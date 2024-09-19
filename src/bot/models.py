@@ -14,3 +14,25 @@ class Company(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class UserActivity(models.Model):
+    user_id = models.IntegerField()
+    username = models.CharField(max_length=MAX_LEN,
+                                blank=True,
+                                null=True)
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL)
+    join_time = models.DateTimeField(default=timezone.now)
+    leave_time = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self) -> str:
+        return f"{self.username} в {self.company.name}"
+
+    def get_spent_time(self):
+        if self.leave_time:
+            delta = self.leave_time - self.join_time
+            total_seconds = delta.total_seconds()
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            return f"{hours} часов и {minutes} минут"
+        return "Ещё не покинул"
