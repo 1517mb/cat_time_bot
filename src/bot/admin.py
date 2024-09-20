@@ -16,7 +16,6 @@ class CompanyAdmin(admin.ModelAdmin):
 class UserActivityAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "user_id"
         "username",
         "company",
         "join_time",
