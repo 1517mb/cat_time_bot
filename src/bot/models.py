@@ -21,7 +21,7 @@ class UserActivity(models.Model):
     username = models.CharField(max_length=MAX_LEN,
                                 blank=True,
                                 null=True)
-    company = models.ForeignKey(Company, on_delete=models.SET_NULL)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     join_time = models.DateTimeField(default=timezone.now)
     leave_time = models.DateTimeField(blank=True, null=True)
 
