@@ -34,5 +34,7 @@ class UserActivity(models.Model):
             total_seconds = delta.total_seconds()
             hours = int(total_seconds // 3600)
             minutes = int((total_seconds % 3600) // 60)
-            return f"{hours} часов и {minutes} минут"
+            if hours < 1:
+                return f"{minutes} мин."
+            return f"{hours} ч. {minutes} мин."
         return "Ещё не покинул"
