@@ -1,5 +1,5 @@
 from django.contrib import admin
-from import_export.admin import ExportMixin
+from import_export.admin import ExportActionModelAdmin
 from import_export.formats import base_formats
 
 from bot.models import Company, UserActivity
@@ -17,7 +17,7 @@ class CompanyAdmin(admin.ModelAdmin):
 
 
 @admin.register(UserActivity)
-class UserActivityAdmin(ExportMixin, admin.ModelAdmin):
+class UserActivityAdmin(ExportActionModelAdmin):
     resource_class = UserActivityResource
     list_display = (
         "id",
@@ -26,7 +26,7 @@ class UserActivityAdmin(ExportMixin, admin.ModelAdmin):
         "join_time",
         "leave_time",
         "get_spent_time")
-    list_filter = ("company", "username")
+    list_filter = ("company", "username", "join_time")
     search_fields = ("username", "company__name")
     readonly_fields = ("get_spent_time", )
 
