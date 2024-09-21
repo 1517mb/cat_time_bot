@@ -9,3 +9,13 @@ class CompanyCfg:
     VERBOSE_NAME = "Название"
     META_NAME = "Организация"
     META_PL_NAME = "Организации"
+
+
+class UserActivityCfg:
+    USER_ID_V = "Telegram ID"
+    USERNAME_V = "Имя пользователя Telegram"
+    COMPANY_V = "Название компании"
+    JOIN_TIME_V = "Время прибытия"
+    LEAVE_TIME_V = "Время убытия"
+    SPENT_TIME_V = "Время, проведенное пользователем"
+    SPENT_TIME_PLURAL_V = "Время, проведенное пользователями"
