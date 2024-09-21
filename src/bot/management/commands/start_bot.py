@@ -2,6 +2,7 @@ import logging
 from difflib import get_close_matches
 
 import requests
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -18,7 +19,7 @@ from telegram.ext import (
 from ...models import Company, UserActivity
 
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
 )
 
@@ -37,7 +38,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def get_similar_companies(company_name):
-    companies = Company.objects.all()
+    companies = await sync_to_async(list)(Company.objects.all())
     similar_companies = get_close_matches(
         company_name, [company.name for company in companies], n=2, cutoff=0.6)
     return similar_companies
@@ -46,18 +47,19 @@ async def get_similar_companies(company_name):
 async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    company_name = ' '.join(context.args)
+    company_name = " ".join(context.args)
 
     if not company_name:
         await update.message.reply_text(
             "Пожалуйста, укажите название организации после команды /join.")
         return ConversationHandler.END
 
-    company, created = Company.objects.get_or_create(name=company_name)
+    company, created = await sync_to_async(
+        Company.objects.get_or_create)(name=company_name)
     if created:
         await update.message.reply_text(
             f"Вы прибыли в организацию {company_name}")
-        UserActivity.objects.create(
+        await sync_to_async(UserActivity.objects.create)(
             user_id=user_id,
             username=username,
             company=company
@@ -70,8 +72,8 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 [f"{i + 1}. {company}" for i, company in enumerate(
                     similar_companies)])
             reply_keyboard = [
-                [KeyboardButton(company)] for company in similar_companies]
-            + [[KeyboardButton("Добавить новую организацию")]]
+                [KeyboardButton(company)] for company in similar_companies
+            ] + [[KeyboardButton("Добавить новую организацию")]]
             await update.message.reply_text(
                 f"Организации с названием \"{company_name}\" не найдено."
                 f"Возможно, вы имели в виду:\n{similar_companies_text}\n"
@@ -83,7 +85,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         else:
             await update.message.reply_text(
                 f"Вы прибыли в организацию {company_name}")
-            UserActivity.objects.create(
+            await sync_to_async(UserActivity.objects.create)(
                 user_id=user_id,
                 username=username,
                 company=company
@@ -101,10 +103,11 @@ async def select_company(
         await update.message.reply_text(
             "Пожалуйста, введите название новой организации")
         return JOIN_CO
-    company, created = Company.objects.get_or_create(name=selected_company)
+    company, created = await sync_to_async(
+        Company.objects.get_or_create)(name=selected_company)
     await update.message.reply_text(
         f"Вы прибыли в организацию {selected_company}.")
-    UserActivity.objects.create(
+    await sync_to_async(UserActivity.objects.create)(
         user_id=user_id,
         username=username,
         company=company
@@ -118,10 +121,11 @@ async def add_new_company(
     username = update.message.from_user.username
     company_name = update.message.text
 
-    company, created = Company.objects.get_or_create(name=company_name)
+    company, created = await sync_to_async(
+        Company.objects.get_or_create)(name=company_name)
     await update.message.reply_text(
-        f'Вы присоединились к новой организации {company_name}.')
-    UserActivity.objects.create(
+        f"Вы присоединились к новой организации {company_name}.")
+    await sync_to_async(UserActivity.objects.create)(
         user_id=user_id,
         username=username,
         company=company
@@ -133,29 +137,27 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     try:
-        activity = UserActivity.objects.filter(
-            user_id=user_id, leave_time__isnull=True).latest("join_time")
+        activity = await sync_to_async(UserActivity.objects.filter(
+            user_id=user_id, leave_time__isnull=True).latest)("join_time")
         activity.leave_time = timezone.now()
-        activity.save()
+        await sync_to_async(activity.save)()
+        company_name = await sync_to_async(lambda: activity.company.name)()
+        spent_time = await sync_to_async(lambda: activity.get_spent_time)()
         await update.message.reply_text(
-            f"Вы покинули организацию {activity.company.name}. "
-            "Затраченное время: {activity.get_spent_time()}.")
+            f"Вы покинули организацию {company_name}. "
+            f"Затраченное время: {spent_time}.")
     except UserActivity.DoesNotExist:
         await update.message.reply_text(
             "Вы не прибыли ни к одной организации.")
 
 
 async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Отправка запроса на API
-    response = requests.get('https://api.thecatapi.com/v1/images/search')
+    response = requests.get("https://api.thecatapi.com/v1/images/search")
     if response.status_code == 200:
-        # Получение URL фотографии
-        cat_photo_url = response.json()[0]['url']
-        # Отправка фотографии в чат
+        cat_photo_url = response.json()[0]["url"]
         await update.message.reply_photo(photo=cat_photo_url)
     else:
-        # Отправка сообщения об ошибке, если запрос не удался
-        await update.message.reply_text('Не удалось получить фото котика :(')
+        await update.message.reply_text("Не удалось получить фото котика :(")
 
 
 class Command(BaseCommand):
@@ -166,7 +168,7 @@ class Command(BaseCommand):
             settings.TELEGRAM_BOT_TOKEN).build()
 
         conv_handler = ConversationHandler(
-            entry_points=[CommandHandler('join', join)],
+            entry_points=[CommandHandler("join", join)],
             states={
                 SELECT_CO: [MessageHandler(
                     filters.TEXT & ~filters.COMMAND, select_company)],
@@ -174,7 +176,7 @@ class Command(BaseCommand):
                     filters.TEXT & ~filters.COMMAND, add_new_company)],
             },
             fallbacks=[CommandHandler(
-                'cancel', lambda update, context: ConversationHandler.END)],
+                "cancel", lambda update, context: ConversationHandler.END)],
         )
 
         application.add_handler(conv_handler)
