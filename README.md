@@ -24,7 +24,6 @@ Cat Time Bot  — это телеграм-бот, который не тольк
 
 ## Инструкция
 
-## Установка для разработки:<a name="installation"></a>
 - Клонируйте проект на свой компьютер:
 ```
 git clone git@github.com:hydrospirt/cat_time_bot.git
