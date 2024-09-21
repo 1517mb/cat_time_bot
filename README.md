@@ -33,11 +33,11 @@ git clone git@github.com:hydrospirt/cat_time_bot.git
 cd ./pokemon-unite-site/ &&
 py -3.12 -m venv venv
 ```
-Для Windows:
+- Для Windows:
 ```
 source venv/Scripts/Activate
 ```
-Для Linux
+- Для Linux
 ```
 source venv/bin/activate
 ```
