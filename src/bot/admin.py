@@ -28,6 +28,11 @@ class UserActivityAdmin(ExportMixin, admin.ModelAdmin):
         "get_spent_time")
     list_filter = ("company", "username")
     search_fields = ("username", "company__name")
+    readonly_fields = ("get_spent_time", )
+
+    def get_spent_time(self, obj):
+        return obj.get_spent_time
+    get_spent_time.short_description = "Общее время"
 
     def get_export_formats(self):
         formats = (
