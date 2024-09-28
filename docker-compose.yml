@@ -1,0 +1,30 @@
+services:
+  web:
+    container_name: catbot_0.1a
+    build: .
+    restart: always
+    command: >
+      bash -c "python manage.py makemigrations
+      && python manage.py migrate
+      && python manage.py collectstatic --noinput
+      && gunicorn --bind 0.0.0.0:8000 config.wsgi:application"
+    volumes:
+      - static:/app/static
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - static:/var/www/static/
+    depends_on:
+      - web
+
+volumes:
+  static:
+  
