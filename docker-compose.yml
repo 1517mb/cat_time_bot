@@ -7,21 +7,21 @@ services:
       bash -c "python manage.py makemigrations
       && python manage.py migrate
       && python manage.py collectstatic --noinput
-      && gunicorn --bind 0.0.0.0:8000 config.wsgi:application"
+      && uvicorn config.asgi:application --host 0.0.0.0 --port 8000"
     volumes:
       - static:/app/static
     ports:
-      - "8000:8000"
+      - 8000:8000
     env_file:
       - ./.env
 
   nginx:
     image: nginx:latest
     ports:
-      - "80:80"
+      - 80:80
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - static:/var/www/static/
+      - static:/app/static:ro
     depends_on:
       - web
 
