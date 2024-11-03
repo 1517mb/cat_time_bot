@@ -44,13 +44,20 @@ class UserActivityResource(resources.ModelResource):
         return "Ещё не покинул"
 
     def dehydrate_time_difference(self, obj):
-        """Возвращает дельту потраченого времени"""
+        """Возвращает дельту потраченного времени"""
         if obj.join_time and obj.leave_time:
             delta = obj.leave_time - obj.join_time
             total_seconds = delta.total_seconds()
-            hours = int(total_seconds // 3600)
+
+            days = int(total_seconds // (3600 * 24))
+            hours = int((total_seconds % (3600 * 24)) // 3600)
             minutes = int((total_seconds % 3600) // 60)
-            if hours < 1:
+
+            if days > 0:
+                return f"{days} д. {hours} ч. {minutes} мин."
+            elif hours > 0:
+                return f"{hours} ч. {minutes} мин."
+            else:
                 return f"{minutes} мин."
-            return f"{hours} ч. {minutes} мин."
+
         return "Ещё не покинул"
