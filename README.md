@@ -1,7 +1,7 @@
 # cat_time_bot
 ![Лицензия](https://img.shields.io/github/license/hydrospirt/cat_time_bot)
 
-### Версия
+### Текущая версия
 
 0.0.1 alpha
 
