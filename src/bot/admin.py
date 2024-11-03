@@ -26,7 +26,7 @@ class UserActivityAdmin(ExportActionModelAdmin):
         "join_time",
         "leave_time",
         "get_spent_time")
-    list_filter = ("company", "username", "join_time")
+    list_filter = ("username", "join_time")
     search_fields = ("username", "company__name")
     readonly_fields = ("get_spent_time", )
 
