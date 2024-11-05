@@ -6,7 +6,12 @@ from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from telegram import KeyboardButton, ReplyKeyboardMarkup, Update
+from telegram import (
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+    Update,
+)
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -52,6 +57,14 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not company_name:
         await update.message.reply_text(
             "Пожалуйста, укажите название организации после команды /join.")
+        return ConversationHandler.END
+
+    active_activity = await sync_to_async(UserActivity.objects.filter(
+        user_id=user_id, leave_time__isnull=True).exists)()
+
+    if active_activity:
+        await update.message.reply_text(
+            "Вы ещё не покинули предыдущую организацию.")
         return ConversationHandler.END
 
     company, created = await sync_to_async(
@@ -103,10 +116,21 @@ async def select_company(
         await update.message.reply_text(
             "Пожалуйста, введите название новой организации")
         return JOIN_CO
+
+    active_activity = await sync_to_async(UserActivity.objects.filter(
+        user_id=user_id, leave_time__isnull=True).exists)()
+
+    if active_activity:
+        await update.message.reply_text(
+            "Вы ещё не покинули предыдущую организацию.")
+        return ConversationHandler.END
+
     company, created = await sync_to_async(
         Company.objects.get_or_create)(name=selected_company)
     await update.message.reply_text(
-        f"Вы прибыли в организацию {selected_company}.")
+        f"Вы прибыли в организацию {selected_company}.",
+        reply_markup=ReplyKeyboardRemove()
+    )
     await sync_to_async(UserActivity.objects.create)(
         user_id=user_id,
         username=username,
@@ -121,10 +145,20 @@ async def add_new_company(
     username = update.message.from_user.username
     company_name = update.message.text
 
+    active_activity = await sync_to_async(UserActivity.objects.filter(
+        user_id=user_id, leave_time__isnull=True).exists)()
+
+    if active_activity:
+        await update.message.reply_text(
+            "Вы ещё не покинули предыдущую организацию.")
+        return ConversationHandler.END
+
     company, created = await sync_to_async(
         Company.objects.get_or_create)(name=company_name)
     await update.message.reply_text(
-        f"Вы присоединились к новой организации {company_name}.")
+        f"Вы присоединились к новой организации {company_name}.",
+        reply_markup=ReplyKeyboardRemove()
+    )
     await sync_to_async(UserActivity.objects.create)(
         user_id=user_id,
         username=username,
@@ -136,19 +170,30 @@ async def add_new_company(
 async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
+
     try:
-        activity = await sync_to_async(UserActivity.objects.filter(
-            user_id=user_id, leave_time__isnull=True).latest)("join_time")
+        activity = await sync_to_async(UserActivity.objects.select_related(
+            "company").filter(
+                user_id=user_id,
+                leave_time__isnull=True).latest)("join_time")
+
         activity.leave_time = timezone.now()
         await sync_to_async(activity.save)()
-        company_name = await sync_to_async(lambda: activity.company.name)()
-        spent_time = await sync_to_async(lambda: activity.get_spent_time)()
+
+        company_name = activity.company.name
+        spent_time = activity.get_spent_time
+
         await update.message.reply_text(
             f"Вы покинули организацию {company_name}. "
             f"Затраченное время: {spent_time}.")
+
     except UserActivity.DoesNotExist:
         await update.message.reply_text(
             "Вы не прибыли ни к одной организации.")
+    except Exception as e:
+        logging.error(f"Ошибка при выполнении команды /leave: {e}")
+        await update.message.reply_text(
+            "Произошла ошибка при обработке вашего запроса.")
 
 
 async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
