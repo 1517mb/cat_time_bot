@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+
 from core.constants import BOT_APP_VERBOSE
 
 
