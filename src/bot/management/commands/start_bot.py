@@ -259,4 +259,8 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler("leave", leave))
         application.add_handler(CommandHandler("mew", mew))
 
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
+        try:
+            application.run_polling(allowed_updates=Update.ALL_TYPES)
+        except KeyboardInterrupt:
+            self.stdout.write(self.style.SUCCESS("Бот остановлен."))
+            application.stop()
