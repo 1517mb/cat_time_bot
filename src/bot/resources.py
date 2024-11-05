@@ -55,9 +55,8 @@ class UserActivityResource(resources.ModelResource):
 
             if days > 0:
                 return f"{days} д. {hours} ч. {minutes} мин."
-            elif hours > 0:
+            if hours > 0:
                 return f"{hours} ч. {minutes} мин."
-            else:
-                return f"{minutes} мин."
+            return f"{minutes} мин."
 
         return "Ещё не покинул"
