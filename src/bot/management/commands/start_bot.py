@@ -64,7 +64,7 @@ async def get_similar_companies(company_name):
 async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    company_name = " ".join(context.args).title()
+    company_name = " ".join(context.args)
 
     if not company_name:
         await update.message.reply_text(
@@ -128,7 +128,7 @@ async def select_company(
         update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    selected_company = update.message.text.title()
+    selected_company = update.message.text
 
     if not VALID_COMPANY_NAME_PATTERN.match(selected_company):
         await update.message.reply_text(
@@ -167,7 +167,7 @@ async def add_new_company(
         update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    company_name = update.message.text.title()
+    company_name = update.message.text
 
     active_activity = await sync_to_async(UserActivity.objects.filter(
         user_id=user_id, leave_time__isnull=True).exists)()
