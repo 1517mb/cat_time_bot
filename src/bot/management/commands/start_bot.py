@@ -1,3 +1,4 @@
+import re
 import logging
 from difflib import get_close_matches
 
@@ -30,6 +31,8 @@ logging.basicConfig(
 
 JOIN_CO, SELECT_CO = range(2)
 
+VALID_COMPANY_NAME_PATTERN = re.compile(r'^[А-Яа-я0-9\s]+$')
+
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_text = (
@@ -61,11 +64,17 @@ async def get_similar_companies(company_name):
 async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    company_name = " ".join(context.args)
+    company_name = " ".join(context.args).title()
 
     if not company_name:
         await update.message.reply_text(
             "Пожалуйста, укажите название организации после команды /join.")
+        return ConversationHandler.END
+
+    if not VALID_COMPANY_NAME_PATTERN.match(company_name):
+        await update.message.reply_text(
+            "Название организации должно содержать только"
+            + " буквы русского алфавита и цифры.")
         return ConversationHandler.END
 
     active_activity = await sync_to_async(UserActivity.objects.filter(
@@ -119,7 +128,13 @@ async def select_company(
         update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    selected_company = update.message.text
+    selected_company = update.message.text.title()
+
+    if not VALID_COMPANY_NAME_PATTERN.match(selected_company):
+        await update.message.reply_text(
+            "Название организации должно содержать только"
+            + " буквы русского алфавита и цифры.")
+        return ConversationHandler.END
 
     if selected_company == "Добавить новую организацию":
         await update.message.reply_text(
@@ -152,7 +167,7 @@ async def add_new_company(
         update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    company_name = update.message.text
+    company_name = update.message.text.title()
 
     active_activity = await sync_to_async(UserActivity.objects.filter(
         user_id=user_id, leave_time__isnull=True).exists)()
@@ -160,6 +175,12 @@ async def add_new_company(
     if active_activity:
         await update.message.reply_text(
             "Вы ещё не покинули предыдущую организацию.")
+        return ConversationHandler.END
+
+    if not VALID_COMPANY_NAME_PATTERN.match(company_name):
+        await update.message.reply_text(
+            "Название организации должно содержать только"
+            + " буквы русского алфавита и цифры.")
         return ConversationHandler.END
 
     company, created = await sync_to_async(
