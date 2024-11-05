@@ -3,7 +3,7 @@
 
 ### Текущая версия
 
-0.0.1 alpha
+0.2 alpha
 
 Список всех изменений: [Ссылка.](https://github.com/hydrospirt/cat_time_bot/blob/master/CHANGE_LIST.md)
 
