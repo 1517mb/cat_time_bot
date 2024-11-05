@@ -43,10 +43,19 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def get_similar_companies(company_name):
-    companies = await sync_to_async(list)(Company.objects.all())
-    similar_companies = get_close_matches(
-        company_name, [company.name for company in companies], n=2, cutoff=0.6)
-    return similar_companies
+    """
+    Searches for companies with names similar to the given company_name
+    and returns a list of the closest matches (up to 2 matches with a
+    similarity cutoff of 0.6).
+
+    :param company_name: The company name to search for.
+    :return: A list of strings of the closest company name matches.
+    """
+    similar_companies = await sync_to_async(list)(
+        Company.objects.filter(name__icontains=company_name).values_list(
+            "name", flat=True)
+    )
+    return get_close_matches(company_name, similar_companies, n=2, cutoff=0.6)
 
 
 async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
