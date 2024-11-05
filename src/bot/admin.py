@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.contrib import admin
 from import_export.admin import ExportActionModelAdmin
 from import_export.formats import base_formats
@@ -40,3 +41,11 @@ class UserActivityAdmin(ExportActionModelAdmin):
             base_formats.XLSX,
         )
         return [f for f in formats if f().can_export()]
+
+    get_export_formats.short_description = "Форматы экспорта"
+
+    actions = ["mark_as_left"]
+
+    def mark_as_left(self, request, queryset):
+        queryset.update(leave_time=timezone.now())
+    mark_as_left.short_description = "Пометить как покинувших организацию"
