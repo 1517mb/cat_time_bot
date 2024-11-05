@@ -1,0 +1,55 @@
+{% load static %}
+{% load unicorn %}
+{% unicorn_scripts %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/bulma.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="{% static 'js/clip.js' %}"></script>
+    <script src="{% static 'js/time.js' %}"></script>
+    <title>Генератор паролей</title>
+</head>
+<body>
+    {% include 'includes/navbar.html' %}
+    <div id="notification-container" class="notification-container"></div>
+    <div class="container">
+        <div class="content is-small mt-6">
+            {% unicorn 'password_generator' %}
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Toggle instruction visibility
+            const toggleInstructionButton = document.getElementById("toggle-instruction");
+            const instructionColumn = document.getElementById("instruction-column");
+        
+            toggleInstructionButton.addEventListener("click", () => {
+                if (instructionColumn.classList.contains("is-hidden")) {
+                    instructionColumn.classList.remove("is-hidden");
+                    toggleInstructionButton.innerHTML = `
+                        <span class="icon is-small">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </span>
+                    `;
+                } else {
+                    instructionColumn.classList.add("is-hidden");
+                    toggleInstructionButton.innerHTML = `
+                        <span class="icon is-small">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </span>
+                    `;
+                }
+            });
+        
+            // Ensure the instruction column is hidden initially
+            instructionColumn.classList.add("is-hidden");
+        });
+        </script>
+
+    {% include 'includes/footer.html' %}
+</body>
+</html>
