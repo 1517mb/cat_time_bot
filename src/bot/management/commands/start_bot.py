@@ -31,7 +31,7 @@ logging.basicConfig(
 
 JOIN_CO, SELECT_CO = range(2)
 
-VALID_COMPANY_NAME_PATTERN = re.compile(r'^[А-Яа-я0-9\s]+$')
+VALID_COMPANY_NAME_PATTERN = re.compile(r'^[А-Яа-яA-Za-z0-9\s]+$')
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -74,7 +74,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not VALID_COMPANY_NAME_PATTERN.match(company_name):
         await update.message.reply_text(
             "Название организации должно содержать только"
-            + " буквы русского алфавита и цифры.")
+            + " буквы русского или английского алфавита и цифры.")
         return ConversationHandler.END
 
     active_activity = await sync_to_async(UserActivity.objects.filter(
@@ -133,7 +133,7 @@ async def select_company(
     if not VALID_COMPANY_NAME_PATTERN.match(selected_company):
         await update.message.reply_text(
             "Название организации должно содержать только"
-            + " буквы русского алфавита и цифры.")
+            + " буквы русского или английского алфавита и цифры")
         return ConversationHandler.END
 
     if selected_company == "Добавить новую организацию":
@@ -180,7 +180,7 @@ async def add_new_company(
     if not VALID_COMPANY_NAME_PATTERN.match(company_name):
         await update.message.reply_text(
             "Название организации должно содержать только"
-            + " буквы русского алфавита и цифры.")
+            + " буквы русского или английского алфавита и цифры")
         return ConversationHandler.END
 
     company, created = await sync_to_async(
