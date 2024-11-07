@@ -58,6 +58,7 @@ DEBUG=False
 ALLOWED_HOSTS=127.0.0.1,localhost
 SECRET_KEY="Секретный код Django"
 TELEGRAM_BOT_TOKEN="Секретный токен @BotFather"
+TRUSTED_ORIGINS=http://127.0.0.1,http://localhost и тд.
 ```
 ## Инструкции для запуска на localhost
 - Запустить скрипт:

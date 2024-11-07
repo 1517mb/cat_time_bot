@@ -133,7 +133,7 @@ async def select_company(
     if not VALID_COMPANY_NAME_PATTERN.match(selected_company):
         await update.message.reply_text(
             "Название организации должно содержать только"
-            + " буквы русского или английского алфавита и цифры")
+            + " буквы русского алфавита и цифры.")
         return ConversationHandler.END
 
     if selected_company == "Добавить новую организацию":
