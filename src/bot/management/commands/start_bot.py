@@ -74,7 +74,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if not VALID_COMPANY_NAME_PATTERN.match(company_name):
         await update.message.reply_text(
             "Название организации должно содержать только"
-            + " буквы русского или английского алфавита и цифры.")
+            + " буквы русского или английского алфавита, цифры и тире.")
         return ConversationHandler.END
 
     active_activity = await sync_to_async(UserActivity.objects.filter(
@@ -86,40 +86,9 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return ConversationHandler.END
 
     try:
-        company, created = await sync_to_async(
-            Company.objects.get_or_create)(name=company_name)
-    except Exception:
-        await update.message.reply_text(
-            "Произошла ошибка при поиске или создании организации.")
-        return ConversationHandler.END
-
-    if created:
-        await update.message.reply_text(
-            f"Вы прибыли в организацию {company_name}")
-        await sync_to_async(UserActivity.objects.create)(
-            user_id=user_id,
-            username=username,
-            company=company
-        )
-        return ConversationHandler.END
-    else:
-        similar_companies = await get_similar_companies(company_name)
-        if similar_companies:
-            similar_companies_text = "\n".join(
-                [f"{i + 1}. {company}" for i, company in enumerate(
-                    similar_companies)])
-            reply_keyboard = [
-                [KeyboardButton(company)] for company in similar_companies
-            ] + [[KeyboardButton("Добавить новую организацию")]]
-            await update.message.reply_text(
-                f"Организации с названием \"{company_name}\" не найдено."
-                f"Возможно, вы имели в виду:\n{similar_companies_text}\n"
-                "Выберите из списка или добавьте новую организацию.",
-                reply_markup=ReplyKeyboardMarkup(
-                    reply_keyboard, one_time_keyboard=True)
-            )
-            return SELECT_CO
-        else:
+        company = await sync_to_async(
+            Company.objects.filter(name=company_name).first)()
+        if company:
             await update.message.reply_text(
                 f"Вы прибыли в организацию {company_name}")
             await sync_to_async(UserActivity.objects.create)(
@@ -128,6 +97,38 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 company=company
             )
             return ConversationHandler.END
+        else:
+            similar_companies = await get_similar_companies(company_name)
+            if similar_companies:
+                similar_companies_text = "\n".join(
+                    [f"{i + 1}. {company}" for i, company in enumerate(
+                        similar_companies)])
+                reply_keyboard = [
+                    [KeyboardButton(company)] for company in similar_companies
+                ] + [[KeyboardButton("Добавить новую организацию")]]
+                await update.message.reply_text(
+                    f"Организации с названием \"{company_name}\" не найдено."
+                    f"Возможно, вы имели в виду:\n{similar_companies_text}\n"
+                    "Выберите из списка или добавьте новую организацию.",
+                    reply_markup=ReplyKeyboardMarkup(
+                        reply_keyboard, one_time_keyboard=True)
+                )
+                return SELECT_CO
+            else:
+                company, created = await sync_to_async(
+                    Company.objects.get_or_create)(name=company_name)
+                await update.message.reply_text(
+                    f"Вы прибыли в организацию {company_name}")
+                await sync_to_async(UserActivity.objects.create)(
+                    user_id=user_id,
+                    username=username,
+                    company=company
+                )
+                return ConversationHandler.END
+    except Exception:
+        await update.message.reply_text(
+            "Произошла ошибка при поиске или создании организации.")
+        return ConversationHandler.END
 
 
 async def select_company(
