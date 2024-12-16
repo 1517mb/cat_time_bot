@@ -38,11 +38,36 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_text = (
         "Привет! Вот список доступных команд:\n"
         "/help - Показать это сообщение с инструкциями.\n"
+        "/get_chat_info - Получить информацию о чате.\n"
         "/join <Организация> - Прибыть к указанной организации.\n"
         "/leave - Покинуть текущую организацию и записать затраченное время.\n"
         "/mew - Получить случайное фото кота."
     )
     await update.message.reply_text(help_text)
+
+
+async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id
+    try:
+        chat = await context.bot.get_chat(chat_id)
+        try:
+            member_count = await chat.get_member_count()
+        except Exception:
+            member_count = (
+                "Недоступно (группа приватная или бот не имеет доступа)")
+        chat_info = f"""
+🔍 Информация о чате:
+- ID: {chat.id}
+- Название: {chat.title}
+- Тип: {chat.type}
+- Количество участников: {member_count}
+- Описание: {chat.description if chat.description else "Нет описания"}
+- Ссылка: {chat.invite_link if chat.invite_link else "Недоступна"}
+        """
+        await update.message.reply_text(chat_info)
+    except Exception as e:
+        await update.message.reply_text(
+            f"Ошибка при получении информации о чате: {e}")
 
 
 async def get_similar_companies(company_name):
@@ -261,6 +286,7 @@ class Command(BaseCommand):
 
         application.add_handler(conv_handler)
         application.add_handler(CommandHandler("help", help))
+        application.add_handler(CommandHandler("get_chat_info", get_chat_info))
         application.add_handler(CommandHandler("leave", leave))
         application.add_handler(CommandHandler("mew", mew))
 
