@@ -22,7 +22,7 @@ from telegram.ext import (
     filters,
 )
 
-from ...models import Company, UserActivity
+from bot.models import Company, UserActivity
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -31,7 +31,7 @@ logging.basicConfig(
 
 JOIN_CO, SELECT_CO = range(2)
 
-VALID_COMPANY_NAME_PATTERN = re.compile(r'^[А-Яа-яA-Za-z0-9\s]+$')
+VALID_COMPANY_NAME_PATTERN = re.compile(r'^[А-Яа-яA-Za-z0-9\s\-]+$')
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -85,8 +85,14 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             "Вы ещё не покинули предыдущую организацию.")
         return ConversationHandler.END
 
-    company, created = await sync_to_async(
-        Company.objects.get_or_create)(name=company_name)
+    try:
+        company, created = await sync_to_async(
+            Company.objects.get_or_create)(name=company_name)
+    except Exception:
+        await update.message.reply_text(
+            "Произошла ошибка при поиске или создании организации.")
+        return ConversationHandler.END
+
     if created:
         await update.message.reply_text(
             f"Вы прибыли в организацию {company_name}")
@@ -199,8 +205,6 @@ async def add_new_company(
 
 async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    username = update.message.from_user.username
-
     try:
         activity = await sync_to_async(UserActivity.objects.select_related(
             "company").filter(
