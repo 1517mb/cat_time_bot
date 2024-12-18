@@ -1,5 +1,8 @@
+import asyncio
 import logging
+import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from difflib import get_close_matches
 
 import requests
@@ -7,6 +10,7 @@ from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from dotenv import load_dotenv
 from telegram import (
     KeyboardButton,
     ReplyKeyboardMarkup,
@@ -24,6 +28,8 @@ from telegram.ext import (
 
 from bot.models import Company, UserActivity
 
+load_dotenv()
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
@@ -31,7 +37,9 @@ logging.basicConfig(
 
 JOIN_CO, SELECT_CO = range(2)
 
-VALID_COMPANY_NAME_PATTERN = re.compile(r'^[А-Яа-яA-Za-z0-9\s\-]+$')
+VALID_COMPANY_NAME_PATTERN = re.compile(r"^[А-Яа-яA-Za-z0-9\s\-]+$")
+
+executor = ThreadPoolExecutor()
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -68,6 +76,34 @@ async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(
             f"Ошибка при получении информации о чате: {e}")
+
+
+def get_weather():
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    city = "Zelenograd"
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru" # noqa
+    response = requests.get(url)
+    data = response.json()
+    if data["cod"] == 200:
+        temp = data["main"]["temp"]
+        description = data["weather"][0]["description"]
+        return f"Погода в {city}: {temp}°C, {description}"
+    else:
+        return "Не удалось получить погоду."
+
+
+async def send_weather_to_group(update: Update,
+                                context: ContextTypes.DEFAULT_TYPE):
+    try:
+        loop = asyncio.get_event_loop()
+        weather_message = await loop.run_in_executor(executor, get_weather)
+        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        await context.bot.send_message(
+            chat_id=group_chat_id, text=weather_message)
+    except Exception as e:
+        logging.error(f"Ошибка при отправке погоды: {e}")
+        await context.bot.send_message(
+            chat_id=group_chat_id, text="Не удалось отправить погоду.")
 
 
 async def get_similar_companies(company_name):
@@ -289,6 +325,8 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler("get_chat_info", get_chat_info))
         application.add_handler(CommandHandler("leave", leave))
         application.add_handler(CommandHandler("mew", mew))
+        application.add_handler(
+            CommandHandler("weather", send_weather_to_group))
 
         try:
             application.run_polling(allowed_updates=Update.ALL_TYPES)
