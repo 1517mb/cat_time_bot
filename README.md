@@ -56,9 +56,11 @@ touch .env
 ```
 DEBUG=False
 ALLOWED_HOSTS=127.0.0.1,localhost
-SECRET_KEY="Секретный код Django"
-TELEGRAM_BOT_TOKEN="Секретный токен @BotFather"
+SECRET_KEY=Секретный код Django
+TELEGRAM_BOT_TOKEN=Секретный токен @BotFather
 TRUSTED_ORIGINS=http://127.0.0.1,http://localhost и тд.
+OPENWEATHER_API_KEY=ключ от API например: 1a2b3c4d5e6f7g8h
+TELEGRAM_GROUP_CHAT_ID=ИД канала например: -1001234517895
 ```
 ## Инструкции для запуска на localhost
 - Запустить скрипт:
