@@ -47,15 +47,16 @@ scheduler = BackgroundScheduler()
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_text = (
-        "Привет! Вот список доступных команд:\n"
+        "😺 *Привет!* 😺\n"
+        "Вот список доступных команд:\n"
         "\n"
-        "Основные команды:\n"
+        "*Основные команды:*\n"
         "/help - Показать это сообщение с инструкциями.\n"
         "/join <Организация> - Прибыть к указанной организации.\n"
         "/leave - Покинуть текущую организацию и записать затраченное время.\n"
         "/edit - Изменить время прибытия в текущую организацию.\n"
         "\n"
-        "Дополнительные команды:\n"
+        "*Дополнительные команды:*\n"
         "/start_scheduler - Запустить задание для отправки погоды.\n"
         "/get_chat_info - Получить информацию о чате.\n"
         "/mew - Получить случайное фото кота."
@@ -84,7 +85,7 @@ async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(chat_info)
     except Exception as e:
         await update.message.reply_text(
-            f"Ошибка при получении информации о чате: {e}")
+            f"🚨 *Ошибка при получении информации о чате:* {e}")
 
 
 def get_weather():
@@ -127,7 +128,7 @@ def get_weather():
         )
         return weather_message
     else:
-        return "Не удалось получить погоду."
+        return "🚨 Не удалось получить погоду. 🚨"
 
 
 async def send_weather_to_group(bot):
@@ -159,7 +160,7 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         args=[context.bot]
     )
     scheduler.start()
-    await update.message.reply_text("Планировщик погоды запущен.")
+    await update.message.reply_text("☀️ Планировщик погоды запущен. ⛈️")
 
 
 async def get_similar_companies(company_name):
@@ -185,11 +186,13 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     if not company_name:
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Пожалуйста, укажите название организации после команды /join.")
         return ConversationHandler.END
 
     if not VALID_COMPANY_NAME_PATTERN.match(company_name):
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Название организации должно содержать только"
             + " буквы русского или английского алфавита, цифры и тире.")
         return ConversationHandler.END
@@ -199,6 +202,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     if active_activity:
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Вы ещё не покинули предыдущую организацию.")
         return ConversationHandler.END
 
@@ -208,8 +212,9 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if company:
             local_time = timezone.localtime(timezone.now())
             await update.message.reply_text(
-                f"Вы прибыли в организацию {company_name} "
-                + f"в {local_time.strftime('%H:%M')}.")
+                f"😺 *Вы прибыли в организацию {company_name}* 😺\n"
+                f"Время прибытия: {local_time.strftime('%H:%M')}."
+            )
             await sync_to_async(UserActivity.objects.create)(
                 user_id=user_id,
                 username=username,
@@ -226,7 +231,8 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     [KeyboardButton(company)] for company in similar_companies
                 ] + [[KeyboardButton("Добавить новую организацию")]]
                 await update.message.reply_text(
-                    f"Организации с названием \"{company_name}\" не найдено."
+                    f"🚨 *Организации с названием \"{company_name}\" "
+                    + "не найдено.* 🚨\n"
                     f"Возможно, вы имели в виду:\n{similar_companies_text}\n"
                     "Выберите из списка или добавьте новую организацию.",
                     reply_markup=ReplyKeyboardMarkup(
@@ -238,8 +244,9 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     Company.objects.get_or_create)(name=company_name)
                 local_time = timezone.localtime(timezone.now())
                 await update.message.reply_text(
-                    f"Вы прибыли в организацию {company_name} "
-                    + f"в {local_time.strftime('%H:%M')}.")
+                    f"😺 *Вы прибыли в организацию {company_name}* 😺\n"
+                    f"Время прибытия: {local_time.strftime('%H:%M')}."
+                )
                 await sync_to_async(UserActivity.objects.create)(
                     user_id=user_id,
                     username=username,
@@ -248,7 +255,8 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 return ConversationHandler.END
     except Exception:
         await update.message.reply_text(
-            "Произошла ошибка при поиске или создании организации.")
+            "🚨 *Произошла ошибка при поиске или создании организации.* 🚨"
+        )
         return ConversationHandler.END
 
 
@@ -260,13 +268,15 @@ async def select_company(
 
     if not VALID_COMPANY_NAME_PATTERN.match(selected_company):
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Название организации должно содержать только"
             + " буквы русского алфавита и цифры.")
         return ConversationHandler.END
 
     if selected_company == "Добавить новую организацию":
         await update.message.reply_text(
-            "Пожалуйста, введите название новой организации")
+            "🐾 *Пожалуйста, введите название новой организации.* 🐾"
+        )
         return JOIN_CO
 
     active_activity = await sync_to_async(UserActivity.objects.filter(
@@ -274,6 +284,7 @@ async def select_company(
 
     if active_activity:
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Вы ещё не покинули предыдущую организацию.")
         return ConversationHandler.END
 
@@ -281,8 +292,8 @@ async def select_company(
         Company.objects.get_or_create)(name=selected_company)
     local_time = timezone.localtime(timezone.now())
     await update.message.reply_text(
-        f"Вы прибыли в организацию {selected_company} "
-        + f"в {local_time.strftime('%H:%M')}.",
+        f"😺 *Вы прибыли в организацию {selected_company}* 😺\n"
+        f"Время прибытия: {local_time.strftime('%H:%M')}.",
         reply_markup=ReplyKeyboardRemove()
     )
     await sync_to_async(UserActivity.objects.create)(
@@ -305,6 +316,7 @@ async def edit_arrival_time(update: Update,
 
     if not active_activity:
         await update.message.reply_text(
+            "🚨 *Ошибка!* 🚨\n"
             "У вас нет активной организации, "
             "для которой можно изменить время прибытия.")
         return
@@ -312,6 +324,7 @@ async def edit_arrival_time(update: Update,
     args = context.args
     if not args or len(args) != 1:
         await update.message.reply_text(
+            "🚨 *Ошибка!* 🚨\n"
             "Пожалуйста, укажите новое время прибытия "
             "в формате ЧЧ:ММ (например, /edit 10:15).")
         return
@@ -323,6 +336,7 @@ async def edit_arrival_time(update: Update,
             new_arrival_time_str, '%H:%M').time()
     except ValueError:
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Неверный формат времени. "
             "Пожалуйста, укажите время в формате ЧЧ:ММ (например, 09:15).")
         return
@@ -331,6 +345,7 @@ async def edit_arrival_time(update: Update,
 
     if new_arrival_time > current_time:
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Вы не можете выбрать время, которое больше текущего. "
             "Пожалуйста, укажите время, которое меньше или равно текущему.")
         return
@@ -347,6 +362,7 @@ async def edit_arrival_time(update: Update,
     local_join_time = timezone.localtime(new_arrival_datetime)
 
     await update.message.reply_text(
+        f"😻 *Успешно!* 😻\n"
         f"Время прибытия в организацию {company_name} успешно"
         + f" изменено на {local_join_time.strftime('%H:%M')}.")
 
@@ -362,11 +378,13 @@ async def add_new_company(
 
     if active_activity:
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Вы ещё не покинули предыдущую организацию.")
         return ConversationHandler.END
 
     if not VALID_COMPANY_NAME_PATTERN.match(company_name):
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Название организации должно содержать только"
             + " буквы русского или английского алфавита и цифры")
         return ConversationHandler.END
@@ -374,8 +392,8 @@ async def add_new_company(
     company, created = await sync_to_async(
         Company.objects.get_or_create)(name=company_name)
     await update.message.reply_text(
-        f"Вы прибыли к новой организации {company_name}."
-        f"в {local_time.strftime('%H:%M')}.\n ",
+        f"😺 *Вы прибыли к новой организации {company_name}* 😺\n"
+        f"Время прибытия: {local_time.strftime('%H:%M')}.\n ",
         reply_markup=ReplyKeyboardRemove()
     )
     await sync_to_async(UserActivity.objects.create)(
@@ -402,17 +420,19 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         local_time = timezone.localtime(timezone.now())
 
         await update.message.reply_text(
-            f"Вы покинули организацию {company_name} "
-            f"в {local_time.strftime('%H:%M')}.\n "
-            f"Затраченное время: {spent_time}.")
+            f"😺 *Вы покинули организацию {company_name}* 😺\n"
+            f"Время ухода: {local_time.strftime('%H:%M')}.\n"
+            f"Затраченное время: {spent_time}."
+        )
 
     except UserActivity.DoesNotExist:
         await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
             "Вы не прибыли ни к одной организации.")
     except Exception as e:
         logging.error(f"Ошибка при выполнении команды /leave: {e}")
         await update.message.reply_text(
-            "Произошла ошибка при обработке вашего запроса.")
+            "🚨 *Произошла ошибка при обработке вашего запроса.* 🚨")
 
 
 async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -421,7 +441,7 @@ async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         cat_photo_url = response.json()[0]["url"]
         await update.message.reply_photo(photo=cat_photo_url)
     else:
-        await update.message.reply_text("Не удалось получить фото котика :(")
+        await update.message.reply_text("😿 Не удалось получить фото котика. 😿")
 
 
 class Command(BaseCommand):
