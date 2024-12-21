@@ -1,16 +1,10 @@
-/**
- * Copies the given text to the user's clipboard using the `copyToClipboard`
- * function from the `clip.js` script.
- *
- * @param {string} elementId - The id of the input element to copy from
- */
 function copyToClipboard(elementId) {
-    let inputElement;
-    if (elementId === 'password') {
-        inputElement = document.getElementById('password');
-    } else {
-        inputElement = document.querySelector(`input[value='${elementId}']`);
+    const inputElement = document.getElementById(elementId);
+    if (!inputElement) {
+        showNotification("Элемент для копирования не найден!");
+        return;
     }
+
     navigator.clipboard.writeText(inputElement.value).then(function() {
         showNotification("Пароль скопирован в буфер обмена!");
     }).catch(function(err) {
@@ -18,14 +12,13 @@ function copyToClipboard(elementId) {
     });
 }
 
-/**
- * Displays a notification with the specified message at the top right corner of the page.
- * The notification includes a delete button to manually close it and automatically
- * disappears after 5 seconds.
- *
- * @param {string} message - The message to display within the notification.
- */
 function showNotification(message) {
+    const notificationContainer = document.getElementById("notification-container");
+    if (!notificationContainer) {
+        console.error("Контейнер для уведомлений не найден!");
+        return;
+    }
+
     const notification = document.createElement("div");
     notification.className = "notification is-success is-light";
     notification.innerHTML = `
@@ -33,7 +26,6 @@ function showNotification(message) {
         ${message}
     `;
 
-    const notificationContainer = document.getElementById("notification-container");
     notificationContainer.appendChild(notification);
 
     // Adding a handler to close the alert

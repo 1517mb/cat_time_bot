@@ -10,10 +10,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 DEBUG = os.getenv("DEBUG") == "True"
-
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
+
 USE_X_FORWARDED_HOST = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CSRF_TRUSTED_ORIGINS = os.getenv("TRUSTED_ORIGINS", "").split(",")

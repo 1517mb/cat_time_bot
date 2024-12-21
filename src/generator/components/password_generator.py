@@ -16,9 +16,6 @@ class PasswordGeneratorView(UnicornView):
         the selected criteria: length, inclusion of digits,
         and special characters.
 
-        :param self: The PasswordGeneratorView instance
-        :type self: PasswordGeneratorView
-
         The generated passwords are stored in the `password` and
         `password_options` attributes.
         """
@@ -37,19 +34,11 @@ class PasswordGeneratorView(UnicornView):
         self.password: str = "".join(
             secrets.choice(characters) for _ in range(self.length))
 
-        # Generate a list of password options
-        self.password_options: list[str] = [
-            "".join(secrets.choice(characters) for _ in range(self.length))
-            for _ in range(10)
-        ]
-
     def copy_to_clipboard(self, text: str) -> None:
         """
-        Copies the given text to the user's clipboard using the
-        `copyToClipboard` function from the `clip.js` script.
+        Calls the `copyToClipboard` JavaScript function to copy the given text
+        to the user's clipboard.
 
         :param text: The text to copy to the user's clipboard
         """
-        # Call the `copyToClipboard` function from the `clip.js` script
-        # with the given text as the argument
         self.call("copyToClipboard", text)
