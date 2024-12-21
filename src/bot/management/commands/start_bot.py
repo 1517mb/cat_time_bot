@@ -1,12 +1,13 @@
 import asyncio
 import logging
-from datetime import datetime
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from difflib import get_close_matches
 
 import requests
+from apscheduler.schedulers.background import BackgroundScheduler
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -26,7 +27,6 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-from apscheduler.schedulers.background import BackgroundScheduler
 
 from bot.models import Company, UserActivity
 
