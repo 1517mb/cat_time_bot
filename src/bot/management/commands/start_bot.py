@@ -45,10 +45,12 @@ executor = ThreadPoolExecutor()
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_text = (
         "Привет! Вот список доступных команд:\n"
+        "Основные команды:\n"
         "/help - Показать это сообщение с инструкциями.\n"
-        "/get_chat_info - Получить информацию о чате.\n"
         "/join <Организация> - Прибыть к указанной организации.\n"
         "/leave - Покинуть текущую организацию и записать затраченное время.\n"
+        "Дополнительные команды:\n"
+        "/get_chat_info - Получить информацию о чате.\n"
         "/mew - Получить случайное фото кота."
     )
     await update.message.reply_text(help_text)
