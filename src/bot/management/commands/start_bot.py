@@ -25,6 +25,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from bot.models import Company, UserActivity
 
@@ -40,6 +41,7 @@ JOIN_CO, SELECT_CO = range(2)
 VALID_COMPANY_NAME_PATTERN = re.compile(r"^[А-Яа-яA-Za-z0-9\s\-]+$")
 
 executor = ThreadPoolExecutor()
+scheduler = BackgroundScheduler()
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -83,13 +85,14 @@ async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def get_weather():
     api_key = os.getenv("OPENWEATHER_API_KEY")
     city = "Zelenograd"
+    city_ru = "Зеленограде"
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru" # noqa
     response = requests.get(url)
     data = response.json()
     if data["cod"] == 200:
         temp = data["main"]["temp"]
         description = data["weather"][0]["description"]
-        return f"Погода в {city}: {temp}°C, {description}"
+        return f"Погода в {city_ru}: {temp}°C, {description}"
     else:
         return "Не удалось получить погоду."
 
