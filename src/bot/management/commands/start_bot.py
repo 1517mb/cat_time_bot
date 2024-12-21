@@ -47,11 +47,14 @@ scheduler = BackgroundScheduler()
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_text = (
         "Привет! Вот список доступных команд:\n"
+        "\n"
         "Основные команды:\n"
         "/help - Показать это сообщение с инструкциями.\n"
         "/join <Организация> - Прибыть к указанной организации.\n"
         "/leave - Покинуть текущую организацию и записать затраченное время.\n"
+        "\n"
         "Дополнительные команды:\n"
+        "/start_scheduler - Запустить задание для отправки погоды.\n"
         "/get_chat_info - Получить информацию о чате.\n"
         "/mew - Получить случайное фото кота."
     )
@@ -91,24 +94,68 @@ def get_weather():
     data = response.json()
     if data["cod"] == 200:
         temp = data["main"]["temp"]
+        feels_like = data["main"]["feels_like"]
         description = data["weather"][0]["description"]
-        return f"Погода в {city_ru}: {temp}°C, {description}"
+        clouds = data["clouds"]["all"]
+        wind_speed = data["wind"]["speed"]
+        wind_gust = data["wind"].get("gust", 0)
+
+        weather_emoji = {
+            "дождь": "🌧️",
+            "снег": "❄️",
+            "сильный снегопад": "🌨️",
+            "ясно": "☀️",
+            "облачно": "☁️",
+            "туман": "🌫️",
+            "гроза": "⛈️",
+            "ветер": "💨",
+        }
+
+        emoji = weather_emoji.get(description.lower(), "❓")
+
+        weather_message = (
+            f"Погода в {city_ru}:\n"
+            f"{emoji} {description}\n"
+            f"🌡 Температура: {temp}°C, ощущается как {feels_like}°C\n"
+            f"🌥 Облачность: {clouds}%\n"
+            f"💨 Скорость ветра: {wind_speed} м/с\n"
+            f"🌬 Порывы ветра: {wind_gust} м/с"
+        )
+        return weather_message
     else:
         return "Не удалось получить погоду."
 
 
-async def send_weather_to_group(update: Update,
-                                context: ContextTypes.DEFAULT_TYPE):
+async def send_weather_to_group(bot):
     try:
         loop = asyncio.get_event_loop()
         weather_message = await loop.run_in_executor(executor, get_weather)
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
-        await context.bot.send_message(
-            chat_id=group_chat_id, text=weather_message)
+        await bot.send_message(chat_id=group_chat_id, text=weather_message)
     except Exception as e:
         logging.error(f"Ошибка при отправке погоды: {e}")
-        await context.bot.send_message(
+        await bot.send_message(
             chat_id=group_chat_id, text="Не удалось отправить погоду.")
+
+
+def run_send_weather_to_group(bot):
+    """Функция для запуска асинхронной корутины в потоке."""
+    asyncio.run(send_weather_to_group(bot))
+
+
+async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    scheduler.remove_all_jobs()
+
+    scheduler.add_job(
+        run_send_weather_to_group,
+        "cron",
+        day_of_week="*",
+        hour=12,
+        minute=31,
+        args=[context.bot]
+    )
+    scheduler.start()
+    await update.message.reply_text("Планировщик погоды запущен.")
 
 
 async def get_similar_companies(company_name):
@@ -330,8 +377,8 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler("get_chat_info", get_chat_info))
         application.add_handler(CommandHandler("leave", leave))
         application.add_handler(CommandHandler("mew", mew))
-        application.add_handler(
-            CommandHandler("weather", send_weather_to_group))
+        application.add_handler(CommandHandler(
+            "start_scheduler", start_scheduler))
 
         try:
             application.run_polling(allowed_updates=Update.ALL_TYPES)
