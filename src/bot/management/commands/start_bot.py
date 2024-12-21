@@ -104,6 +104,7 @@ def get_weather():
             "дождь": "🌧️",
             "снег": "❄️",
             "сильный снегопад": "🌨️",
+            "небольшой снег": "🌨️",
             "ясно": "☀️",
             "облачно": "☁️",
             "туман": "🌫️",
@@ -120,6 +121,7 @@ def get_weather():
             f"🌥 Облачность: {clouds}%\n"
             f"💨 Скорость ветра: {wind_speed} м/с\n"
             f"🌬 Порывы ветра: {wind_gust} м/с"
+            "** По данным openweathermap.org"
         )
         return weather_message
     else:
@@ -150,8 +152,8 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         run_send_weather_to_group,
         "cron",
         day_of_week="*",
-        hour=12,
-        minute=31,
+        hour=13,
+        minute=7,
         args=[context.bot]
     )
     scheduler.start()
