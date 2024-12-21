@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -52,6 +53,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/help - Показать это сообщение с инструкциями.\n"
         "/join <Организация> - Прибыть к указанной организации.\n"
         "/leave - Покинуть текущую организацию и записать затраченное время.\n"
+        "/edit - Изменить время прибытия в текущую организацию.\n"
         "\n"
         "Дополнительные команды:\n"
         "/start_scheduler - Запустить задание для отправки погоды.\n"
@@ -204,8 +206,10 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         company = await sync_to_async(
             Company.objects.filter(name=company_name).first)()
         if company:
+            local_time = timezone.localtime(timezone.now())
             await update.message.reply_text(
-                f"Вы прибыли в организацию {company_name}")
+                f"Вы прибыли в организацию {company_name} "
+                + f"в {local_time.strftime('%H:%M')}.")
             await sync_to_async(UserActivity.objects.create)(
                 user_id=user_id,
                 username=username,
@@ -232,8 +236,10 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             else:
                 company, created = await sync_to_async(
                     Company.objects.get_or_create)(name=company_name)
+                local_time = timezone.localtime(timezone.now())
                 await update.message.reply_text(
-                    f"Вы прибыли в организацию {company_name}")
+                    f"Вы прибыли в организацию {company_name} "
+                    + f"в {local_time.strftime('%H:%M')}.")
                 await sync_to_async(UserActivity.objects.create)(
                     user_id=user_id,
                     username=username,
@@ -273,8 +279,10 @@ async def select_company(
 
     company, created = await sync_to_async(
         Company.objects.get_or_create)(name=selected_company)
+    local_time = timezone.localtime(timezone.now())
     await update.message.reply_text(
-        f"Вы прибыли в организацию {selected_company}.",
+        f"Вы прибыли в организацию {selected_company} "
+        + f"в {local_time.strftime('%H:%M')}.",
         reply_markup=ReplyKeyboardRemove()
     )
     await sync_to_async(UserActivity.objects.create)(
@@ -283,6 +291,64 @@ async def select_company(
         company=company
     )
     return ConversationHandler.END
+
+
+async def edit_arrival_time(update: Update,
+                            context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Команда для изменения времени прибытия в организацию.
+    """
+    user_id = update.message.from_user.id
+
+    active_activity = await sync_to_async(UserActivity.objects.filter(
+        user_id=user_id, leave_time__isnull=True).first)()
+
+    if not active_activity:
+        await update.message.reply_text(
+            "У вас нет активной организации, "
+            "для которой можно изменить время прибытия.")
+        return
+
+    args = context.args
+    if not args or len(args) != 1:
+        await update.message.reply_text(
+            "Пожалуйста, укажите новое время прибытия "
+            "в формате ЧЧ:ММ (например, /edit 10:15).")
+        return
+
+    new_arrival_time_str = args[0]
+
+    try:
+        new_arrival_time = datetime.strptime(
+            new_arrival_time_str, '%H:%M').time()
+    except ValueError:
+        await update.message.reply_text(
+            "Неверный формат времени. "
+            "Пожалуйста, укажите время в формате ЧЧ:ММ (например, 09:15).")
+        return
+
+    current_time = timezone.localtime(timezone.now()).time()
+
+    if new_arrival_time > current_time:
+        await update.message.reply_text(
+            "Вы не можете выбрать время, которое больше текущего. "
+            "Пожалуйста, укажите время, которое меньше или равно текущему.")
+        return
+
+    today = timezone.now().date()
+    new_arrival_datetime = datetime.combine(today, new_arrival_time)
+
+    new_arrival_datetime = timezone.make_aware(new_arrival_datetime)
+
+    active_activity.join_time = new_arrival_datetime
+    await sync_to_async(active_activity.save)()
+
+    company_name = await sync_to_async(lambda: active_activity.company.name)()
+    local_join_time = timezone.localtime(new_arrival_datetime)
+
+    await update.message.reply_text(
+        f"Время прибытия в организацию {company_name} успешно"
+        + f" изменено на {local_join_time.strftime('%H:%M')}.")
 
 
 async def add_new_company(
@@ -304,11 +370,12 @@ async def add_new_company(
             "Название организации должно содержать только"
             + " буквы русского или английского алфавита и цифры")
         return ConversationHandler.END
-
+    local_time = timezone.localtime(timezone.now())
     company, created = await sync_to_async(
         Company.objects.get_or_create)(name=company_name)
     await update.message.reply_text(
-        f"Вы присоединились к новой организации {company_name}.",
+        f"Вы прибыли к новой организации {company_name}."
+        f"в {local_time.strftime('%H:%M')}.\n ",
         reply_markup=ReplyKeyboardRemove()
     )
     await sync_to_async(UserActivity.objects.create)(
@@ -332,9 +399,11 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         company_name = activity.company.name
         spent_time = activity.get_spent_time
+        local_time = timezone.localtime(timezone.now())
 
         await update.message.reply_text(
-            f"Вы покинули организацию {company_name}. "
+            f"Вы покинули организацию {company_name} "
+            f"в {local_time.strftime('%H:%M')}.\n "
             f"Затраченное время: {spent_time}.")
 
     except UserActivity.DoesNotExist:
@@ -363,7 +432,9 @@ class Command(BaseCommand):
             settings.TELEGRAM_BOT_TOKEN).build()
 
         conv_handler = ConversationHandler(
-            entry_points=[CommandHandler("join", join)],
+            entry_points=[
+                CommandHandler("join", join),
+            ],
             states={
                 SELECT_CO: [MessageHandler(
                     filters.TEXT & ~filters.COMMAND, select_company)],
@@ -381,6 +452,7 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler("mew", mew))
         application.add_handler(CommandHandler(
             "start_scheduler", start_scheduler))
+        application.add_handler(CommandHandler("edit", edit_arrival_time))
 
         try:
             application.run_polling(allowed_updates=Update.ALL_TYPES)
