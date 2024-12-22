@@ -155,8 +155,8 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         run_send_weather_to_group,
         "cron",
         day_of_week="*",
-        hour=13,
-        minute=7,
+        hour=7,
+        minute=30,
         args=[context.bot]
     )
     scheduler.start()
