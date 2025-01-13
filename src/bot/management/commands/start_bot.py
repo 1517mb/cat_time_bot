@@ -1,10 +1,10 @@
-import aiohttp
 import logging
 import os
 import re
 from datetime import datetime
 from difflib import get_close_matches
 
+import aiohttp
 import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asgiref.sync import sync_to_async
@@ -45,8 +45,12 @@ scheduler = AsyncIOScheduler()
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Команда для отображения списка доступных команд.
+    """
+
     help_text = (
-        "😺 Привет! 😺 Вот список доступных команд:\n"
+        "😺👋 Привет! Вот список доступных команд:\n"
         "\n"
         "*Основные команды:*\n"
         "/help - Показать это сообщение с инструкциями.\n"
@@ -89,10 +93,12 @@ async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def get_weather():
+    """Асинхронная функция для получения погоды."""
     api_key = os.getenv("OPENWEATHER_API_KEY")
     city = "Zelenograd"
     city_ru = "Зеленограде"
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru" # noqa
+    url = ("http://api.openweathermap.org/data/2.5/"
+           + f"weather?q={city}&appid={api_key}&units=metric&lang=ru")
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -100,10 +106,70 @@ async def get_weather():
             if data["cod"] == 200:
                 temp = data["main"]["temp"]
                 feels_like = data["main"]["feels_like"]
+                pressure_hpa = data["main"]["pressure"]
+                pressure_mmhg = pressure_hpa * 0.750062
+                humidity = data["main"]["humidity"]
                 description = data["weather"][0]["description"]
                 clouds = data["clouds"]["all"]
                 wind_speed = data["wind"]["speed"]
                 wind_gust = data["wind"].get("gust", 0)
+                wind_deg = data["wind"].get("deg", 0)
+
+                def get_wind_direction(deg):
+                    """
+                    Определяет направление ветра по заданному углу.
+
+                    :param deg: Угол направления ветра.
+                    :return: Строка, представляющая кардинальное направление
+                    ветра.
+                    """
+
+                    directions = [
+                        "северный", "северо-восточный", "восточный",
+                        "юго-восточный", "южный", "юго-западный",
+                        "западный", "северо-западный"
+                    ]
+                    index = round((deg % 360) / 45) % 8
+                    return directions[index]
+
+                wind_direction = get_wind_direction(wind_deg)
+
+                sunrise = datetime.fromtimestamp(
+                    data["sys"]["sunrise"]).strftime("%H:%M")
+                sunset = datetime.fromtimestamp(
+                    data["sys"]["sunset"]).strftime("%H:%M")
+
+                forecast_url = ("http://api.openweathermap.org/data/2.5/"
+                                + f"forecast?q={city}&appid={api_key}&"
+                                + "units=metric&lang=ru")
+                async with session.get(forecast_url) as forecast_response:
+                    forecast_data = await forecast_response.json()
+                    if forecast_data["cod"] == "200":
+                        current_date = datetime.now().date()
+
+                        morning_temp = None
+                        day_temp = None
+                        evening_temp = None
+
+                        for entry in forecast_data["list"]:
+                            entry_time = datetime.fromtimestamp(entry["dt"])
+                            if entry_time.date() == current_date:
+                                time = entry_time.strftime("%H:%M")
+                                if time == "09:00":
+                                    morning_temp = entry["main"]["temp"]
+                                elif time == "15:00":
+                                    day_temp = entry["main"]["temp"]
+                                elif time == "21:00":
+                                    evening_temp = entry["main"]["temp"]
+
+                        forecast_temp_message = (
+                            f"🌅 Утром: {morning_temp}°C\n"
+                            f"🌞 Днём: {day_temp}°C\n"
+                            f"🌇 Вечером: {evening_temp}°C"
+                        )
+                    else:
+                        forecast_temp_message = (
+                            "🚨 Не удалось получить прогноз температуры. 🚨")
 
                 weather_emoji = {
                     "дождь": "🌧️",
@@ -128,9 +194,19 @@ async def get_weather():
                     f"{emoji} {description}\n"
                     f"🌡 Температура: {temp}°C, ощущается как {feels_like}°C\n"
                     f"🌥 Облачность: {clouds}%\n"
-                    f"💨 Скорость ветра: {wind_speed} м/с\n"
+                    f"💨 Скорость ветра: {wind_speed} м/с, {wind_direction}\n"
                     f"🌬 Порывы ветра: {wind_gust} м/с\n"
-                    "** По данным openweathermap.org"
+                    f"📊 Давление: {pressure_mmhg:.1f} мм рт. ст.\n"
+                    f"💧 Влажность: {humidity}%\n"
+                    f"\n"
+                    f"Длина дня в {city_ru}:\n"
+                    f"🌅 Восход: {sunrise}\n"
+                    f"🌇 Закат: {sunset}\n"
+                    f"\n"
+                    f"Прогноз температуры на сегодня:\n"
+                    f"{forecast_temp_message}\n"
+                    f"\n"
+                    f"** По данным openweathermap.org"
                 )
                 return weather_message
             else:
@@ -156,8 +232,8 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         send_weather_to_group,
         "cron",
         day_of_week="*",
-        hour=18,
-        minute=54,
+        hour=19,
+        minute=35,
         args=[context.bot]
     )
     scheduler.start()
@@ -279,6 +355,18 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def select_company(
         update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Callback для выбора существующей организации.
+
+    Пользователь может выбрать организацию из списка предложенных
+    или добавить новую. Если пользователь выбрал существующую
+    организацию, то он будет зарегистрирован в ней, иначе
+    он будет предложен ввести название новой организации.
+
+    :param update: update от Telegram
+    :param context: context от Telegram
+    :return: следующий шаг в ConversationHandler
+    """
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     selected_company = update.message.text
@@ -394,6 +482,18 @@ async def edit_arrival_time(update: Update,
 
 async def add_new_company(
         update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Callback для добавления новой организации.
+
+    Пользователь может ввести название новой организации,
+    и если оно не существует, то она будет создана,
+    иначе - будет предложено выбрать существующую
+    организацию.
+
+    :param update: update от Telegram
+    :param context: context от Telegram
+    :return: следующий шаг в ConversationHandler
+    """
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     company_name = update.message.text
@@ -419,7 +519,7 @@ async def add_new_company(
     company, created = await sync_to_async(
         Company.objects.get_or_create)(name=company_name)
     await update.message.reply_text(
-        f"😺 *Вы прибыли к новой организации {company_name}* 😺\n"
+        f"🐱‍💻 *Вы прибыли к новой организации {company_name}* 🐱‍💻\n"
         f"Время прибытия: {local_time.strftime('%H:%M')}.\n ",
         parse_mode="Markdown",
         reply_markup=ReplyKeyboardRemove()
@@ -433,6 +533,18 @@ async def add_new_company(
 
 
 async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Callback для ухода из организации.
+
+    Если пользователь отправит команду /leave,
+    то он покинет организацию, к которой он
+    прибыл, и будет отображено затраченное время.
+
+    :param update: update от Telegram
+    :param context: context от Telegram
+    :return: None
+    """
+
     user_id = update.message.from_user.id
     try:
         activity = await sync_to_async(UserActivity.objects.select_related(
@@ -448,7 +560,7 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         local_time = timezone.localtime(timezone.now())
 
         await update.message.reply_text(
-            f"😺 *Вы покинули организацию {company_name}* 😺\n"
+            f"🐾👋 *Вы покинули организацию {company_name}* 🐾👋\n"
             f"Время ухода: {local_time.strftime('%H:%M')}.\n"
             f"Затраченное время: {spent_time}.",
             parse_mode="Markdown"
