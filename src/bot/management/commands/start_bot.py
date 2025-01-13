@@ -578,12 +578,23 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    response = requests.get("https://api.thecatapi.com/v1/images/search")
-    if response.status_code == 200:
-        cat_photo_url = response.json()[0]["url"]
-        await update.message.reply_photo(photo=cat_photo_url)
-    else:
-        await update.message.reply_text("😿 Не удалось получить фото котика. 😿")
+    """Отправляет случайное фото котика."""
+    url = "https://api.thecatapi.com/v1/images/search"
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    cat_photo_url = data[0]["url"]
+                    await update.message.reply_photo(photo=cat_photo_url)
+                else:
+                    await update.message.reply_text(
+                        "😿 Не удалось получить фото котика. 😿")
+        except Exception as e:
+            logging.error(f"Ошибка при запросе к API котиков: {e}")
+            await update.message.reply_text(
+                "😿 Произошла ошибка при получении фото котика. 😿")
 
 
 class Command(BaseCommand):
