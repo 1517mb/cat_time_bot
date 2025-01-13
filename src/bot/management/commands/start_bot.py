@@ -1,13 +1,12 @@
-import asyncio
+import aiohttp
 import logging
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from difflib import get_close_matches
 
 import requests
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -41,8 +40,8 @@ JOIN_CO, SELECT_CO = range(2)
 
 VALID_COMPANY_NAME_PATTERN = re.compile(r"^[А-Яа-яA-Za-z0-9\s\-]+$")
 
-executor = ThreadPoolExecutor()
-scheduler = BackgroundScheduler()
+
+scheduler = AsyncIOScheduler()
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -57,6 +56,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "\n"
         "*Дополнительные команды:*\n"
         "/start\\_scheduler - Запустить задание для отправки погоды.\n"
+        "/stop\\_scheduler - Остановить задание для отправки погоды.\n"
         "/get\\_chat\\_info - Получить информацию о чате.\n"
         "/mew - Получить случайное фото кота."
     )
@@ -88,79 +88,89 @@ async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown")
 
 
-def get_weather():
+async def get_weather():
     api_key = os.getenv("OPENWEATHER_API_KEY")
     city = "Zelenograd"
     city_ru = "Зеленограде"
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru" # noqa
-    response = requests.get(url)
-    data = response.json()
-    if data["cod"] == 200:
-        temp = data["main"]["temp"]
-        feels_like = data["main"]["feels_like"]
-        description = data["weather"][0]["description"]
-        clouds = data["clouds"]["all"]
-        wind_speed = data["wind"]["speed"]
-        wind_gust = data["wind"].get("gust", 0)
 
-        weather_emoji = {
-            "дождь": "🌧️",
-            "снег": "❄️",
-            "сильный снегопад": "🌨️",
-            "небольшой снег": "🌨️",
-            "ясно": "☀️",
-            "облачно": "☁️",
-            "туман": "🌫️",
-            "гроза": "⛈️",
-            "ветер": "💨",
-        }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            data = await response.json()
+            if data["cod"] == 200:
+                temp = data["main"]["temp"]
+                feels_like = data["main"]["feels_like"]
+                description = data["weather"][0]["description"]
+                clouds = data["clouds"]["all"]
+                wind_speed = data["wind"]["speed"]
+                wind_gust = data["wind"].get("gust", 0)
 
-        emoji = weather_emoji.get(description.lower(), "❓")
+                weather_emoji = {
+                    "дождь": "🌧️",
+                    "снег": "❄️",
+                    "сильный снегопад": "🌨️",
+                    "небольшой снег": "🌨️",
+                    "ясно": "☀️",
+                    "облачно": "☁️",
+                    "облачно с прояснениями": "⛅",
+                    "пасмурно": "🌥️",
+                    "небольшая морось": "🌧️",
+                    "плотный туман": "🌫️",
+                    "туман": "🌫️",
+                    "гроза": "⛈️",
+                    "ветер": "💨",
+                }
 
-        weather_message = (
-            f"Погода в {city_ru}:\n"
-            f"{emoji} {description}\n"
-            f"🌡 Температура: {temp}°C, ощущается как {feels_like}°C\n"
-            f"🌥 Облачность: {clouds}%\n"
-            f"💨 Скорость ветра: {wind_speed} м/с\n"
-            f"🌬 Порывы ветра: {wind_gust} м/с\n"
-            "** По данным openweathermap.org"
-        )
-        return weather_message
-    else:
-        return "🚨 Не удалось получить погоду. 🚨"
+                emoji = weather_emoji.get(description.lower(), "❓")
+
+                weather_message = (
+                    f"Погода в {city_ru}:\n"
+                    f"{emoji} {description}\n"
+                    f"🌡 Температура: {temp}°C, ощущается как {feels_like}°C\n"
+                    f"🌥 Облачность: {clouds}%\n"
+                    f"💨 Скорость ветра: {wind_speed} м/с\n"
+                    f"🌬 Порывы ветра: {wind_gust} м/с\n"
+                    "** По данным openweathermap.org"
+                )
+                return weather_message
+            else:
+                return "🚨 Не удалось получить погоду. 🚨"
 
 
 async def send_weather_to_group(bot):
+    """Асинхронная функция для отправки погоды в группу."""
     try:
-        loop = asyncio.get_event_loop()
-        weather_message = await loop.run_in_executor(executor, get_weather)
+        weather_message = await get_weather()
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
         await bot.send_message(chat_id=group_chat_id, text=weather_message)
     except Exception as e:
         logging.error(f"Ошибка при отправке погоды: {e}")
         await bot.send_message(
-            chat_id=group_chat_id, text="🚨 Не удалось отправить погоду. 🚨")
-
-
-def run_send_weather_to_group(bot):
-    """Функция для запуска асинхронной корутины в потоке."""
-    asyncio.run(send_weather_to_group(bot))
+            chat_id=group_chat_id, text="🚨 Не удалось отправить погоду. 🚨"
+        )
 
 
 async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    scheduler.remove_all_jobs()
-
+    """Запуск планировщика для отправки погоды."""
     scheduler.add_job(
-        run_send_weather_to_group,
+        send_weather_to_group,
         "cron",
         day_of_week="*",
-        hour=7,
-        minute=30,
+        hour=18,
+        minute=54,
         args=[context.bot]
     )
     scheduler.start()
     await update.message.reply_text("☀️ Планировщик погоды запущен. ⛈️")
+
+
+async def stop_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Остановка планировщика."""
+    if scheduler.running:
+        scheduler.shutdown(wait=False)
+        await update.message.reply_text("🛑 Планировщик погоды остановлен. 🌧️")
+    else:
+        await update.message.reply_text("🚦 Планировщик уже остановлен. 🚦")
 
 
 async def get_similar_companies(company_name):
@@ -492,6 +502,8 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler("mew", mew))
         application.add_handler(CommandHandler(
             "start_scheduler", start_scheduler))
+        application.add_handler(CommandHandler(
+            "stop_scheduler", stop_scheduler))
         application.add_handler(CommandHandler("edit", edit_arrival_time))
 
         try:
