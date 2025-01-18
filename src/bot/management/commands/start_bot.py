@@ -41,7 +41,7 @@ JOIN_CO, SELECT_CO = range(2)
 VALID_COMPANY_NAME_PATTERN = re.compile(r"^[А-Яа-яA-Za-z0-9\s\-]+$")
 
 
-scheduler = AsyncIOScheduler()
+scheduler = AsyncIOScheduler(timezone=timezone("Europe/Moscow"))
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -266,7 +266,7 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         trigger="cron",
         hour=hour,
         minute=minute,
-        timezone="Europe/Moscow"
+        args=[context.bot]
     )
     if not scheduler.running:
         scheduler.start()
