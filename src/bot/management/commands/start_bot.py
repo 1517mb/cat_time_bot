@@ -59,7 +59,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/edit - Изменить время прибытия в текущую организацию.\n"
         "\n"
         "*Дополнительные команды:*\n"
-        "/start\\_scheduler - Запустить задание для отправки погоды.\n"
+        "/start\\_scheduler <Время> - Запустить задание для отправки погоды.\n"
         "/stop\\_scheduler - Остановить задание для отправки погоды.\n"
         "/get\\_chat\\_info - Получить информацию о чате.\n"
         "/mew - Получить случайное фото кота."
@@ -228,16 +228,54 @@ async def send_weather_to_group(bot):
 
 async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск планировщика для отправки погоды."""
+    if not context.args:
+        await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
+            "Пожалуйста, укажите время в формате ЧЧ:ММ"
+            + " (например, /start_scheduler 7:30).",
+            parse_mode="Markdown"
+        )
+        return
+
+    time_str = context.args[0]
+
+    try:
+        hour, minute = map(int, time_str.split(":"))
+    except ValueError:
+        await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
+            "Неправильный формат времени. Пожалуйста, используйте "
+            "формат ЧЧ:ММ (например, /start_scheduler 7:30).",
+            parse_mode="Markdown"
+        )
+        return
+
+    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+        await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
+            "Неверное время. Часы должны быть "
+            + "от 0 до 23, а минуты от 0 до 59.",
+            parse_mode="Markdown"
+        )
+        return
+
+    scheduler.remove_all_jobs()
+
     scheduler.add_job(
         send_weather_to_group,
-        "cron",
-        day_of_week="*",
-        hour=19,
-        minute=35,
-        args=[context.bot]
+        trigger="cron",
+        hour=hour,
+        minute=minute,
+        timezone="Europe/Moscow"
     )
-    scheduler.start()
-    await update.message.reply_text("☀️ Планировщик погоды запущен. ⛈️")
+    if not scheduler.running:
+        scheduler.start()
+
+    await update.message.reply_text(
+        f"☀️ Планировщик погоды запущен. ⛈️\n"
+        f"Время отправки: {hour:02d}:{minute:02d}.",
+        parse_mode="Markdown"
+    )
 
 
 async def stop_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -301,7 +339,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if company:
             local_time = timezone.localtime(timezone.now())
             await update.message.reply_text(
-                f"😺 *Вы прибыли в организацию {company_name}* 😺\n"
+                f"🐱‍💻 *Вы прибыли в организацию {company_name}* 🐱‍💻\n"
                 f"Время прибытия: {local_time.strftime('%H:%M')}.",
                 parse_mode="Markdown"
             )
@@ -335,7 +373,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     Company.objects.get_or_create)(name=company_name)
                 local_time = timezone.localtime(timezone.now())
                 await update.message.reply_text(
-                    f"😺 *Вы прибыли в организацию {company_name}* 😺\n"
+                    f"🐱‍💻 *Вы прибыли в организацию {company_name}* 🐱‍💻\n"
                     f"Время прибытия: {local_time.strftime('%H:%M')}.",
                     parse_mode="Markdown"
                 )
@@ -399,7 +437,7 @@ async def select_company(
         Company.objects.get_or_create)(name=selected_company)
     local_time = timezone.localtime(timezone.now())
     await update.message.reply_text(
-        f"😺 *Вы прибыли в организацию {selected_company}* 😺\n"
+        f"🐱‍💻 *Вы прибыли в организацию {selected_company}* 🐱‍💻\n"
         f"Время прибытия: {local_time.strftime('%H:%M')}.",
         parse_mode="Markdown",
         reply_markup=ReplyKeyboardRemove()
