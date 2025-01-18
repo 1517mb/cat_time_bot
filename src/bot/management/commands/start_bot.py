@@ -3,6 +3,7 @@ import os
 import re
 from datetime import datetime
 from difflib import get_close_matches
+from zoneinfo import ZoneInfo
 
 import aiohttp
 import requests
@@ -41,7 +42,7 @@ JOIN_CO, SELECT_CO = range(2)
 VALID_COMPANY_NAME_PATTERN = re.compile(r"^[А-Яа-яA-Za-z0-9\s\-]+$")
 
 
-scheduler = AsyncIOScheduler(timezone=timezone("Europe/Moscow"))
+scheduler = AsyncIOScheduler(timezone=ZoneInfo("Europe/Moscow"))
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -148,6 +149,7 @@ async def get_weather():
                         current_date = datetime.now().date()
 
                         morning_temp = None
+
                         day_temp = None
                         evening_temp = None
 
@@ -232,7 +234,7 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Пожалуйста, укажите время в формате ЧЧ:ММ"
-            + " (например, /start_scheduler 7:30).",
+            + " (например, /start\\_scheduler 7:30).",
             parse_mode="Markdown"
         )
         return
@@ -245,7 +247,7 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Неправильный формат времени. Пожалуйста, используйте "
-            "формат ЧЧ:ММ (например, /start_scheduler 7:30).",
+            "формат ЧЧ:ММ (например, /start\\_scheduler 7:30).",
             parse_mode="Markdown"
         )
         return
@@ -273,7 +275,7 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         f"☀️ Планировщик погоды запущен. ⛈️\n"
-        f"Время отправки: {hour:02d}:{minute:02d}.",
+        f"Время отправки: {hour:02d}:{minute:02d}",
         parse_mode="Markdown"
     )
 
