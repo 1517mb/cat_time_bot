@@ -31,6 +31,8 @@ INSTALLED_APPS = [
     "generator.apps.GeneratorConfig",
     "import_export",
     "django_unicorn",
+    "markdownify",
+    "markdownx",
 ]
 
 MIDDLEWARE = [
@@ -101,6 +103,14 @@ STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+MARKDOWNX_MARKDOWN_EXTENSIONS = [
+    "markdown.extensions.extra",
+    "markdown.extensions.codehilite",
+]
+
+MARKDOWNX_EDITOR_RESIZABLE = True
+MARKDOWNX_UPLOAD_MAX_SIZE = 50 * 1024 * 1024
 
 if DEBUG:
     STATICFILES_DIRS = [
