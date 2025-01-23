@@ -7,6 +7,9 @@ from bot.models import Company, UserActivity
 from bot.resources import UserActivityResource
 from core.constants import SITE_HEADER, SITE_TITLE
 
+from bot.models import DailytTips
+from markdownx.admin import MarkdownxModelAdmin
+
 admin.site.site_header = SITE_HEADER
 admin.site.site_title = SITE_TITLE
 
@@ -49,3 +52,11 @@ class UserActivityAdmin(ExportActionModelAdmin):
     def mark_as_left(self, request, queryset):
         queryset.update(leave_time=timezone.now())
     mark_as_left.short_description = "Пометить как покинувших организацию"
+
+
+@admin.register(DailytTips)
+class DailytTipsAdmin(MarkdownxModelAdmin):
+    list_display = ("id", "title", "author", "pub_date")
+    search_fields = ("title", "content")
+    list_filter = ("author", "pub_date")
+    date_hierarchy = "pub_date"
