@@ -228,58 +228,6 @@ async def send_weather_to_group(bot):
         )
 
 
-async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Запуск планировщика для отправки погоды."""
-    if not context.args:
-        await update.message.reply_text(
-            "❌ *Ошибка!* ❌\n"
-            "Пожалуйста, укажите время в формате ЧЧ:ММ"
-            + " (например, /start\\_scheduler 7:30).",
-            parse_mode="Markdown"
-        )
-        return
-
-    time_str = context.args[0]
-
-    try:
-        hour, minute = map(int, time_str.split(":"))
-    except ValueError:
-        await update.message.reply_text(
-            "❌ *Ошибка!* ❌\n"
-            "Неправильный формат времени. Пожалуйста, используйте "
-            "формат ЧЧ:ММ (например, /start\\_scheduler 7:30).",
-            parse_mode="Markdown"
-        )
-        return
-
-    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
-        await update.message.reply_text(
-            "❌ *Ошибка!* ❌\n"
-            "Неверное время. Часы должны быть "
-            + "от 0 до 23, а минуты от 0 до 59.",
-            parse_mode="Markdown"
-        )
-        return
-
-    scheduler.remove_all_jobs()
-
-    scheduler.add_job(
-        send_weather_to_group,
-        trigger="cron",
-        hour=hour,
-        minute=minute,
-        args=[context.bot]
-    )
-    if not scheduler.running:
-        scheduler.start()
-
-    await update.message.reply_text(
-        f"☀️ Планировщик погоды запущен. ⛈️\n"
-        f"Время отправки: {hour:02d}:{minute:02d}",
-        parse_mode="Markdown"
-    )
-
-
 async def stop_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Остановка планировщика."""
     if scheduler.running:
@@ -452,49 +400,54 @@ async def select_company(
     return ConversationHandler.END
 
 
-async def edit_arrival_time(update: Update,
-                            context: ContextTypes.DEFAULT_TYPE) -> None:
+async def _validate_and_update_time(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    time_field: str,  # Поле для обновления: "join_time" или "leave_time"
+    error_message_prefix: str,  # Префикс для сообщений об ошибках
+    success_message: str,  # Сообщение об успешном обновлении
+) -> None:
     """
-    Команда для изменения времени прибытия в организацию.
+    Вспомогательная функция для валидации и обновления времени.
     """
     user_id = update.message.from_user.id
 
+    # Получаем активную организацию пользователя
     active_activity = await sync_to_async(UserActivity.objects.filter(
         user_id=user_id, leave_time__isnull=True).first)()
 
     if not active_activity:
         await update.message.reply_text(
-            "🚨 *Ошибка!* 🚨\n"
-            "У вас нет активной организации, "
-            "для которой можно изменить время прибытия.",
+            f"🚨 *Ошибка!* 🚨\n"
+            f"У вас нет активной организации, для которой можно изменить {error_message_prefix}.",
             parse_mode="Markdown")
         return
 
+    # Проверяем аргументы команды
     args = context.args
     if not args or len(args) != 1:
         await update.message.reply_text(
-            "🚨 *Ошибка!* 🚨\n"
-            "Пожалуйста, укажите новое время прибытия "
-            "в формате *ЧЧ:ММ* (например, /edit 10:15).",
+            f"🚨 *Ошибка!* 🚨\n"
+            f"Пожалуйста, укажите новое время {error_message_prefix} "
+            f"в формате *ЧЧ:ММ* (например, /edit 10:15).",
             parse_mode="Markdown")
         return
 
-    new_arrival_time_str = args[0]
+    new_time_str = args[0]
 
+    # Парсим время
     try:
-        new_arrival_time = datetime.strptime(
-            new_arrival_time_str, '%H:%M').time()
+        new_time = datetime.strptime(new_time_str, '%H:%M').time()
     except ValueError:
         await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
-            "Неверный формат времени. "
-            "Пожалуйста, укажите время в формате *ЧЧ:ММ* (например, 09:15).",
+            "Неверный формат времени. Пожалуйста, укажите время в формате *ЧЧ:ММ* (например, 09:15).",
             parse_mode="Markdown")
         return
 
+    # Проверяем, что время не больше текущего
     current_time = timezone.localtime(timezone.now()).time()
-
-    if new_arrival_time > current_time:
+    if new_time > current_time:
         await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Вы не можете выбрать время, которое больше текущего. "
@@ -502,22 +455,48 @@ async def edit_arrival_time(update: Update,
             parse_mode="Markdown")
         return
 
+    # Обновляем время в базе данных
     today = timezone.now().date()
-    new_arrival_datetime = datetime.combine(today, new_arrival_time)
+    new_datetime = datetime.combine(today, new_time)
+    new_datetime = timezone.make_aware(new_datetime)
 
-    new_arrival_datetime = timezone.make_aware(new_arrival_datetime)
-
-    active_activity.join_time = new_arrival_datetime
+    setattr(active_activity, time_field, new_datetime)
     await sync_to_async(active_activity.save)()
 
+    # Отправляем сообщение об успехе
     company_name = await sync_to_async(lambda: active_activity.company.name)()
-    local_join_time = timezone.localtime(new_arrival_datetime)
+    local_time = timezone.localtime(new_datetime)
 
     await update.message.reply_text(
         f"😻 *Успешно!* 😻\n"
-        f"Время прибытия в организацию {company_name} успешно"
-        + f" изменено на {local_join_time.strftime('%H:%M')}.",
+        f"{success_message.format(company_name=company_name, time=local_time.strftime('%H:%M'))}.",
         parse_mode="Markdown")
+
+
+async def edit_arrival_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Команда для изменения времени прибытия в организацию.
+    """
+    await _validate_and_update_time(
+        update,
+        context,
+        time_field="join_time",
+        error_message_prefix="время прибытия",
+        success_message="Время прибытия в организацию {company_name} успешно изменено на {time}"
+    )
+
+
+async def edit_departure_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Команда для изменения времени убытия из организации.
+    """
+    await _validate_and_update_time(
+        update,
+        context,
+        time_field="leave_time",
+        error_message_prefix="время убытия",
+        success_message="Время убытия из организации {company_name} успешно изменено на {time}"
+    )
 
 
 async def add_new_company(
@@ -617,6 +596,38 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             parse_mode="Markdown")
 
 
+async def remind_to_leave(bot):
+    """Функция для напоминания пользователям о необходимости
+    ввести команду /leave."""
+    try:
+        # Используем sync_to_async для выполнения синхронного запроса к базе данных
+        active_activities = await sync_to_async(
+            lambda: list(UserActivity.objects.filter(leave_time__isnull=True))
+        )()
+
+        for activity in active_activities:
+            user_id = activity.user_id
+            company_name = await sync_to_async(lambda: activity.company.name)()
+
+            try:
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=(
+                        f"⚠️ *Внимание\!* ⚠️\n"
+                        f"Вы всё ещё находитесь в организации *{company_name}*?\n"
+                        f"Пожалуйста, введите команду /leave, чтобы покинуть организацию.\n"
+                        f"Если вы хотите изменить время убытия, используйте команду /edit."
+                    ),
+                    parse_mode="Markdown"
+                )
+                logging.info(f"Напоминание отправлено пользователю {user_id}")
+            except Exception as e:
+                logging.error(f"Неизвестная ошибка при отправке сообщения пользователю {user_id}: {e}")
+
+    except Exception as e:
+        logging.error(f"Ошибка в remind_to_leave: {e}", exc_info=True)
+
+
 async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет случайное фото котика."""
     url = "https://api.thecatapi.com/v1/images/search"
@@ -635,6 +646,68 @@ async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             logging.error(f"Ошибка при запросе к API котиков: {e}")
             await update.message.reply_text(
                 "😿 Произошла ошибка при получении фото котика. 😿")
+
+
+async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Запуск планировщика для отправки погоды."""
+    if not context.args:
+        await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
+            "Пожалуйста, укажите время в формате ЧЧ:ММ"
+            + " (например, /start\\_scheduler 7:30).",
+            parse_mode="Markdown"
+        )
+        return
+
+    time_str = context.args[0]
+
+    try:
+        hour, minute = map(int, time_str.split(":"))
+    except ValueError:
+        await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
+            "Неправильный формат времени. Пожалуйста, используйте "
+            "формат ЧЧ:ММ (например, /start\\_scheduler 7:30).",
+            parse_mode="Markdown"
+        )
+        return
+
+    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+        await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
+            "Неверное время. Часы должны быть "
+            + "от 0 до 23, а минуты от 0 до 59.",
+            parse_mode="Markdown"
+        )
+        return
+
+    scheduler.remove_all_jobs()
+
+    scheduler.add_job(
+        send_weather_to_group,
+        trigger="cron",
+        hour=hour,
+        minute=minute,
+        args=[context.bot]
+    )
+
+    scheduler.add_job(
+        remind_to_leave,
+        trigger="cron",
+        hour=20,
+        minute=41,
+        args=[context.bot]
+    )
+
+    if not scheduler.running:
+        scheduler.start()
+
+    await update.message.reply_text(
+        f"☀️ Планировщик погоды запущен. ⛈️\n"
+        f"Время отправки: {hour:02d}:{minute:02d}\n"
+        "Время напоминания: 21:00",
+        parse_mode="Markdown"
+    )
 
 
 class Command(BaseCommand):
@@ -668,6 +741,7 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler(
             "stop_scheduler", stop_scheduler))
         application.add_handler(CommandHandler("edit", edit_arrival_time))
+        application.add_handler(CommandHandler("dep", edit_departure_time))
 
         try:
             application.run_polling(allowed_updates=Update.ALL_TYPES)
