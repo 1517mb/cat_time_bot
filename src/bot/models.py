@@ -1,7 +1,10 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 from core.constants import MAX_LEN, CompanyCfg, UserActivityCfg
+
+from markdownx.models import MarkdownxField
 
 
 class Company(models.Model):
@@ -55,3 +58,29 @@ class UserActivity(models.Model):
     class Meta:
         verbose_name = UserActivityCfg.SPENT_TIME_V
         verbose_name_plural = UserActivityCfg.SPENT_TIME_PLURAL_V
+
+
+class DailytTips(models.Model):
+    title = models.CharField(
+        max_length=MAX_LEN,
+        verbose_name="Название",
+    )
+    content = MarkdownxField(
+        verbose_name="Текст (Markdown)",
+    )
+    pub_date = models.DateTimeField(
+        verbose_name="Дата публикации",
+        default=timezone.now
+    )
+    author = models.ForeignKey(
+        User,
+        verbose_name="Автор совета",
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name = "Совет дня"
+        verbose_name_plural = "Советы дня"
+
+    def __str__(self):
+        return self.title
