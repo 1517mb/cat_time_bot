@@ -2,13 +2,17 @@ from django.contrib import admin
 from django.utils import timezone
 from import_export.admin import ExportActionModelAdmin
 from import_export.formats import base_formats
+from markdownx.admin import MarkdownxModelAdmin
 
-from bot.models import Company, UserActivity
+from bot.models import (
+    Achievement,
+    Company,
+    DailyStatistics,
+    DailytTips,
+    UserActivity,
+)
 from bot.resources import UserActivityResource
 from core.constants import SITE_HEADER, SITE_TITLE
-
-from bot.models import DailytTips
-from markdownx.admin import MarkdownxModelAdmin
 
 admin.site.site_header = SITE_HEADER
 admin.site.site_title = SITE_TITLE
@@ -64,3 +68,21 @@ class DailytTipsAdmin(MarkdownxModelAdmin):
         "is_published",
         "rating",
     )
+
+
+@admin.register(Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    list_display = ("id", "user_id", "username",
+                    "achievement_name", "achieved_at")
+    list_filter = ("achievement_name", "achieved_at")
+    search_fields = ("username", "achievement_name")
+    ordering = ("-achieved_at",)
+
+
+@admin.register(DailyStatistics)
+class DailyStatisticsAdmin(admin.ModelAdmin):
+    list_display = ("id", "user_id", "username",
+                    "date", "total_time", "total_trips")
+    list_filter = ("date",)
+    search_fields = ("username",)
+    ordering = ("-date",)
