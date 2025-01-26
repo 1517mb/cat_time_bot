@@ -58,5 +58,9 @@ class UserActivityAdmin(ExportActionModelAdmin):
 class DailytTipsAdmin(MarkdownxModelAdmin):
     list_display = ("id", "title", "author", "pub_date")
     search_fields = ("title", "content")
-    list_filter = ("author", "pub_date")
+    list_filter = ("author", "pub_date", "is_published")
     date_hierarchy = "pub_date"
+    list_editable = (
+        "is_published",
+        "rating",
+    )

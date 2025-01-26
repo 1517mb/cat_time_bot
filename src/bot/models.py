@@ -77,6 +77,24 @@ class DailytTips(models.Model):
         verbose_name="Автор совета",
         on_delete=models.CASCADE
     )
+    is_published = models.BooleanField(
+        verbose_name="Опубликовано",
+        default=False
+    )
+    external_link = models.URLField(
+        verbose_name="Ссылка на внешний ресурс",
+        blank=True,
+        null=True,
+    )
+    rating = models.FloatField(
+        verbose_name="Рейтинг",
+        default=0.0,
+        blank=True,
+    )
+    views_count = models.PositiveIntegerField(
+        verbose_name="Количество просмотров",
+        default=0,
+    )
 
     class Meta:
         verbose_name = "Совет дня"
