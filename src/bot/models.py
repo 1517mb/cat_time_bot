@@ -102,3 +102,41 @@ class DailytTips(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Achievement(models.Model):
+    user_id = models.IntegerField(
+        verbose_name="Telegram ID")
+    username = models.CharField(
+        verbose_name="Имя пользователя Telegram",
+        max_length=255)
+    achievement_name = models.CharField(
+        verbose_name="Название достижения",
+        max_length=255)
+    achieved_at = models.DateTimeField(
+        verbose_name="Дата достижения",
+        default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user_id} - {self.achievement_name}"
+
+
+class DailyStatistics(models.Model):
+    user_id = models.IntegerField(
+        verbose_name="Telegram ID"
+    )
+    username = models.CharField(
+        verbose_name="Имя пользователя Telegram",
+        max_length=255)
+    date = models.DateField(
+        verbose_name="Дата",
+        default=timezone.now)
+    total_time = models.DurationField(
+        verbose_name="Общее время"
+    )
+    total_trips = models.IntegerField(
+        verbose_name="Общее количество выездов"
+    )
+
+    def __str__(self):
+        return f"{self.username} - {self.date}"
