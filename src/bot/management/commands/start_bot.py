@@ -29,6 +29,7 @@ from telegram.ext import (
 )
 
 from bot.models import Company, UserActivity
+from bot.management.core.statistics import get_daily_statistics_message
 
 load_dotenv()
 
@@ -673,6 +674,25 @@ async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 "😿 Произошла ошибка при получении фото котика. 😿")
 
 
+async def send_daily_statistics_to_group(bot):
+    """
+    Асинхронно отправляет ежедневное статистическое сообщение
+    заранее определенной группе.
+
+    Функция извлекает ежедневное статистическое сообщение и отправляет его в
+    групповой чат, указанный в переменной среды TELEGRAM_GROUP_CHAT_ID.
+    Сообщение отправляется в формате Markdown.
+
+    :param bot: Экземпляр Telegram-бота, использованный для отправки сообщения.
+    """
+
+    message = await get_daily_statistics_message()
+    group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+    await bot.send_message(chat_id=group_chat_id,
+                           text=message,
+                           parse_mode="Markdown")
+
+
 async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск планировщика для отправки погоды."""
     if not context.args:
@@ -721,6 +741,14 @@ async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         trigger="cron",
         hour=20,
         minute=41,
+        args=[context.bot]
+    )
+
+    scheduler.add_job(
+        send_daily_statistics_to_group,
+        trigger="cron",
+        hour=18,
+        minute=0,
         args=[context.bot]
     )
 
