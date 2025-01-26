@@ -403,27 +403,26 @@ async def select_company(
 async def _validate_and_update_time(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
-    time_field: str,  # Поле для обновления: "join_time" или "leave_time"
-    error_message_prefix: str,  # Префикс для сообщений об ошибках
-    success_message: str,  # Сообщение об успешном обновлении
+    time_field: str,
+    error_message_prefix: str,
+    success_message: str,
 ) -> None:
     """
     Вспомогательная функция для валидации и обновления времени.
     """
     user_id = update.message.from_user.id
 
-    # Получаем активную организацию пользователя
     active_activity = await sync_to_async(UserActivity.objects.filter(
         user_id=user_id, leave_time__isnull=True).first)()
 
     if not active_activity:
         await update.message.reply_text(
             f"🚨 *Ошибка!* 🚨\n"
-            f"У вас нет активной организации, для которой можно изменить {error_message_prefix}.",
+            f"У вас нет активной организации, для "
+            f"которой можно изменить {error_message_prefix}.",
             parse_mode="Markdown")
         return
 
-    # Проверяем аргументы команды
     args = context.args
     if not args or len(args) != 1:
         await update.message.reply_text(
@@ -435,17 +434,16 @@ async def _validate_and_update_time(
 
     new_time_str = args[0]
 
-    # Парсим время
     try:
         new_time = datetime.strptime(new_time_str, '%H:%M').time()
     except ValueError:
         await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
-            "Неверный формат времени. Пожалуйста, укажите время в формате *ЧЧ:ММ* (например, 09:15).",
+            "Неверный формат времени. Пожалуйста, "
+            "укажите время в формате *ЧЧ:ММ* (например, 09:15).",
             parse_mode="Markdown")
         return
 
-    # Проверяем, что время не больше текущего
     current_time = timezone.localtime(timezone.now()).time()
     if new_time > current_time:
         await update.message.reply_text(
@@ -455,25 +453,45 @@ async def _validate_and_update_time(
             parse_mode="Markdown")
         return
 
-    # Обновляем время в базе данных
     today = timezone.now().date()
     new_datetime = datetime.combine(today, new_time)
     new_datetime = timezone.make_aware(new_datetime)
 
+    if time_field == "leave_time" and new_datetime < active_activity.join_time:
+        await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
+            "Время убытия не может быть раньше времени прибытия. "
+            "Ваше время прибытия: "
+            f"{active_activity.join_time.strftime('%H:%M')}.",
+            parse_mode="Markdown")
+        return
+
+    if time_field == ("join_time"
+                      and active_activity.leave_time
+                      and new_datetime > active_activity.leave_time):
+        await update.message.reply_text(
+            "❌ *Ошибка!* ❌\n"
+            "Время прибытия не может быть позже времени убытия. "
+            "Ваше время убытия: "
+            f"{active_activity.leave_time.strftime('%H:%M')}.",
+            parse_mode="Markdown")
+        return
+
     setattr(active_activity, time_field, new_datetime)
     await sync_to_async(active_activity.save)()
 
-    # Отправляем сообщение об успехе
     company_name = await sync_to_async(lambda: active_activity.company.name)()
     local_time = timezone.localtime(new_datetime)
 
     await update.message.reply_text(
         f"😻 *Успешно!* 😻\n"
-        f"{success_message.format(company_name=company_name, time=local_time.strftime('%H:%M'))}.",
+        f"{success_message.format(
+            company_name=company_name, time=local_time.strftime('%H:%M'))}.",
         parse_mode="Markdown")
 
 
-async def edit_arrival_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def edit_arrival_time(update: Update,
+                            context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Команда для изменения времени прибытия в организацию.
     """
@@ -482,11 +500,13 @@ async def edit_arrival_time(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         context,
         time_field="join_time",
         error_message_prefix="время прибытия",
-        success_message="Время прибытия в организацию {company_name} успешно изменено на {time}"
+        success_message=("Время прибытия в организацию {company_name} "
+                         "успешно изменено на {time}"),
     )
 
 
-async def edit_departure_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def edit_departure_time(update: Update,
+                              context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Команда для изменения времени убытия из организации.
     """
@@ -495,7 +515,8 @@ async def edit_departure_time(update: Update, context: ContextTypes.DEFAULT_TYPE
         context,
         time_field="leave_time",
         error_message_prefix="время убытия",
-        success_message="Время убытия из организации {company_name} успешно изменено на {time}"
+        success_message=("Время убытия из организации {company_name} "
+                         "успешно изменено на {time}"),
     )
 
 
@@ -600,7 +621,6 @@ async def remind_to_leave(bot):
     """Функция для напоминания пользователям о необходимости
     ввести команду /leave."""
     try:
-        # Используем sync_to_async для выполнения синхронного запроса к базе данных
         active_activities = await sync_to_async(
             lambda: list(UserActivity.objects.filter(leave_time__isnull=True))
         )()
@@ -613,16 +633,21 @@ async def remind_to_leave(bot):
                 await bot.send_message(
                     chat_id=user_id,
                     text=(
-                        f"⚠️ *Внимание\!* ⚠️\n"
-                        f"Вы всё ещё находитесь в организации *{company_name}*?\n"
-                        f"Пожалуйста, введите команду /leave, чтобы покинуть организацию.\n"
-                        f"Если вы хотите изменить время убытия, используйте команду /edit."
+                        f"⚠️ *Внимание!* ⚠️\n"
+                        f"Вы всё ещё находитесь в"
+                        f"организации *{company_name}*?\n"
+                        f"Пожалуйста, введите команду /leave, "
+                        f"чтобы покинуть организацию.\n"
+                        f"Если вы хотите изменить время убытия, "
+                        f"используйте команду /edit."
                     ),
                     parse_mode="Markdown"
                 )
                 logging.info(f"Напоминание отправлено пользователю {user_id}")
             except Exception as e:
-                logging.error(f"Неизвестная ошибка при отправке сообщения пользователю {user_id}: {e}")
+                logging.error(
+                    "Неизвестная ошибка при отправке "
+                    f"сообщения пользователю {user_id}: {e}")
 
     except Exception as e:
         logging.error(f"Ошибка в remind_to_leave: {e}", exc_info=True)
