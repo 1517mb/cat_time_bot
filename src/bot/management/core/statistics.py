@@ -23,3 +23,30 @@ async def get_daily_statistics():
     )
 
     return stats
+
+
+async def get_daily_statistics_message():
+    """
+    Возвращает строку, содержащую общую статистику за сегодняшний день.
+    Если сегодняшних данных нет, то возвращает сообщение, что данных нет.
+
+    : возвращает: строку, описанную выше
+    """
+    stats = await get_daily_statistics()
+
+    if not stats["total_trips"]:
+        message = "📊 *Общая статистика за сегодня:*\nНет данных."
+    else:
+        total_trips = stats["total_trips"]
+        total_time = stats["total_time"]
+
+        total_hours = total_time.total_seconds() // 3600
+        total_minutes = (total_time.total_seconds() % 3600) // 60
+
+        message = (
+            f"📊 *Общая статистика за сегодня:*\n"
+            f"  - Всего выездов: {total_trips}\n"
+            f"  - Общее время: {int(total_hours)} ч {int(total_minutes)} мин\n"
+        )
+
+    return message
