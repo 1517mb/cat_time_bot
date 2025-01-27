@@ -1,8 +1,10 @@
+from datetime import timedelta
+
 from asgiref.sync import sync_to_async
 from django.db.models import DurationField, Sum
 from django.utils import timezone
 
-from bot.models import DailyStatistics
+from bot.models import DailyStatistics, UserActivity
 
 
 async def get_daily_statistics():
@@ -50,3 +52,39 @@ async def get_daily_statistics_message():
         )
 
     return message
+
+
+async def update_daily_statistics(user_id, username):
+    """
+    Обновляет статистику пользователя за текущий день.
+    """
+    today = timezone.now().date()
+
+    activities = await sync_to_async(list)(
+        UserActivity.objects.filter(
+            user_id=user_id,
+            join_time__date=today,
+            leave_time__isnull=False
+        )
+    )
+
+    total_time = timedelta()
+    total_trips = 0
+
+    for activity in activities:
+        time_spent = activity.leave_time - activity.join_time
+        total_time += time_spent
+        total_trips += 1
+
+    stats, created = await sync_to_async(
+        DailyStatistics.objects.get_or_create)(
+        user_id=user_id,
+        username=username,
+        date=today,
+        defaults={"total_time": total_time, "total_trips": total_trips}
+    )
+
+    if not created:
+        stats.total_time = total_time
+        stats.total_trips = total_trips
+        await sync_to_async(stats.save)()
