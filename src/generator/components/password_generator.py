@@ -1,5 +1,6 @@
 import secrets
 import string
+
 from django_unicorn.components import UnicornView
 
 
