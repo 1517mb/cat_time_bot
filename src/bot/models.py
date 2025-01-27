@@ -117,6 +117,10 @@ class Achievement(models.Model):
         verbose_name="Дата достижения",
         default=timezone.now)
 
+    class Meta:
+        verbose_name = "Достижение"
+        verbose_name_plural = "Достижения"
+
     def __str__(self):
         return f"{self.user_id} - {self.achievement_name}"
 
@@ -137,6 +141,10 @@ class DailyStatistics(models.Model):
     total_trips = models.IntegerField(
         verbose_name="Общее количество выездов"
     )
+
+    class Meta:
+        verbose_name = "Дневная статистика"
+        verbose_name_plural = "Дневная статистика"
 
     def __str__(self):
         return f"{self.username} - {self.date}"
