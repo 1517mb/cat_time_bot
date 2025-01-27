@@ -1,10 +1,9 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import User
+from markdownx.models import MarkdownxField
 
 from core.constants import MAX_LEN, CompanyCfg, UserActivityCfg
-
-from markdownx.models import MarkdownxField
 
 
 class Company(models.Model):
