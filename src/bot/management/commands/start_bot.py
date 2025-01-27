@@ -6,7 +6,6 @@ from difflib import get_close_matches
 from zoneinfo import ZoneInfo
 
 import aiohttp
-import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asgiref.sync import sync_to_async
 from django.conf import settings
@@ -28,8 +27,11 @@ from telegram.ext import (
     filters,
 )
 
+from bot.management.core.statistics import (
+    get_daily_statistics_message,
+    update_daily_statistics,
+)
 from bot.models import Company, UserActivity
-from bot.management.core.statistics import get_daily_statistics_message
 
 load_dotenv()
 
@@ -505,6 +507,10 @@ async def edit_arrival_time(update: Update,
                          "успешно изменено на {time}"),
     )
 
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    await update_daily_statistics(user_id, username)
+
 
 async def edit_departure_time(update: Update,
                               context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -519,6 +525,10 @@ async def edit_departure_time(update: Update,
         success_message=("Время убытия из организации {company_name} "
                          "успешно изменено на {time}"),
     )
+
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    await update_daily_statistics(user_id, username)
 
 
 async def add_new_company(
@@ -587,6 +597,7 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
 
     user_id = update.message.from_user.id
+    username = update.message.from_user.username
     try:
         activity = await sync_to_async(UserActivity.objects.select_related(
             "company").filter(
@@ -595,6 +606,8 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         activity.leave_time = timezone.now()
         await sync_to_async(activity.save)()
+
+        await update_daily_statistics(user_id, username)
 
         company_name = activity.company.name
         spent_time = activity.get_spent_time
