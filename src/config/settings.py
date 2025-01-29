@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "generator.apps.GeneratorConfig",
     "import_export",
-    "django_unicorn",
     "markdownify",
     "markdownx",
 ]
