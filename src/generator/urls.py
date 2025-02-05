@@ -1,6 +1,12 @@
 from django.urls import path
-from django.views.generic import TemplateView
+from generator import views
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="index.html")),
+    path("", views.index, name="index"),
+    path("generate-password/",
+         views.generate_password,
+         name="generate_password"),
+    path("copy-password/",
+         views.copy_password,
+         name="copy_password"),
 ]
