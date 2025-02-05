@@ -3,7 +3,7 @@
 
 ### Текущая версия
 
-**0.4 alpha**
+**0.4 alpha** -> [Скачать](https://github.com/1517mb/cat_time_bot/releases/tag/v0.4-alpha)
 
 Список всех изменений: [Ссылка.](https://github.com/hydrospirt/cat_time_bot/blob/master/CHANGE_LIST.md)
 
