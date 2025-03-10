@@ -3,7 +3,14 @@ from django.db import models
 from django.utils import timezone
 from markdownx.models import MarkdownxField
 
-from core.constants import MAX_LEN, CompanyCfg, UserActivityCfg
+from core.constants import (
+    MAX_LEN,
+    AchievementCfg,
+    CompanyCfg,
+    DailyStatisticsCfg,
+    DailytTipsCfg,
+    UserActivityCfg,
+)
 
 
 class Company(models.Model):
@@ -62,42 +69,42 @@ class UserActivity(models.Model):
 class DailytTips(models.Model):
     title = models.CharField(
         max_length=MAX_LEN,
-        verbose_name="Название",
+        verbose_name=DailytTipsCfg.VERBOSE_NAME
     )
     content = MarkdownxField(
-        verbose_name="Текст (Markdown)",
+        verbose_name=DailytTipsCfg.CONTENT_V,
     )
     pub_date = models.DateTimeField(
-        verbose_name="Дата публикации",
+        verbose_name=DailytTipsCfg.PUB_DATE_V,
         default=timezone.now
     )
     author = models.ForeignKey(
         User,
-        verbose_name="Автор совета",
+        verbose_name=DailytTipsCfg.AUTHOR_V,
         on_delete=models.CASCADE
     )
     is_published = models.BooleanField(
-        verbose_name="Опубликовано",
+        verbose_name=DailytTipsCfg.IS_PUBLISHED_V,
         default=False
     )
     external_link = models.URLField(
-        verbose_name="Ссылка на внешний ресурс",
+        verbose_name=DailytTipsCfg.EXTERNAL_LINK_V,
         blank=True,
         null=True,
     )
     rating = models.FloatField(
-        verbose_name="Рейтинг",
-        default=0.0,
+        verbose_name=DailytTipsCfg.RATING_V,
+        default=DailytTipsCfg.RATING_DEFAULT,
         blank=True,
     )
     views_count = models.PositiveIntegerField(
-        verbose_name="Количество просмотров",
-        default=0,
+        verbose_name=DailytTipsCfg.VIEWS_V,
+        default=DailytTipsCfg.VIEWS_DEFAULT,
     )
 
     class Meta:
-        verbose_name = "Совет дня"
-        verbose_name_plural = "Советы дня"
+        verbose_name = DailytTipsCfg.META_NAME
+        verbose_name_plural = DailytTipsCfg.META_PL_NAME
 
     def __str__(self):
         return self.title
@@ -105,20 +112,20 @@ class DailytTips(models.Model):
 
 class Achievement(models.Model):
     user_id = models.IntegerField(
-        verbose_name="Telegram ID")
+        verbose_name=AchievementCfg.USER_ID_V)
     username = models.CharField(
-        verbose_name="Имя пользователя Telegram",
-        max_length=255)
+        verbose_name=AchievementCfg.USERNAME_V,
+        max_length=MAX_LEN)
     achievement_name = models.CharField(
-        verbose_name="Название достижения",
-        max_length=255)
+        verbose_name=AchievementCfg.ACHIEVEMENT_NAME_V,
+        max_length=MAX_LEN)
     achieved_at = models.DateTimeField(
-        verbose_name="Дата достижения",
+        verbose_name=AchievementCfg.ACHIEVED_AT_V,
         default=timezone.now)
 
     class Meta:
-        verbose_name = "Достижение"
-        verbose_name_plural = "Достижения"
+        verbose_name = AchievementCfg.META_NAME
+        verbose_name_plural = AchievementCfg.META_PL_NAME
 
     def __str__(self):
         return f"{self.user_id} - {self.achievement_name}"
@@ -126,24 +133,24 @@ class Achievement(models.Model):
 
 class DailyStatistics(models.Model):
     user_id = models.IntegerField(
-        verbose_name="Telegram ID"
+        verbose_name=DailyStatisticsCfg.USER_ID_V
     )
     username = models.CharField(
-        verbose_name="Имя пользователя Telegram",
+        verbose_name=DailyStatisticsCfg.USERNAME_V,
         max_length=255)
     date = models.DateField(
-        verbose_name="Дата",
+        verbose_name=DailyStatisticsCfg.DATE_V,
         default=timezone.now)
     total_time = models.DurationField(
-        verbose_name="Общее время"
+        verbose_name=DailyStatisticsCfg.TOTAL_TIME_V
     )
     total_trips = models.IntegerField(
-        verbose_name="Общее количество выездов"
+        verbose_name=DailyStatisticsCfg.TOTAL_TRIPS_V
     )
 
     class Meta:
-        verbose_name = "Дневная статистика"
-        verbose_name_plural = "Дневная статистика"
+        verbose_name = DailyStatisticsCfg.META_NAME
+        verbose_name_plural = DailyStatisticsCfg.META_PL_NAME
 
     def __str__(self):
         return f"{self.username} - {self.date}"
