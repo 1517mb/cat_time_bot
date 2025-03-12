@@ -13,11 +13,41 @@
     <link rel="stylesheet" href="{% static 'css/bulma.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=browse_activity" />
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="{% static 'js/clip.js' %}"></script>
     <title>Генератор паролей</title>
 </head>
 <body>
+    <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item py-2" href="/">
+                <span class="navbar-custom-icon material-symbols-outlined" style="font-size: 48px !important;transform: translateY(2px)">browse_activity</span>
+                <span class="navbar-custom-text" style="font-family: 'Kanit', sans-serif;
+                font-weight: 700;
+                font-size: 1.75rem;
+                letter-spacing: -0.5px;
+                text-transform: uppercase;">zelqq</span>
+            </a>
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+
+        <div id="navbarBasicExample" class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item" href="/">
+                    Главная
+                </a>
+                <a class="navbar-item" href="{% url 'tips' %}">
+                    Полезные Советы
+                </a>
+            </div>
+        </div>
+    </nav>
     <div id="notification-container" class="notification-container"></div>
     <div class="container">
         <div class="content is-small mt-6">
