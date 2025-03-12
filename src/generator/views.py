@@ -60,3 +60,13 @@ def generate_password_view(request):
     password = generate_password()
     template = loader.get_template("password_partial.html")
     return HttpResponse(template.render({"password": password}))
+
+
+def tips(request):
+    initial_data = {
+        "length": 12,
+        "include_digits": True,
+        "include_special_chars": False,
+    }
+    form = PasswordGeneratorForm(initial=initial_data)
+    return render(request, "index.html", {"form": form})
