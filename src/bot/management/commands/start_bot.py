@@ -60,7 +60,9 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/help - Показать это сообщение с инструкциями.\n"
         "/join <Организация> - Прибыть к указанной организации.\n"
         "/leave - Покинуть текущую организацию и записать затраченное время.\n"
-        "/edit - Изменить время прибытия в текущую организацию.\n"
+        "/edit_start <Время> - Изменить время прибытия в текущую организацию."
+        "\n"
+        "/edit_end <Время> - Изменить время убытия из текущей организации.\n"
         "\n"
         "*Дополнительные команды:*\n"
         "/start\\_scheduler <Время> - Запустить задание для отправки погоды.\n"
@@ -430,8 +432,12 @@ async def _validate_and_update_time(
     if not args or len(args) != 1:
         await update.message.reply_text(
             f"🚨 *Ошибка!* 🚨\n"
-            f"Пожалуйста, укажите новое время {error_message_prefix} "
-            f"в формате *ЧЧ:ММ* (например, /edit 10:15).",
+            f"⭕️ *Внимание! Неверный формат ввода*\n\n"
+            f"🕒 Пожалуйста, укажите {error_message_prefix} "
+            f"время в формате *ЧЧ:ММ*\n"
+            f"Пример: *14:30*\n\n"
+            f"📖 Для получения дополнительной информации "
+            f"используйте команду /help",
             parse_mode="Markdown")
         return
 
@@ -806,8 +812,10 @@ class Command(BaseCommand):
             "start_scheduler", start_scheduler))
         application.add_handler(CommandHandler(
             "stop_scheduler", stop_scheduler))
-        application.add_handler(CommandHandler("edit", edit_arrival_time))
-        application.add_handler(CommandHandler("dep", edit_departure_time))
+        application.add_handler(
+            CommandHandler("edit_start", edit_arrival_time))
+        application.add_handler(
+            CommandHandler("edit_end", edit_departure_time))
 
         try:
             application.run_polling(allowed_updates=Update.ALL_TYPES)
