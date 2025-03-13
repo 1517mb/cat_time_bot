@@ -6,6 +6,7 @@ from difflib import get_close_matches
 from zoneinfo import ZoneInfo
 
 import aiohttp
+from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asgiref.sync import sync_to_async
 from django.conf import settings
@@ -60,15 +61,20 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/help - Показать это сообщение с инструкциями.\n"
         "/join <Организация> - Прибыть к указанной организации.\n"
         "/leave - Покинуть текущую организацию и записать затраченное время.\n"
-        "/edit_start <Время> - Изменить время прибытия в текущую организацию."
+        "/edit\\_start <ЧЧ:ММ> - Изменить время прибытия "
+        "в текущую организацию."
         "\n"
-        "/edit_end <Время> - Изменить время убытия из текущей организации.\n"
+        "/edit\\_end <ЧЧ:ММ> - Изменить время убытия из текущей организации.\n"
         "\n"
-        "*Дополнительные команды:*\n"
-        "/start\\_scheduler <Время> - Запустить задание для отправки погоды.\n"
-        "/stop\\_scheduler - Остановить задание для отправки погоды.\n"
-        "/get\\_chat\\_info - Получить информацию о чате.\n"
-        "/mew - Получить случайное фото кота."
+        "*Планировщик:*\n"
+        "/start\\_weather <ЧЧ:ММ> - Установить время отправки погоды\n"
+        "/start\\_stats <ЧЧ:ММ> - Установить время отправки статистики\n"
+        "/start\\_reminder <ЧЧ:ММ> - Установить время напоминаний\n"
+        "/stop\\_scheduler - Остановить все задания\n"
+        "\n"
+        "*Дополнительно:*\n"
+        "/mew - Получить фото кота\n"
+        "/get\\_chat\\_info - Информация о чате"
     )
     await update.message.reply_text(help_text, parse_mode="Markdown")
 
@@ -712,73 +718,127 @@ async def send_daily_statistics_to_group(bot):
                            parse_mode="Markdown")
 
 
-async def start_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Запуск планировщика для отправки погоды."""
+async def start_weather(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Запуск ежедневной отправки погоды в указанное время"""
     if not context.args:
         await update.message.reply_text(
-            "❌ *Ошибка!* ❌\n"
-            "Пожалуйста, укажите время в формате ЧЧ:ММ"
-            + " (например, /start\\_scheduler 7:30).",
-            parse_mode="Markdown"
+            "❌ Укажите время в формате ЧЧ:ММ (например: /start_weather 9:30)"
         )
         return
 
     time_str = context.args[0]
-
     try:
         hour, minute = map(int, time_str.split(":"))
     except ValueError:
-        await update.message.reply_text(
-            "❌ *Ошибка!* ❌\n"
-            "Неправильный формат времени. Пожалуйста, используйте "
-            "формат ЧЧ:ММ (например, /start\\_scheduler 7:30).",
-            parse_mode="Markdown"
-        )
+        await update.message.reply_text("❌ Неверный формат времени")
         return
 
-    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
-        await update.message.reply_text(
-            "❌ *Ошибка!* ❌\n"
-            "Неверное время. Часы должны быть "
-            + "от 0 до 23, а минуты от 0 до 59.",
-            parse_mode="Markdown"
-        )
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        await update.message.reply_text("❌ Некорректное время")
         return
 
-    scheduler.remove_all_jobs()
+    try:
+        scheduler.remove_job("weather_job")
+    except JobLookupError:
+        pass
 
     scheduler.add_job(
         send_weather_to_group,
         trigger="cron",
         hour=hour,
         minute=minute,
-        args=[context.bot]
-    )
-
-    scheduler.add_job(
-        remind_to_leave,
-        trigger="cron",
-        hour=20,
-        minute=41,
-        args=[context.bot]
-    )
-
-    scheduler.add_job(
-        send_daily_statistics_to_group,
-        trigger="cron",
-        hour=18,
-        minute=0,
-        args=[context.bot]
+        args=[context.bot],
+        id="weather_job"
     )
 
     if not scheduler.running:
         scheduler.start()
 
     await update.message.reply_text(
-        f"☀️ Планировщик погоды запущен. ⛈️\n"
-        f"Время отправки: {hour:02d}:{minute:02d}\n"
-        "Время напоминания: 21:00",
-        parse_mode="Markdown"
+        f"⛅ Задание для отправки погоды установлено на {hour:02}:{minute:02}"
+    )
+
+
+async def start_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Запуск ежедневной отправки статистики"""
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Укажите время в формате ЧЧ:ММ (например: /start_stats 20:00)"
+        )
+        return
+
+    time_str = context.args[0]
+    try:
+        hour, minute = map(int, time_str.split(':'))
+    except ValueError:
+        await update.message.reply_text("❌ Неверный формат времени")
+        return
+
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        await update.message.reply_text("❌ Некорректное время")
+        return
+
+    try:
+        scheduler.remove_job("stats_job")
+    except JobLookupError:
+        pass
+
+    scheduler.add_job(
+        send_daily_statistics_to_group,
+        trigger="cron",
+        hour=hour,
+        minute=minute,
+        args=[context.bot],
+        id="stats_job"
+    )
+
+    if not scheduler.running:
+        scheduler.start()
+
+    await update.message.reply_text(
+        f"📊 Задание для отправки "
+        f"статистики установлено на {hour:02}:{minute:02}"
+    )
+
+
+async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Запуск напоминаний о необходимости покинуть организацию"""
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Укажите время в формате ЧЧ:ММ (например: /start_reminder 19:45)"
+        )
+        return
+
+    time_str = context.args[0]
+    try:
+        hour, minute = map(int, time_str.split(':'))
+    except ValueError:
+        await update.message.reply_text("❌ Неверный формат времени")
+        return
+
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        await update.message.reply_text("❌ Некорректное время")
+        return
+
+    try:
+        scheduler.remove_job("reminder_job")
+    except JobLookupError:
+        pass
+
+    scheduler.add_job(
+        remind_to_leave,
+        trigger="cron",
+        hour=hour,
+        minute=minute,
+        args=[context.bot],
+        id="reminder_job"
+    )
+
+    if not scheduler.running:
+        scheduler.start()
+
+    await update.message.reply_text(
+        f"🔔 Напоминания будут приходить в {hour:02}:{minute:02}"
     )
 
 
@@ -808,8 +868,10 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler("get_chat_info", get_chat_info))
         application.add_handler(CommandHandler("leave", leave))
         application.add_handler(CommandHandler("mew", mew))
-        application.add_handler(CommandHandler(
-            "start_scheduler", start_scheduler))
+        application.add_handler(CommandHandler("start_weather", start_weather))
+        application.add_handler(CommandHandler("start_stats", start_stats))
+        application.add_handler(
+            CommandHandler("start_reminder", start_reminder))
         application.add_handler(CommandHandler(
             "stop_scheduler", stop_scheduler))
         application.add_handler(
