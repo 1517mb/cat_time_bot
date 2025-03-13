@@ -6,6 +6,7 @@ from difflib import get_close_matches
 from zoneinfo import ZoneInfo
 
 import aiohttp
+import telegram
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asgiref.sync import sync_to_async
@@ -19,6 +20,7 @@ from telegram import (
     ReplyKeyboardRemove,
     Update,
 )
+from telegram import error as telegram_error
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -647,36 +649,56 @@ async def remind_to_leave(bot):
     """Функция для напоминания пользователям о необходимости
     ввести команду /leave."""
     try:
+        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        if not group_chat_id:
+            logging.error("TELEGRAM_GROUP_CHAT_ID не установлен в .env")
+            return
         active_activities = await sync_to_async(
             lambda: list(UserActivity.objects.filter(leave_time__isnull=True))
         )()
 
-        for activity in active_activities:
-            user_id = activity.user_id
-            company_name = await sync_to_async(lambda: activity.company.name)()
+        if not active_activities:
+            return
 
-            try:
-                await bot.send_message(
-                    chat_id=user_id,
-                    text=(
-                        f"⚠️ *Внимание!* ⚠️\n"
-                        f"Вы всё ещё находитесь в"
-                        f"организации *{company_name}*?\n"
-                        f"Пожалуйста, введите команду /leave, "
-                        f"чтобы покинуть организацию.\n"
-                        f"Если вы хотите изменить время убытия, "
-                        f"используйте команду /edit."
-                    ),
-                    parse_mode="Markdown"
-                )
-                logging.info(f"Напоминание отправлено пользователю {user_id}")
-            except Exception as e:
-                logging.error(
-                    "Неизвестная ошибка при отправке "
-                    f"сообщения пользователю {user_id}: {e}")
+        users = []
+        for activity in active_activities:
+            username = (
+                f"@{activity.username}"
+                if activity.username
+                else f"ID: {activity.user_id}")
+            company_name = await sync_to_async(lambda: activity.company.name)()
+            users.append(f"{username} ({company_name})")
+        message = (
+            "⚠️ *Внимание!* ⚠️\n\n"
+            "Следующие сотрудники всё ещё находятся в организациях:\n"
+            f"{'\n'.join(users)}\n\n"
+            "Пожалуйста, выполните:\n"
+            "• /leave - чтобы покинуть организацию\n"
+            "• /edit\\_start <ЧЧ:ММ> - изменить время прибытия\n"
+            "• /edit\\_end <ЧЧ:ММ> - изменить время убытия"
+        )
+        try:
+            await bot.send_message(
+                chat_id=group_chat_id,
+                text=message,
+                parse_mode="Markdown",
+                disable_notification=False)
+            logging.info(f"Напоминание отправлено в группу {group_chat_id}")
+        except telegram.error.BadRequest as e:
+            logging.error(f"Ошибка отправки в группу: {e.message}")
+            if "chat not found" in str(e).lower():
+                logging.critical(
+                    "Бот не добавлен в группу или chat_id неверный!")
+        except telegram.error.Forbidden as e:
+            logging.error(f"Нет прав на отправку: {e.message}")
+            if "bot was blocked" in str(e).lower():
+                logging.critical("Бот заблокирован в группе!")
+        except Exception as e:
+            logging.error(f"Неизвестная ошибка: {str(e)}", exc_info=True)
 
     except Exception as e:
-        logging.error(f"Ошибка в remind_to_leave: {e}", exc_info=True)
+        logging.error(
+            f"Критическая ошибка в remind_to_leave: {e}", exc_info=True)
 
 
 async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
