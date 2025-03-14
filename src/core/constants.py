@@ -53,3 +53,18 @@ class DailyStatisticsCfg:
     TOTAL_TRIPS_V = "Общее количество выездов"
     META_NAME = "Дневная статистика"
     META_PL_NAME = "Дневная статистика"
+
+
+class QuoteCfg:
+    TEXT_V = "Текст"
+    AUTHOR_V = "Автор"
+    SOURCE_V = "Источник"
+    TAGS_V = "Теги"
+    IS_ACTIVE_V = "Активна"
+    META_NAME = "Цитата"
+    META_PL_NAME = "Цитаты"
+    MAX_LEN_AUTHOR = 100
+    MAX_LEN_SOURCE = 200
+    MAX_LEN_TAGS = 200
+    BLANK_TAGS = True
+    IS_ACTIVE_DEFAULT = True
