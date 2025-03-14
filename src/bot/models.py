@@ -10,6 +10,7 @@ from core.constants import (
     DailyStatisticsCfg,
     DailytTipsCfg,
     UserActivityCfg,
+    QuoteCfg,
 )
 
 
@@ -154,3 +155,30 @@ class DailyStatistics(models.Model):
 
     def __str__(self):
         return f"{self.username} - {self.date}"
+
+
+class Quote(models.Model):
+    text = models.TextField(
+        verbose_name=QuoteCfg.TEXT_V)
+    author = models.CharField(
+        verbose_name=QuoteCfg.AUTHOR_V,
+        max_length=QuoteCfg.MAX_LEN_AUTHOR)
+    source = models.CharField(
+        verbose_name=QuoteCfg.SOURCE_V,
+        max_length=QuoteCfg.MAX_LEN_SOURCE
+    )
+    tags = models.CharField(
+        verbose_name=QuoteCfg.TAGS_V,
+        max_length=QuoteCfg.MAX_LEN_TAGS,
+        blank=QuoteCfg.BLANK_TAGS)
+    is_active = models.BooleanField(
+        verbose_name=QuoteCfg.IS_ACTIVE_V,
+        default=QuoteCfg.IS_ACTIVE_DEFAULT
+    )
+
+    class Meta:
+        verbose_name = QuoteCfg.META_NAME
+        verbose_name_plural = QuoteCfg.META_PL_NAME
+
+    def __str__(self):
+        return f"{self.author} - {self.source}"
