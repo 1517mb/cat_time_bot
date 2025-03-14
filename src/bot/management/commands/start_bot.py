@@ -507,6 +507,21 @@ async def _validate_and_update_time(
         parse_mode="Markdown")
 
 
+async def edit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Устаревшая команда для редактирования времени.
+    Информирует пользователя о новых командах.
+    """
+    message = (
+        "ℹ️ *Команда /edit устарела в версии 0.5.*\n\n"
+        "Используйте вместо этого:\n"
+        "/edit\\_start <ЧЧ:ММ> - Изменить время прибытия "
+        "в текущую организацию.\n"
+        "/edit\\_end <ЧЧ:ММ> - Изменить время убытия из текущей организации."
+    )
+    await update.message.reply_text(message, parse_mode="Markdown")
+
+
 async def edit_arrival_time(update: Update,
                             context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -896,6 +911,7 @@ class Command(BaseCommand):
             CommandHandler("start_reminder", start_reminder))
         application.add_handler(CommandHandler(
             "stop_scheduler", stop_scheduler))
+        application.add_handler(CommandHandler("edit", edit))
         application.add_handler(
             CommandHandler("edit_start", edit_arrival_time))
         application.add_handler(
