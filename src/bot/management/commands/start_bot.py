@@ -20,7 +20,6 @@ from telegram import (
     ReplyKeyboardRemove,
     Update,
 )
-from telegram import error as telegram_error
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -34,7 +33,7 @@ from bot.management.core.statistics import (
     get_daily_statistics_message,
     update_daily_statistics,
 )
-from bot.models import Company, UserActivity
+from bot.models import Company, DailytTips, UserActivity
 
 load_dotenv()
 
@@ -72,6 +71,8 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/start\\_weather <ЧЧ:ММ> - Установить время отправки погоды\n"
         "/start\\_stats <ЧЧ:ММ> - Установить время отправки статистики\n"
         "/start\\_reminder <ЧЧ:ММ> - Установить время напоминаний\n"
+        "/start\\_dailytips <ЧЧ:ММ> - Запустить ежедневные советы\n"
+        "/stop\\_dailytips - Остановить рассылку советов\n"
         "/stop\\_scheduler - Остановить все задания\n"
         "\n"
         "*Дополнительно:*\n"
@@ -879,6 +880,103 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def send_daily_tip(bot):
+    """Асинхронная функция для отправки ежедневного совета"""
+    try:
+        unpublished_tip = await sync_to_async(DailytTips.objects.filter(
+            is_published=False
+        ).order_by("pub_date").first)()
+
+        if unpublished_tip:
+            tip = unpublished_tip
+            tip.is_published = True
+            message_prefix = "🌟 *Новый совет дня!*\n\n"
+        else:
+            tip = await sync_to_async(DailytTips.objects.filter(
+                is_published=True
+            ).order_by("?").first)()
+            message_prefix = "🔁 *Лучшие советы*\n\n"
+
+        if not tip:
+            logging.warning("Нет доступных советов для отправки")
+            return
+
+        message = (
+            f"{message_prefix}"
+            f"📌 *{tip.title}*\n\n"
+            f"{tip.content}\n\n"
+        )
+
+        if tip.external_link:
+            message += f"🔗 [Подробнее]({tip.external_link})"
+
+        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        await bot.send_message(
+            chat_id=group_chat_id,
+            text=message,
+            parse_mode="Markdown",
+            disable_web_page_preview=True
+        )
+
+        tip.views_count += 1
+        await sync_to_async(tip.save)()
+
+    except Exception as e:
+        logging.error(f"Ошибка при отправке совета: {str(e)}", exc_info=True)
+
+
+async def start_dailytips(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Запуск ежедневной отправки советов в указанное время"""
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Укажите время в формате ЧЧ:ММ "
+            "(например: /start_dailytips 10:00)"
+        )
+        return
+
+    try:
+        hour, minute = map(int, context.args[0].split(':'))
+        if not (0 <= hour <= 23 and 0 <= minute <= 59):
+            raise ValueError
+    except ValueError:
+        await update.message.reply_text("❌ Неверный формат времени")
+        return
+
+    try:
+        scheduler.remove_job("dailytips_job")
+    except JobLookupError:
+        pass
+
+    scheduler.add_job(
+        send_daily_tip,
+        trigger='cron',
+        hour=hour,
+        minute=minute,
+        args=[context.bot],
+        id="dailytips_job",
+        timezone=ZoneInfo("Europe/Moscow")
+    )
+
+    if not scheduler.running:
+        scheduler.start()
+
+    await update.message.reply_text(
+        f"✅ Ежедневные советы будут отправляться в {hour:02}:{minute:02}\n"
+        "Логика отправки:\n"
+        "1. Приоритет у неопубликованных советов\n"
+        "2. Если все опубликованы - случайный выбор"
+    )
+
+
+async def stop_dailytips(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Остановка ежедневных советов"""
+    try:
+        scheduler.remove_job("dailytips_job")
+        await update.message.reply_text("✅ Рассылка советов остановлена")
+    except JobLookupError:
+        await update.message.reply_text("⚠️ Активная рассылка не найдена")
+
+
 class Command(BaseCommand):
     help = "Запуск бота Телеграмм"
 
@@ -916,6 +1014,10 @@ class Command(BaseCommand):
             CommandHandler("edit_start", edit_arrival_time))
         application.add_handler(
             CommandHandler("edit_end", edit_departure_time))
+        application.add_handler(CommandHandler(
+            "start_dailytips", start_dailytips))
+        application.add_handler(CommandHandler(
+            "stop_dailytips", stop_dailytips))
 
         try:
             application.run_polling(allowed_updates=Update.ALL_TYPES)
