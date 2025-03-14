@@ -9,8 +9,8 @@ from bot.models import (
     Company,
     DailyStatistics,
     DailytTips,
+    Quote,
     UserActivity,
-    Quote
 )
 from bot.resources import UserActivityResource
 from core.constants import SITE_HEADER, SITE_TITLE

@@ -9,8 +9,8 @@ from core.constants import (
     CompanyCfg,
     DailyStatisticsCfg,
     DailytTipsCfg,
-    UserActivityCfg,
     QuoteCfg,
+    UserActivityCfg,
 )
 
 
