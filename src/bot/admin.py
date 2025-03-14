@@ -10,6 +10,7 @@ from bot.models import (
     DailyStatistics,
     DailytTips,
     UserActivity,
+    Quote
 )
 from bot.resources import UserActivityResource
 from core.constants import SITE_HEADER, SITE_TITLE
@@ -87,3 +88,11 @@ class DailyStatisticsAdmin(admin.ModelAdmin):
     list_filter = ("date",)
     search_fields = ("username",)
     ordering = ("-date",)
+
+
+@admin.register(Quote)
+class QuoteAdmin(admin.ModelAdmin):
+    list_display = ("id", "author", "source",
+                    "text", "is_active")
+    search_fields = ("author", "source", "text")
+    list_filter = ("is_active",)
