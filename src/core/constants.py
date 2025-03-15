@@ -19,6 +19,10 @@ class UserActivityCfg:
     LEAVE_TIME_V = "Время убытия"
     SPENT_TIME_V = "Время, проведенное пользователем"
     SPENT_TIME_PLURAL_V = "Время, проведенное пользователями"
+    EDITED_V = "Редактировалось"
+    EDITED_DEFAULT = False
+    EDIT_COUNT_DEFAULT = 0
+    EDIT_COUNT_V = "Счетчик правок"
 
 
 class DailytTipsCfg:
