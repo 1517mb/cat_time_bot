@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -130,6 +131,25 @@ class Achievement(models.Model):
 
     def __str__(self):
         return f"{self.user_id} - {self.achievement_name}"
+
+    @classmethod
+    async def create_achievement(cls, user_id: int, username: str, name: str):
+        """
+        Создает новое достижение для пользователя
+
+        Args:
+            user_id (int): Telegram ID пользователя
+            username (str): Имя пользователя Telegram
+            name (str): Название достижения
+
+        Returns:
+            None
+        """
+        await sync_to_async(cls.objects.create)(
+            user_id=user_id,
+            username=username,
+            achievement_name=name
+        )
 
 
 class DailyStatistics(models.Model):
