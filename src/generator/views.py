@@ -9,6 +9,7 @@ from django.template import loader
 from django.views.decorators.http import require_POST
 
 from bot.models import DailytTips
+
 from .forms import PasswordGeneratorForm
 
 logger = logging.getLogger(__name__)
