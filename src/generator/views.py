@@ -2,11 +2,13 @@ import logging
 import secrets
 import string
 
+from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template import loader
 from django.views.decorators.http import require_POST
 
+from bot.models import DailytTips
 from .forms import PasswordGeneratorForm
 
 logger = logging.getLogger(__name__)
@@ -62,11 +64,13 @@ def generate_password_view(request):
     return HttpResponse(template.render({"password": password}))
 
 
-def tips(request):
-    initial_data = {
-        "length": 12,
-        "include_digits": True,
-        "include_special_chars": False,
+def daily_tips_view(request):
+    tips_list = DailytTips.objects.filter(
+        is_published=True).order_by("-pub_date")
+    paginator = Paginator(tips_list, 6)
+    page_number = request.GET.get("page")
+    tips = paginator.get_page(page_number)
+    context = {
+        "tips": tips,
     }
-    form = PasswordGeneratorForm(initial=initial_data)
-    return render(request, "index.html", {"form": form})
+    return render(request, "tips.html", context)
