@@ -47,6 +47,11 @@ class UserActivity(models.Model):
     leave_time = models.DateTimeField(
         verbose_name=UserActivityCfg.LEAVE_TIME_V,
         blank=True, null=True)
+    edited = models.BooleanField(default=UserActivityCfg.EDITED_DEFAULT,
+                                 verbose_name=UserActivityCfg.EDITED_V)
+    edit_count = models.PositiveIntegerField(
+        default=UserActivityCfg.EDIT_COUNT_DEFAULT,
+        verbose_name=UserActivityCfg.EDIT_COUNT_V)
 
     def __str__(self) -> str:
         return f"{self.username} в {self.company.name}"
