@@ -51,30 +51,30 @@ async def get_daily_statistics_message():
 
     user_stats = await sync_to_async(list)(
         DailyStatistics.objects.filter(date=today)
-        .values('username', 'total_trips', 'total_time')
-        .order_by('-total_trips')
+        .values("username", "total_trips", "total_time")
+        .order_by("-total_trips")
     )
 
     achievements = await sync_to_async(list)(
         Achievement.objects.filter(achieved_at__date=today)
-        .values('username', 'achievement_name')
+        .values("username", "achievement_name")
     )
 
     achievements_text = "\n\n🏆 *Персональная статистика:*\n"
 
     for user in user_stats[:5]:
-        avg_time = user['total_time'].total_seconds() / user['total_trips']
+        avg_time = user["total_time"].total_seconds() / user["total_trips"]
         avg_min = int(avg_time // 60)
         avg_sec = int(avg_time % 60)
 
         user_achs = [
-            a['achievement_name'] for a in achievements
-            if a['username'] == user['username']]
+            a["achievement_name"] for a in achievements
+            if a["username"] == user["username"]]
         unique_achs = list(set(user_achs))[:3]
 
         achievements_text += (
-            f"👤 @{user['username']}\n"
-            f"   ▸ Выездов: {user['total_trips']} 🚗\n"
+            f"👤 @{user["username"]}\n"
+            f"   ▸ Выездов: {user["total_trips"]} 🚗\n"
             f"   ▸ Среднее время: {avg_min} мин {avg_sec} сек ⏱\n"
         )
 
