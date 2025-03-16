@@ -5,7 +5,7 @@ from asgiref.sync import sync_to_async
 from django.db.models import DurationField, Sum
 from django.utils import timezone
 
-from bot.models import DailyStatistics, Quote, UserActivity, Achievement
+from bot.models import Achievement, DailyStatistics, Quote, UserActivity
 
 
 async def get_random_quote():
