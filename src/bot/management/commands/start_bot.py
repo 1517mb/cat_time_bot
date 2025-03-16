@@ -1,7 +1,8 @@
 import logging
 import os
 import re
-from datetime import datetime
+import traceback
+from datetime import datetime, timedelta
 from difflib import get_close_matches
 from zoneinfo import ZoneInfo
 
@@ -12,6 +13,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db.models import Avg, F
 from django.utils import timezone
 from dotenv import load_dotenv
 from telegram import (
@@ -33,7 +35,7 @@ from bot.management.core.statistics import (
     get_daily_statistics_message,
     update_daily_statistics,
 )
-from bot.models import Company, DailytTips, UserActivity
+from bot.models import Achievement, Company, DailytTips, UserActivity
 
 load_dotenv()
 
@@ -80,6 +82,150 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/get\\_chat\\_info - Информация о чате"
     )
     await update.message.reply_text(help_text, parse_mode="Markdown")
+
+
+async def check_achievements(
+    user_id: int,
+    username: str,
+    activity: UserActivity,
+    context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """Проверка и выдача достижений с
+    оптимизированными запросами и логированием"""
+    try:
+        today = timezone.now().date()
+        join_time = activity.join_time
+        leave_time = activity.leave_time
+        duration = (leave_time - join_time).total_seconds()
+        new_achievements = []
+
+        user_stats = await sync_to_async(
+            lambda: {
+                "company_visits": UserActivity.objects.filter(
+                    user_id=user_id,
+                    company=activity.company
+                ).count(),
+
+                "same_day_users": UserActivity.objects.filter(
+                    company=activity.company,
+                    join_time__date=join_time.date()
+                ).values("user_id").distinct().count(),
+
+
+                "today_trips": UserActivity.objects.filter(
+                    user_id=user_id,
+                    join_time__date=today
+                ).count(),
+
+
+                "weekly_trips": UserActivity.objects.filter(
+                    user_id=user_id,
+                    join_time__gte=today - timedelta(days=today.weekday())
+                ).count(),
+
+
+                "avg_duration": UserActivity.objects.filter(
+                    user_id=user_id).annotate(
+                        duration=F(
+                            "leave_time") - F("join_time")).aggregate(
+                                avg=Avg("duration"))["avg"]
+            }
+        )()
+
+        if user_stats["company_visits"] == 1:
+            new_achievements.append("🏕️ Я здесь впервые, правда же?")
+
+        if user_stats["same_day_users"] >= 2:
+            new_achievements.append("👥 Командный игрок")
+
+        if user_stats["today_trips"] > 3:
+            new_achievements.append("🔁 А можно мне ещё выезд?")
+
+        if user_stats["weekly_trips"] > 16:
+            new_achievements.append("🏆 Лучший сотрудник")
+
+        weekday = join_time.weekday()
+        if weekday in [5, 6]:
+            day_name = "субботу" if weekday == 5 else "воскресенье"
+            new_achievements.append(
+                f"📅 Я люблю свою работу, я приду сюда в {day_name}")
+
+        duration_achievements = {
+            (0, 300): None,
+            (300, 1200): "🚀 Экспресс-админ",
+            (1200, 1800): "⏱️ Справлюсь с этим за полчаса",
+            (1800, 3660): None,
+            (3660, 7200): "🐢 Король промедления",
+            (7200, 10800): None,
+            (10800, 14400): "🛠️ Делаю, делаю, по три раза переделаю",
+        }
+
+        for (min_val, max_val), achievement in duration_achievements.items():
+            if min_val <= duration < max_val and achievement:
+                new_achievements.append(achievement)
+
+        if (user_stats["avg_duration"] and user_stats[
+                "avg_duration"].total_seconds() > 9000):
+            new_achievements.append("🐢 Поспешишь - людей насмешишь")
+
+        edit_achievements = {
+            (1, 3): None,
+            (3, 5): "🕰️ Читер: Часовщик II уровня",
+            (5, float('inf')): "🕰️ Читер: Часовщик III уровня"
+        }
+
+        if activity.edited:
+            new_achievements.append("🕵️♂️ Читер: Часовщик")
+            for (min_edit, max_edit), achievement in edit_achievements.items():
+                if min_edit <= activity.edit_count < max_edit and achievement:
+                    new_achievements.append(achievement)
+
+        if new_achievements:
+            achievements_count = {}
+            for ach in new_achievements:
+                if ach in achievements_count:
+                    achievements_count[ach] += 1
+                else:
+                    achievements_count[ach] = 1
+
+            formatted_achievements = []
+            for ach, count in achievements_count.items():
+                if count > 1:
+                    formatted_achievements.append(f"• {ach} x{count}")
+                else:
+                    formatted_achievements.append(f"• {ach}")
+
+            achievements_to_create = [
+                Achievement(
+                    user_id=user_id,
+                    username=username,
+                    achievement_name=(
+                        ach.split(" ", 1)[1] if " " in ach else ach)
+                ) for ach in new_achievements
+            ]
+
+        await sync_to_async(
+            Achievement.objects.bulk_create)(achievements_to_create)
+
+        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        formatted_achievements_text = "\n".join(formatted_achievements)
+        await context.bot.send_message(
+            chat_id=group_chat_id,
+            text=(
+                "🏆 *Новое достижение!*\n"
+                f"Сотрудник: @{username}\n"
+                f"Заслуги:\n{formatted_achievements_text}\n"
+                "Поздравляем! 🎉"
+            ),
+            parse_mode="Markdown"
+        )
+
+    except Exception as e:
+        logging.error(
+            f"Ошибка при проверке достижений для {username}: {str(e)}\n"
+            f"Детали: {traceback.format_exc()}",
+            exc_info=True
+        )
 
 
 async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -312,6 +458,30 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 username=username,
                 company=company
             )
+
+            today = timezone.now().date()
+            total_today = await sync_to_async(
+                UserActivity.objects.filter(join_time__date=today).count
+            )()
+            if total_today == 1:
+                achievement = Achievement(
+                    user_id=user_id,
+                    username=username,
+                    achievement_name="🩸 Первая кровь"
+                )
+                await sync_to_async(achievement.save)()
+                group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+                await context.bot.send_message(
+                    chat_id=group_chat_id,
+                    text=(
+                        "🏆 *Новое достижение!*\n"
+                        f"Сотрудник: @{username}\n"
+                        f"Заслуги: 🩸 Первая кровь!\n"
+                        "Поздравляем! 🎉"
+                    ),
+                    parse_mode="Markdown"
+                )
+
             return ConversationHandler.END
         else:
             similar_companies = await get_similar_companies(company_name)
@@ -346,6 +516,30 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     username=username,
                     company=company
                 )
+
+                today = timezone.now().date()
+                total_today = await sync_to_async(
+                    UserActivity.objects.filter(join_time__date=today).count
+                )()
+                if total_today == 1:
+                    achievement = Achievement(
+                        user_id=user_id,
+                        username=username,
+                        achievement_name="🩸 Первая кровь"
+                    )
+                    await sync_to_async(achievement.save)()
+                    group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+                    await context.bot.send_message(
+                        chat_id=group_chat_id,
+                        text=(
+                            "🏆 *Новое достижение!*\n"
+                            f"Сотрудник: @{username}\n"
+                            f"Заслуги: 🩸 Первая кровь!\n"
+                            "Поздравляем! 🎉"
+                        ),
+                        parse_mode="Markdown"
+                    )
+
                 return ConversationHandler.END
     except Exception:
         await update.message.reply_text(
@@ -426,15 +620,20 @@ async def _validate_and_update_time(
     """
     user_id = update.message.from_user.id
 
-    active_activity = await sync_to_async(UserActivity.objects.filter(
-        user_id=user_id, leave_time__isnull=True).first)()
+    active_activity = await sync_to_async(
+        UserActivity.objects.filter(
+            user_id=user_id,
+            leave_time__isnull=True
+        ).select_related('company').first
+    )()
 
     if not active_activity:
         await update.message.reply_text(
             f"🚨 *Ошибка!* 🚨\n"
             f"У вас нет активной организации, для "
             f"которой можно изменить {error_message_prefix}.",
-            parse_mode="Markdown")
+            parse_mode="Markdown"
+        )
         return
 
     args = context.args
@@ -447,19 +646,19 @@ async def _validate_and_update_time(
             f"Пример: *14:30*\n\n"
             f"📖 Для получения дополнительной информации "
             f"используйте команду /help",
-            parse_mode="Markdown")
+            parse_mode="Markdown"
+        )
         return
 
-    new_time_str = args[0]
-
     try:
-        new_time = datetime.strptime(new_time_str, '%H:%M').time()
+        new_time = datetime.strptime(args[0], '%H:%M').time()
     except ValueError:
         await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Неверный формат времени. Пожалуйста, "
             "укажите время в формате *ЧЧ:ММ* (например, 09:15).",
-            parse_mode="Markdown")
+            parse_mode="Markdown"
+        )
         return
 
     current_time = timezone.localtime(timezone.now()).time()
@@ -468,12 +667,12 @@ async def _validate_and_update_time(
             "❌ *Ошибка!* ❌\n"
             "Вы не можете выбрать время, которое больше текущего. "
             "Пожалуйста, укажите время, которое меньше или равно текущему.",
-            parse_mode="Markdown")
+            parse_mode="Markdown"
+        )
         return
 
     today = timezone.now().date()
-    new_datetime = datetime.combine(today, new_time)
-    new_datetime = timezone.make_aware(new_datetime)
+    new_datetime = timezone.make_aware(datetime.combine(today, new_time))
 
     if time_field == "leave_time" and new_datetime < active_activity.join_time:
         await update.message.reply_text(
@@ -481,31 +680,36 @@ async def _validate_and_update_time(
             "Время убытия не может быть раньше времени прибытия. "
             "Ваше время прибытия: "
             f"{active_activity.join_time.strftime('%H:%M')}.",
-            parse_mode="Markdown")
+            parse_mode="Markdown"
+        )
         return
 
-    if time_field == ("join_time"
-                      and active_activity.leave_time
-                      and new_datetime > active_activity.leave_time):
+    if (time_field == "join_time"
+        and active_activity.leave_time
+            and new_datetime > active_activity.leave_time):
         await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Время прибытия не может быть позже времени убытия. "
             "Ваше время убытия: "
             f"{active_activity.leave_time.strftime('%H:%M')}.",
-            parse_mode="Markdown")
+            parse_mode="Markdown"
+        )
         return
 
     setattr(active_activity, time_field, new_datetime)
+    active_activity.edited = True
+    active_activity.edit_count += 1
     await sync_to_async(active_activity.save)()
 
-    company_name = await sync_to_async(lambda: active_activity.company.name)()
-    local_time = timezone.localtime(new_datetime)
+    company_name = active_activity.company.name
+    local_time = timezone.localtime(new_datetime).strftime('%H:%M')
 
     await update.message.reply_text(
         f"😻 *Успешно!* 😻\n"
         f"{success_message.format(
-            company_name=company_name, time=local_time.strftime('%H:%M'))}.",
-        parse_mode="Markdown")
+            company_name=company_name, time=local_time)}.",
+        parse_mode="Markdown"
+    )
 
 
 async def edit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -636,6 +840,8 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         activity.leave_time = timezone.now()
         await sync_to_async(activity.save)()
+
+        await check_achievements(user_id, username, activity, context)
 
         await update_daily_statistics(user_id, username)
 
