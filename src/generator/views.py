@@ -71,7 +71,14 @@ def daily_tips_view(request):
     paginator = Paginator(tips_list, 6)
     page_number = request.GET.get("page")
     tips = paginator.get_page(page_number)
+    page_range = tips.paginator.page_range
+    current_page = tips.number
+    page_range = page_range[
+        max(0, current_page - 3):min(
+            current_page + 2, len(page_range))]
     context = {
         "tips": tips,
+        "page_range": page_range,
+        "current_page": current_page
     }
     return render(request, "tips.html", context)
