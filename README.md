@@ -3,9 +3,9 @@
 
 ### Текущая версия
 
-**0.4 alpha** -> [Скачать](https://github.com/1517mb/cat_time_bot/releases/tag/v0.4-alpha)
+**0.5 alpha-rz** -> [Скачать](https://github.com/1517mb/cat_time_bot/releases/tag/v0.5-alpha-rz)
 
-Список всех изменений: [Ссылка.](https://github.com/hydrospirt/cat_time_bot/blob/master/CHANGE_LIST.md)
+Список всех изменений: [Ссылка.](https://github.com/1517mb/cat_time_bot/blob/v0.5-alpha-rz/CHANGE_LIST.md)
 
 ### О проекте
 **Cat Time Bot** — это телеграм-бот, который не только считает время вашего пребывания, но и отправляет милых котиков! Представьте себе, как удобно иметь автоматизированный процесс контроля времени, который мгновенно экспортирует данные в Excel таблицу через Django Admin. Этот бот станет вашим незаменимым помощником в организации рабочего времени и повысит вашу продуктивность. Не упустите возможность добавить немного радости и эффективности в свой рабочий день с **cat_time_bot**!
@@ -34,7 +34,7 @@ git clone git@github.com:hydrospirt/cat_time_bot.git
 ```
 - Установите и активируйте виртуальное окружение c Python 3.12
 ```
-cd ./pokemon-unite-site/ &&
+cd ./src/ &&
 py -3.12 -m venv venv
 ```
 - Для Windows:
@@ -50,7 +50,7 @@ source venv/bin/activate
 python3 -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
-- Создайте переменные окружения в основной папке проекта "pokemon-unite-site"
+- Создайте переменные окружения в основной папке проекта "cat_time_bot"
 ```
 touch .env
 ```
