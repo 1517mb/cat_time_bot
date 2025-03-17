@@ -31,6 +31,7 @@ from telegram.ext import (
     filters,
 )
 
+from bot.management.core.bot_constants import SiteCfg
 from bot.management.core.statistics import (
     get_daily_statistics_message,
     update_daily_statistics,
@@ -62,6 +63,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "\n"
         "*Основные команды:*\n"
         "/help - Показать это сообщение с инструкциями.\n"
+        "/site - Информация о нашем сайте\n"
         "/join <Организация> - Прибыть к указанной организации.\n"
         "/leave - Покинуть текущую организацию и записать затраченное время.\n"
         "/edit\\_start <ЧЧ:ММ> - Изменить время прибытия "
@@ -82,6 +84,12 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/get\\_chat\\_info - Информация о чате"
     )
     await update.message.reply_text(help_text, parse_mode="Markdown")
+
+
+async def site(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Отправляет информацию о сайте"""
+    site_info = SiteCfg.MSG_SITE
+    await update.message.reply_text(site_info, parse_mode="Markdown")
 
 
 async def check_achievements(
@@ -1206,6 +1214,7 @@ class Command(BaseCommand):
 
         application.add_handler(conv_handler)
         application.add_handler(CommandHandler("help", help))
+        application.add_handler(CommandHandler("site", site))
         application.add_handler(CommandHandler("get_chat_info", get_chat_info))
         application.add_handler(CommandHandler("leave", leave))
         application.add_handler(CommandHandler("mew", mew))
