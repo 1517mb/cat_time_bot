@@ -82,6 +82,7 @@ async def check_achievements(
         leave_time = activity.leave_time
         duration = (leave_time - join_time).total_seconds()
         new_achievements = []
+        formatted_achievements = []
 
         user_stats = await sync_to_async(
             lambda: {
@@ -200,29 +201,27 @@ async def check_achievements(
         if new_achievements:
             achievements_count = {}
             for ach in new_achievements:
-                if ach in achievements_count:
-                    achievements_count[ach] += 1
-                else:
-                    achievements_count[ach] = 1
+                achievements_count[ach] = achievements_count.get(ach, 0) + 1
 
-            formatted_achievements = []
-            for ach, count in achievements_count.items():
-                if count > 1:
-                    formatted_achievements.append(f"• {ach} x{count}")
-                else:
-                    formatted_achievements.append(f"• {ach}")
+            formatted_achievements = [
+                f"• {ach} x{count}" if count > 1 else f"• {ach}"
+                for ach, count in achievements_count.items()
+            ]
 
             achievements_to_create = [
                 Achievement(
                     user_id=user_id,
                     username=username,
-                    achievement_name=(
-                        ach.split(" ", 1)[1] if " " in ach else ach)
+                    achievement_name=ach.split(
+                        " ", 1)[1] if " " in ach else ach
                 ) for ach in new_achievements
             ]
-
-        await sync_to_async(
-            Achievement.objects.bulk_create)(achievements_to_create)
+        else:
+            achievements_to_create = []
+            formatted_achievements = ["• Пока ничего 🐱"]
+        if achievements_to_create:
+            await sync_to_async(
+                Achievement.objects.bulk_create)(achievements_to_create)
 
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
         formatted_achievements_text = "\n".join(formatted_achievements)
