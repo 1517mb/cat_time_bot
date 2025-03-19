@@ -113,11 +113,8 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
 MARKDOWNX_EDITOR_RESIZABLE = True
 MARKDOWNX_UPLOAD_MAX_SIZE = 50 * 1024 * 1024
 
-if DEBUG:
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, "static"),
-    ]
-    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True, parents=True)
 
 LOGGING = {
     "version": 1,
@@ -193,3 +190,9 @@ LOGGING = {
         },
     },
 }
+
+if DEBUG:
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "static"),
+    ]
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
