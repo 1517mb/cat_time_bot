@@ -96,6 +96,12 @@ async def check_achievements(
                     join_time__date=join_time.date()
                 ).values("user_id").distinct().count(),
 
+                "same_company_today": UserActivity.objects.filter(
+                    user_id=user_id,
+                    company=activity.company,
+                    join_time__date=today
+                ).count(),
+
 
                 "today_trips": UserActivity.objects.filter(
                     user_id=user_id,
@@ -127,6 +133,16 @@ async def check_achievements(
                 "🚩 Первая вылазка в данную локацию",
                 "📌 Точка отсчета моего пути здесь"]
             new_achievements.append(random.choice(first_visit_achievements))
+
+        if user_stats["same_company_today"] > 1:
+            revisit_achievements = [
+                "🔄 Дежавю: Снова здесь!",
+                "♻️ Экономлю на пропуске",
+                "📌 Постоянный клиент дня",
+                "🏃 Реверс-раунд: Туда и обратно",
+                "🔄 Повторение - мать учения"
+            ]
+            new_achievements.append(random.choice(revisit_achievements))
 
         if user_stats["same_day_users"] >= 2:
             new_achievements.append("👥 Командный игрок")
@@ -234,6 +250,7 @@ async def check_achievements(
         for (min_val, max_val), achievements in duration_achievements.items():
             if min_val <= duration < max_val and achievements:
                 new_achievements.append(random.choice(achievements))
+                break
 
         if (user_stats["avg_duration"] and user_stats[
                 "avg_duration"].total_seconds() > 9000):
