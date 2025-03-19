@@ -1,0 +1,28 @@
+<nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+        <a class="navbar-item py-2" href="/">
+            <span class="navbar-custom-text" style="font-family: 'Kanit', sans-serif;
+            font-weight: 700;
+            font-size: 1.75rem;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;">riopass</span>
+        </a>
+        
+        <a role="button" 
+           class="navbar-burger" 
+           aria-label="menu" 
+           aria-expanded="false" 
+           data-target="navbarBasicExample">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+    </div>
+
+    <div id="navbarBasicExample" class="navbar-menu">
+        <div class="navbar-start">
+            <a class="navbar-item" href="/">Главная</a>
+            <a class="navbar-item" href="{% url 'tips' %}">Полезные Советы</a>
+        </div>
+    </div>
+</nav>
