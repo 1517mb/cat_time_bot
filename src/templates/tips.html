@@ -1,69 +1,31 @@
-<!DOCTYPE html>
-{% load static %}
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Полезные Советы</title>
-    <link rel="stylesheet" href="{% static 'css/bulma.css' %}">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-</head>
-<body>
-    <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
-        <div class="navbar-brand">
-            <a class="navbar-item py-2" href="/">
-                <span class="navbar-custom-text" style="font-family: 'Kanit', sans-serif;
-                font-weight: 700;
-                font-size: 1.75rem;
-                letter-spacing: -0.5px;
-                text-transform: uppercase;">riopass</span>
-            </a>
-            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-            </a>
-        </div>
+{% extends "base.html" %}
 
-        <div id="navbarBasicExample" class="navbar-menu">
-            <div class="navbar-start">
-                <a class="navbar-item" href="/">
-                    Главная
-                </a>
-                <a class="navbar-item" href="{% url 'tips' %}">
-                    Полезные Советы
-                </a>
-            </div>
-        </div>
-    </nav>
+{% block title %}Полезные Советы{% endblock %}
 
-    <div class="container">
-        <div class="content is-small mt-6 px-3 mx-3">
-            <h1 class="title">Полезные Советы</h1>
-            <div class="columns is-multiline">
-                {% for tip in tips %}
-                    <div class="column is-one-third">
-                        <div class="card">
-                            <div class="card-content">
-                                <p class="title is-4">{{ tip.title }}</p>
-                                <p class="subtitle is-6">Автор: {{ tip.author.username }}</p>
-                                <p class="subtitle is-6">Дата публикации: {{ tip.pub_date|date:"d.m.Y H:i" }}</p>
-                                <div class="content">
-                                    {{ tip.content|safe }}
-                                </div>
-                                {% if tip.external_link %}
-                                    <a href="{{ tip.external_link }}" class="button is-link" target="_blank">Подробнее</a>
-                                {% endif %}
-                            </div>
+{% block content %}
+<section class="tips-section">
+    <div class="content is-small mt-6 px-3 mx-3">
+        <h1 class="title">Полезные Советы</h1>
+        <div class="columns is-multiline">
+            {% for tip in tips %}
+            <div class="column is-one-third">
+                <div class="card">
+                    <div class="card-content">
+                        <p class="title is-4">{{ tip.title }}</p>
+                        <p class="subtitle is-6">Автор: {{ tip.author.username }}</p>
+                        <p class="subtitle is-6">Дата публикации: {{ tip.pub_date|date:"d.m.Y H:i" }}</p>
+                        <div class="content">
+                            {{ tip.content|safe }}
                         </div>
+                        {% if tip.external_link %}
+                            <a href="{{ tip.external_link }}" class="button is-link" target="_blank">Подробнее</a>
+                        {% endif %}
                     </div>
-                {% endfor %}
+                </div>
             </div>
+            {% endfor %}
         </div>
     </div>
-
-    <!-- Улучшенная пагинация -->
     <nav class="pagination is-centered my-6" role="navigation" aria-label="pagination">
         {% if tips.has_previous %}
             <a href="?page=1" class="pagination-previous">Первая</a>
@@ -95,7 +57,5 @@
             {% endfor %}
         </ul>
     </nav>
-
-    {% include 'includes/footer.html' %}
-</body>
-</html>
+</section>
+{% endblock %}

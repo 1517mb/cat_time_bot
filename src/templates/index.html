@@ -7,3 +7,24 @@
     {% include 'generator/password_generator.html' %}
 </div>
 {% endblock %}
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.getElementById('toggle-instruction');
+        const instructionColumn = document.getElementById('instruction-column');
+        
+        instructionColumn.classList.add('is-hidden');
+        toggleButton.querySelector('i').classList.replace('fa-chevron-left', 'fa-chevron-right');
+        
+        toggleButton.addEventListener('click', function() {
+            instructionColumn.classList.toggle('is-hidden');
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-chevron-right');
+            icon.classList.toggle('fa-chevron-left');
+            
+            this.classList.toggle('is-active');
+        });
+    });
+    </script>
+{% endblock %}
