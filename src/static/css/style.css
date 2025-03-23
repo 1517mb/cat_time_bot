@@ -31,10 +31,6 @@ body {
     text-decoration: underline;
 }
 
-.fa-solid {
-    color: white;
-}
-
 #instruction-column {
     transition: all 0.3s ease;
 }
