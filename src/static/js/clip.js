@@ -1,53 +1,53 @@
-function copyToClipboard(elementId) {
-    const inputElement = document.getElementById(elementId);
-    if (!inputElement) {
-        showNotification("Элемент для копирования не найден!");
-        return;
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', async (e) => {
+      if (e.target.closest('.copy-button')) {
+        const button = e.target.closest('.copy-button');
+        const targetId = button.dataset.target;
+        await copyToClipboard(targetId);
+      }
 
-    navigator.clipboard.writeText(inputElement.value).then(function() {
-        showNotification("Пароль скопирован в буфер обмена!");
-    }).catch(function(err) {
-        showNotification("Не удалось скопировать пароль: " + err);
+      if (e.target.classList.contains('delete')) {
+        e.target.closest('.notification').remove();
+      }
     });
-}
-
-function showNotification(message) {
+  });
+  
+  async function copyToClipboard(elementId) {
+    try {
+      const element = document.getElementById(elementId);
+      
+      if (!element) {
+        showNotification("Элемент не найден!", 'is-danger');
+        return;
+      }
+  
+      const textToCopy = element.value 
+        || element.textContent 
+        || element.innerText;
+  
+      await navigator.clipboard.writeText(textToCopy);
+      showNotification("Скопировано в буфер!", 'is-success');
+      
+    } catch (err) {
+      console.error('Ошибка копирования:', err);
+      showNotification("Ошибка копирования", 'is-danger');
+    }
+  }
+  
+  function showNotification(message, type = 'is-success') {
     const notificationContainer = document.getElementById("notification-container");
     if (!notificationContainer) {
-        console.error("Контейнер для уведомлений не найден!");
-        return;
+      console.error('Контейнер для уведомлений не найден');
+      return;
     }
-
-    const notification = document.createElement("div");
-    notification.className = "notification is-success is-light";
+  
+    const notification = document.createElement('div');
+    notification.className = `notification ${type} is-light`;
     notification.innerHTML = `
-        <button class="delete"></button>
-        ${message}
+      <button class="delete"></button>
+      ${message}
     `;
-
+  
     notificationContainer.appendChild(notification);
-
-    // Adding a handler to close the alert
-    const deleteButton = notification.querySelector(".delete");
-    deleteButton.addEventListener("click", () => {
-        notification.parentNode.removeChild(notification);
-    });
-
-    // We delete the notification after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    }, 5000);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    (document.querySelectorAll(".notification .delete") || []).forEach(($delete) => {
-        const $notification = $delete.parentNode;
-
-        $delete.addEventListener("click", () => {
-            $notification.parentNode.removeChild($notification);
-        });
-    });
-});
+    setTimeout(() => notification.remove(), 5000);
+  }
