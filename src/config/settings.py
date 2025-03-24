@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "bot.apps.BotConfig",
     "core.apps.CoreConfig",
     "generator.apps.GeneratorConfig",
+    "content.apps.ContentConfig",
     "import_export",
     "markdownify",
     "markdownx",
