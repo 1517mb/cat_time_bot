@@ -2,51 +2,53 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+from core.constants import ProgramCfg
+
 
 class Program(models.Model):
     name = models.CharField(
-        max_length=200,
-        verbose_name="Название программы"
+        max_length=ProgramCfg.NAME_MAX_LEN,
+        verbose_name=ProgramCfg.NAME_V
     )
     description = models.TextField(
-        verbose_name="Описание"
+        verbose_name=ProgramCfg.DESCRIPTION_V
     )
     external_download_link = models.URLField(
-        verbose_name="Внешняя ссылка",
-        blank=True,
-        null=True
+        verbose_name=ProgramCfg.EXT_DOWNLOAD_V,
+        blank=ProgramCfg.EXT_DOWNLOAD_BLANK,
+        null=ProgramCfg.EXT_DOWNLOAD_NULL
     )
     file = models.FileField(
-        upload_to="programs/%Y/%m/%d/",
-        verbose_name="Файл программы",
-        blank=True,
-        null=True
+        upload_to=ProgramCfg.FILE_UPLOAD_TO,
+        verbose_name=ProgramCfg.FILE_V,
+        blank=ProgramCfg.FILE_BLANK,
+        null=ProgramCfg.FILE_NULL
     )
     downloads = models.PositiveIntegerField(
-        default=0,
-        verbose_name="Скачивания"
+        default=ProgramCfg.DOWNLOADS_DEFAULT,
+        verbose_name=ProgramCfg.DOWNLOADS_V
     )
     rating = models.DecimalField(
         max_digits=3,
         decimal_places=2,
-        default=0.0,
+        default=ProgramCfg.RATING_DEFAULT,
         validators=[
             MinValueValidator(0.0),
             MaxValueValidator(5.0)
         ],
-        verbose_name="Рейтинг"
+        verbose_name=ProgramCfg.RATING_V
     )
     verified = models.BooleanField(
-        default=False,
-        verbose_name="Проверено"
+        default=ProgramCfg.VERIFIED_DEFAULT,
+        verbose_name=ProgramCfg.VERIFIED_V
     )
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Создано"
+        auto_now_add=ProgramCfg.CREATTED_AUTO_NOW_ADD,
+        verbose_name=ProgramCfg.CREATED_V
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Обновлено"
+        auto_now=ProgramCfg.UPDATED_AUTO_NOW,
+        verbose_name=ProgramCfg.UPDATED_V
     )
 
     def clean(self):
@@ -70,6 +72,6 @@ class Program(models.Model):
         return self.name
 
     class Meta:
-        verbose_name = "Программа"
-        verbose_name_plural = "Программы"
-        ordering = ["-created_at"]
+        verbose_name = ProgramCfg.META_NAME
+        verbose_name_plural = ProgramCfg.META_PL_NAME
+        ordering = ProgramCfg.ORDERING
