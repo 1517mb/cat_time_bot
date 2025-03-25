@@ -72,3 +72,29 @@ class QuoteCfg:
     MAX_LEN_TAGS = 200
     BLANK_TAGS = True
     IS_ACTIVE_DEFAULT = True
+
+
+class ProgramCfg:
+    NAME_V = "Название программы"
+    NAME_MAX_LEN = 200
+    DESCRIPTION_V = "Описание"
+    EXT_DOWNLOAD_V = "Ссылка на скачивание"
+    EXT_DOWNLOAD_BLANK = True
+    EXT_DOWNLOAD_NULL = True
+    FILE_V = "Файл с программой"
+    FILE_UPLOAD_TO = "programs/%Y/%m/%d/"
+    FILE_BLANK = True
+    FILE_NULL = True
+    META_NAME = "Программа"
+    META_PL_NAME = "Программы"
+    DOWNLOADS_V = "Количество скачиваний"
+    DOWNLOADS_DEFAULT = 0
+    RATING_V = "Рейтинг"
+    RATING_DEFAULT = 0.0
+    VERIFIED_V = "Проверено"
+    VERIFIED_DEFAULT = False
+    CREATED_V = "Дата создания"
+    CREATTED_AUTO_NOW_ADD = True
+    UPDATED_V = "Дата обновления"
+    UPDATED_AUTO_NOW = True
+    ORDERING = ("-created_at",)
