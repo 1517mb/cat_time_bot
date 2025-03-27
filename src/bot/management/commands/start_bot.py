@@ -33,7 +33,11 @@ from telegram.ext import (
     filters,
 )
 
-from bot.management.core.bot_constants import BotAchievementsCfg, SiteCfg
+from bot.management.core.bot_constants import (
+    BotAchievementsCfg,
+    BotMessages,
+    SiteCfg,
+)
 from bot.management.core.statistics import (
     get_daily_statistics_message,
     update_daily_statistics,
@@ -747,13 +751,7 @@ async def edit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     Устаревшая команда для редактирования времени.
     Информирует пользователя о новых командах.
     """
-    message = (
-        "ℹ️ *Команда /edit устарела в версии 0.5.*\n\n"
-        "Используйте вместо этого:\n"
-        "/edit\\_start <ЧЧ:ММ> - Изменить время прибытия "
-        "в текущую организацию.\n"
-        "/edit\\_end <ЧЧ:ММ> - Изменить время убытия из текущей организации."
-    )
+    message = BotMessages.EDIT_MSG
     await update.message.reply_text(message, parse_mode="Markdown")
 
 
