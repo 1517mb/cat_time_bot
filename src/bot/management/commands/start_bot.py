@@ -4,6 +4,7 @@ import random
 import re
 import traceback
 from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 from difflib import get_close_matches
 from zoneinfo import ZoneInfo
 
@@ -698,8 +699,10 @@ async def _validate_and_update_time(
 
     current_tz = timezone.get_current_timezone()
     now = timezone.localtime(timezone.now())
-    new_datetime = current_tz.localize(
-        datetime.combine(now.date(), new_time)).astimezone(timezone.utc)
+    new_datetime = datetime.combine(now.date(),
+                                    new_time,
+                                    tzinfo=current_tz
+                                    ).astimezone(dt_timezone.utc)
 
     if time_field == "leave_time" and new_datetime < active_activity.join_time:
         await update.message.reply_text(
