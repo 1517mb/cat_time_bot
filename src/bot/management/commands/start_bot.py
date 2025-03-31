@@ -9,6 +9,7 @@ from difflib import get_close_matches
 from zoneinfo import ZoneInfo
 
 import aiohttp
+import pytz
 import telegram
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -42,6 +43,7 @@ from bot.management.core.statistics import (
     get_daily_statistics_message,
     update_daily_statistics,
 )
+from bot.management.core.utils import is_holiday
 from bot.models import Achievement, Company, DailytTips, UserActivity
 
 load_dotenv()
@@ -994,12 +996,21 @@ async def send_daily_statistics_to_group(bot):
 
     :param bot: Экземпляр Telegram-бота, использованный для отправки сообщения.
     """
+    try:
+        tz = pytz.timezone("Europe/Moscow")
+        now = datetime.now(tz)
+        if await is_holiday(now.date()):
+            logging.info(f"Пропуск статистики {now.date()} - "
+                         "праздник/выходной")
+            return
 
-    message = await get_daily_statistics_message()
-    group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
-    await bot.send_message(chat_id=group_chat_id,
-                           text=message,
-                           parse_mode="Markdown")
+        message = await get_daily_statistics_message()
+        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        await bot.send_message(chat_id=group_chat_id,
+                               text=message,
+                               parse_mode="Markdown")
+    except Exception as e:
+        logging.error(f"Ошибка отправки статистики: {str(e)}")
 
 
 async def start_weather(update: Update, context: ContextTypes.DEFAULT_TYPE):
