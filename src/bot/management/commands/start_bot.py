@@ -965,6 +965,43 @@ async def remind_to_leave(bot):
             f"Критическая ошибка в remind_to_leave: {e}", exc_info=True)
 
 
+async def check_and_send_transport_reminder(bot):
+    """Проверяет и отправляет напоминание о транспортных расходах за месяц."""
+    try:
+        today = timezone.now().date()
+        if today.month == 12:
+            last_day = today.replace(
+                year=today.year + 1, month=1, day=1) - timedelta(days=1)
+        else:
+            last_day = today.replace(
+                month=today.month + 1, day=1) - timedelta(days=1)
+
+        days_left = (last_day - today).days
+
+        if days_left in [7, 4, 2]:
+            group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+            if not group_chat_id:
+                logging.error("TELEGRAM_GROUP_CHAT_ID не установлен в .env")
+                return
+            messages = [
+                (f"⏰ *Важное напоминание!* До конца месяца {days_left} дней\n"
+                 "🚖 Пора внести транспортные расходы и данные о проездных!"),
+                (f"📅 Внимание! Осталось {days_left} дней до закрытия месяца\n"
+                 "🚕 Не забудьте зафиксировать транспортные затраты!"),
+                (f"🔔 Напоминание: {days_left} дня до конца месяца\n"
+                 "🚙 Проверьте учет расходов на транспорт!")
+            ]
+            await bot.send_message(
+                chat_id=group_chat_id,
+                text=random.choice(messages),
+                parse_mode="Markdown"
+            )
+    except telegram.error.BadRequest as e:
+        logging.error(f"Ошибка отправки сообщения: {str(e)}")
+    except Exception as e:
+        logging.error(f"Неожиданная ошибка: {str(e)}", exc_info=True)
+
+
 async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет случайное фото котика."""
     url = "https://api.thecatapi.com/v1/images/search"
@@ -1115,10 +1152,11 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Некорректное время")
         return
 
-    try:
-        scheduler.remove_job("reminder_job")
-    except JobLookupError:
-        pass
+    for job_id in ["reminder_job", "transport_reminder"]:
+        try:
+            scheduler.remove_job(job_id)
+        except JobLookupError:
+            pass
 
     scheduler.add_job(
         remind_to_leave,
@@ -1129,12 +1167,27 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         id="reminder_job"
     )
 
+    scheduler.add_job(
+        check_and_send_transport_reminder,
+        trigger="cron",
+        hour=9,
+        minute=0,
+        args=[context.bot],
+        id="transport_reminder",
+        timezone=ZoneInfo("Europe/Moscow"))
+
     if not scheduler.running:
         scheduler.start()
 
-    await update.message.reply_text(
-        f"🔔 Напоминания будут приходить в {hour:02}:{minute:02}"
+    response_message = (
+        "🔔 Напоминания успешно установлены:\n\n"
+        "• Проверка активности в организациях — "
+        f"ежедневно в {hour:02}:{minute:02}\n"
+        "• Транспортные расходы — ежедневно в 09:00 "
+        "(только за 7/4/1 дней до конца месяца)"
     )
+
+    await update.message.reply_text(response_message)
 
 
 async def send_daily_tip(bot):
