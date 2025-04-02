@@ -10,6 +10,7 @@ from bot.models import (
     DailyStatistics,
     DailytTips,
     Quote,
+    Tag,
     UserActivity,
 )
 from bot.resources import UserActivityResource
@@ -59,10 +60,17 @@ class UserActivityAdmin(ExportActionModelAdmin):
     mark_as_left.short_description = "Пометить как покинувших организацию"
 
 
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug")
+    prepopulated_fields = {"slug": ("name",)}
+
+
 @admin.register(DailytTips)
 class DailytTipsAdmin(MarkdownxModelAdmin):
     list_display = ("id", "title", "author",
                     "pub_date", "is_published", "rating", "views_count")
+    filter_horizontal = ("tags",)
     search_fields = ("title", "content")
     list_filter = ("author", "pub_date", "is_published")
     date_hierarchy = "pub_date"
