@@ -38,6 +38,9 @@ class DailytTipsCfg:
     VIEWS_DEFAULT = 0
     META_NAME = "Совет дня"
     META_PL_NAME = "Советы дня"
+    TAGS_V = "Теги"
+    TAGS_BLANK = True
+    TAGS_RELATED_NAME = "dailytips"
 
 
 class AchievementCfg:
@@ -98,3 +101,13 @@ class ProgramCfg:
     UPDATED_V = "Дата обновления"
     UPDATED_AUTO_NOW = True
     ORDERING = ("-created_at",)
+
+
+class TagCfg:
+    NAME_V = "Название тега"
+    SLUG_V = "URL-адрес"
+    META_NAME = "Тег"
+    META_PL_NAME = "Теги"
+    MAX_LEN_NAME = 100
+    MAX_LEN_SLUG = 100
+    UNIQUE_SLUG = True
