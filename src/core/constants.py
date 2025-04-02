@@ -1,4 +1,4 @@
-VERSION = "0.5.1 alpha"
+VERSION = "0.5.2 alpha"
 SITE_HEADER = f"Cat-Time-Bot {VERSION}"
 SITE_TITLE = "Панель управления"
 BOT_APP_VERBOSE = "Данные приложения Cat-Time-Bot"

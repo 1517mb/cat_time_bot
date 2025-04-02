@@ -1,6 +1,6 @@
 services:
   web:
-    container_name: catbot_0.5.1a
+    container_name: catbot_0.5.2a
     build: .
     restart: always
     command: >
