@@ -2,6 +2,7 @@ from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 from markdownx.models import MarkdownxField
 
 from core.constants import (
@@ -11,6 +12,7 @@ from core.constants import (
     DailyStatisticsCfg,
     DailytTipsCfg,
     QuoteCfg,
+    TagCfg,
     UserActivityCfg,
 )
 
@@ -73,6 +75,32 @@ class UserActivity(models.Model):
         verbose_name_plural = UserActivityCfg.SPENT_TIME_PLURAL_V
 
 
+class Tag(models.Model):
+    name = models.CharField(
+        verbose_name=TagCfg.NAME_V,
+        max_length=TagCfg.MAX_LEN_NAME,
+        unique=True
+    )
+    slug = models.SlugField(
+        verbose_name=TagCfg.SLUG_V,
+        max_length=TagCfg.MAX_LEN_SLUG,
+        unique=TagCfg.UNIQUE_SLUG,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = TagCfg.META_NAME
+        verbose_name_plural = TagCfg.META_PL_NAME
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
 class DailytTips(models.Model):
     title = models.CharField(
         max_length=MAX_LEN,
@@ -107,6 +135,12 @@ class DailytTips(models.Model):
     views_count = models.PositiveIntegerField(
         verbose_name=DailytTipsCfg.VIEWS_V,
         default=DailytTipsCfg.VIEWS_DEFAULT,
+    )
+    tags = models.ManyToManyField(
+        Tag,
+        verbose_name=DailytTipsCfg.TAGS_V,
+        blank=DailytTipsCfg.TAGS_BLANK,
+        related_name=DailytTipsCfg.TAGS_RELATED_NAME
     )
 
     class Meta:
@@ -195,7 +229,7 @@ class Quote(models.Model):
     tags = models.CharField(
         verbose_name=QuoteCfg.TAGS_V,
         max_length=QuoteCfg.MAX_LEN_TAGS,
-        blank=QuoteCfg.BLANK_TAGS)
+        blank=QuoteCfg.BLANK_TAGS)  # ???
     is_active = models.BooleanField(
         verbose_name=QuoteCfg.IS_ACTIVE_V,
         default=QuoteCfg.IS_ACTIVE_DEFAULT
