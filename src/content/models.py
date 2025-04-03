@@ -1,8 +1,68 @@
-from django.db import models
+from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.utils import timezone
 
-from core.constants import ProgramCfg
+from core.constants import NewsCfg, ProgramCfg
+
+
+class News(models.Model):
+    title = models.CharField(
+        max_length=NewsCfg.TITLE_MAX_LEN,
+        verbose_name=NewsCfg.TITLE_V
+    )
+    content = models.TextField(
+        verbose_name=NewsCfg.CONTENT_V
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name=NewsCfg.AUTHOR_RELATED,
+        verbose_name=NewsCfg.AUTHOR_V
+    )
+    slug = models.SlugField(
+        max_length=NewsCfg.SLUG_MAX_LEN,
+        unique=True,
+        verbose_name=NewsCfg.SLUG_V
+    )
+    image = models.ImageField(
+        upload_to=NewsCfg.IMAGE_UPLOAD_TO,
+        blank=NewsCfg.IMAGE_BLANK,
+        null=NewsCfg.IMAGE_NULL,
+        verbose_name=NewsCfg.IMAGE_V
+    )
+    is_published = models.BooleanField(
+        default=NewsCfg.IS_PUBLISHED_DEFAULT,
+        verbose_name=NewsCfg.IS_PUBLISHED_V
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=NewsCfg.CREATED_AUTO_NOW_ADD,
+        verbose_name=NewsCfg.CREATED_V
+    )
+    updated_at = models.DateTimeField(
+        auto_now=NewsCfg.UPDATED_AUTO_NOW,
+        verbose_name=NewsCfg.UPDATED_V
+    )
+
+    def clean(self):
+        """Проверка даты публикации"""
+        if self.created_at and self.created_at > timezone.now():
+            raise ValidationError("Дата публикации не может быть в будущем")
+
+    def save(self, *args, **kwargs):
+        """Принудительная валидация при сохранении"""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = NewsCfg.META_NAME
+        verbose_name_plural = NewsCfg.META_PL_NAME
+        ordering = NewsCfg.ORDERING
+        indexes = NewsCfg.INDEXES
 
 
 class Program(models.Model):
