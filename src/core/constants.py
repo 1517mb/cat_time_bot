@@ -1,3 +1,5 @@
+from django.db.models import Index
+
 VERSION = "0.5.2 alpha"
 SITE_HEADER = f"Cat-Time-Bot {VERSION}"
 SITE_TITLE = "Панель управления"
@@ -111,3 +113,27 @@ class TagCfg:
     MAX_LEN_NAME = 100
     MAX_LEN_SLUG = 100
     UNIQUE_SLUG = True
+
+
+class NewsCfg:
+    TITLE_MAX_LEN = 255
+    TITLE_V = "Заголовок"
+    CONTENT_V = "Содержание"
+    AUTHOR_V = "Автор"
+    AUTHOR_RELATED = "news_posts"
+    SLUG_MAX_LEN = 255
+    SLUG_V = "URL-адрес"
+    IMAGE_UPLOAD_TO = "news/%Y/%m/%d/"
+    IMAGE_BLANK = True
+    IMAGE_NULL = True
+    IMAGE_V = "Изображение"
+    IS_PUBLISHED_DEFAULT = False
+    IS_PUBLISHED_V = "Опубликовано"
+    CREATED_AUTO_NOW_ADD = True
+    CREATED_V = "Дата создания"
+    UPDATED_AUTO_NOW = True
+    UPDATED_V = "Дата обновления"
+    META_NAME = "Новость"
+    META_PL_NAME = "Новости"
+    ORDERING = ["-created_at"]
+    INDEXES = [Index(fields=["-created_at", "is_published"])]
