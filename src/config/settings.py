@@ -113,6 +113,21 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.codehilite",
 ]
 
+MARKDOWNIFY = {
+    "default": {
+        "WHITELIST_TAGS": [
+            "h1", "h2", "h3", "h4", "h5", "h6",
+            "a", "p", "ul", "ol", "li", "strong", "em",
+            "code", "pre", "blockquote", "img", "table",
+            "thead", "tbody", "tr", "th", "td", "br", "hr"
+        ],
+        "MARKDOWN_EXTENSIONS": [
+            "markdown.extensions.extra",
+            "markdown.extensions.sane_lists"
+        ]
+    }
+}
+
 MARKDOWNX_EDITOR_RESIZABLE = True
 MARKDOWNX_UPLOAD_MAX_SIZE = 50 * 1024 * 1024
 
