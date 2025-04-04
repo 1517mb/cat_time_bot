@@ -1,31 +1,49 @@
 {% extends "base.html" %}
+{% load markdownify %}
 
 {% block title %}Полезные Советы{% endblock %}
 
 {% block content %}
-<section class="tips-section">
-    <div class="content is-small mt-6 px-3 mx-3">
+<section class="section">
+    <div class="container">
         <h1 class="title">Полезные Советы</h1>
+        
         <div class="columns is-multiline">
             {% for tip in tips %}
             <div class="column is-one-third">
                 <div class="card">
                     <div class="card-content">
                         <p class="title is-4">{{ tip.title }}</p>
-                        <p class="subtitle is-6">Автор: {{ tip.author.username }}</p>
-                        <p class="subtitle is-6">Дата публикации: {{ tip.pub_date|date:"d.m.Y H:i" }}</p>
+                        <p class="subtitle is-6 has-text-grey">
+                            <span class="icon-text">
+                                <span class="icon">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <span>{{ tip.author.username }}</span>
+                            </span>
+                        </p>
+                        
                         <div class="content">
-                            {{ tip.content|safe }}
+                            <div class="markdown-content">
+                                {{ tip.content|markdownify }}
+                            </div>
                         </div>
+
                         {% if tip.external_link %}
-                            <a href="{{ tip.external_link }}" class="button is-primary" target="_blank">Подробнее</a>
+                        <div class="mt-4">
+                            <a href="{{ tip.external_link }}" class="button is-primary is-outlined">
+                                <span class="icon">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </span>
+                                <span>Подробнее</span>
+                            </a>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
-    </div>
     <nav class="pagination is-centered my-6" role="navigation" aria-label="pagination">
         {% if tips.has_previous %}
             <a href="?page=1" class="pagination-previous">Первая</a>
