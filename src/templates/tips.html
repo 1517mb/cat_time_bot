@@ -14,14 +14,23 @@
                 <div class="card">
                     <div class="card-content">
                         <p class="title is-4">{{ tip.title }}</p>
-                        <p class="subtitle is-6 has-text-grey">
-                            <span class="icon-text">
+                        
+                        <div class="subtitle is-6 has-text-grey mb-4">
+
+                            <div class="icon-text mb-2">
                                 <span class="icon">
                                     <i class="fas fa-user"></i>
                                 </span>
                                 <span>{{ tip.author.username }}</span>
-                            </span>
-                        </p>
+                            </div>
+
+                            <div class="icon-text">
+                                <span class="icon">
+                                    <i class="far fa-calendar-alt"></i>
+                                </span>
+                                <span>{{ tip.pub_date|date:"d.m.Y H:i" }}</span>
+                            </div>
+                        </div>
                         
                         <div class="content">
                             <div class="markdown-content">
