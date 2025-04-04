@@ -41,3 +41,54 @@ body {
     left: 10px;
     z-index: 10;
 }
+
+.markdown-content {
+    line-height: 1.625;
+}
+
+/* Заголовки */
+.markdown-content h1 { font-size: 2em; }
+.markdown-content h2 { font-size: 1.75em; }
+.markdown-content h3 { font-size: 1.5em; }
+
+/* Списки */
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 1.5em;
+}
+
+/* Код */
+.markdown-content code {
+    background-color: var(--bulma-code-background);
+    color: var(--bulma-code-color);
+    padding: 0.25em 0.5em;
+    border-radius: var(--bulma-radius);
+}
+
+.markdown-content pre {
+    background-color: var(--bulma-pre-background);
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+    border-radius: var(--bulma-radius);
+}
+
+/* Цитаты */
+.markdown-content blockquote {
+    border-left: 3px solid var(--bulma-border);
+    padding: 0.75rem 1.5rem;
+    margin: 1rem 0;
+    background-color: var(--bulma-background);
+}
+
+/* Таблицы */
+.markdown-content table {
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid var(--bulma-border);
+    padding: 0.5em 0.75em;
+}
