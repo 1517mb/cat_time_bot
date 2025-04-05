@@ -1,5 +1,5 @@
 class SiteCfg:
-    SITE = "https://riopass.ddns.net/"
+    SITE = "https://www.riopass.ru/"
     MSG_SITE = (
         "🌐 *Мой сайт для системного администрирования* 🌐\n\n"
         "🖥 Название: Riopass\n"
