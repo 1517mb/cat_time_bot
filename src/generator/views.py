@@ -84,7 +84,7 @@ def daily_tips_view(request):
     return render(request, "tips.html", context)
 
 
-def daily_tip_detail(request, pk):
+def daily_tip_detail_view(request, pk):
     tip = get_object_or_404(DailytTips, pk=pk)
     tip.views_count += 1
     tip.save()
