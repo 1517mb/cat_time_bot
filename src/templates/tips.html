@@ -7,7 +7,6 @@
 <section class="section">
     <div class="container">
         <h1 class="title">Полезные Советы</h1>
-        
         <div class="columns is-multiline">
             {% for tip in tips %}
             <div class="column is-one-third">
@@ -16,14 +15,12 @@
                         <p class="title is-4">{{ tip.title }}</p>
                         
                         <div class="subtitle is-6 has-text-grey mb-4">
-
                             <div class="icon-text mb-2">
                                 <span class="icon">
                                     <i class="fas fa-user"></i>
                                 </span>
                                 <span>{{ tip.author.username }}</span>
                             </div>
-
                             <div class="icon-text">
                                 <span class="icon">
                                     <i class="far fa-calendar-alt"></i>
@@ -34,20 +31,26 @@
                         
                         <div class="content">
                             <div class="markdown-content">
-                                {{ tip.content|markdownify }}
+                                {{ tip.content|markdownify|truncatechars_html:150 }}
                             </div>
                         </div>
 
-                        {% if tip.external_link %}
-                        <div class="mt-4">
+                        <div class="mt-4 buttons are-small">
+                            <a href="{% url 'tip_detail' tip.pk %}" class="button is-primary">
+                                <span class="icon">
+                                    <i class="fas fa-book-open"></i>
+                                </span>
+                                <span>Читать</span>
+                            </a>
+                            {% if tip.external_link %}
                             <a href="{{ tip.external_link }}" class="button is-primary is-outlined">
                                 <span class="icon">
                                     <i class="fas fa-external-link-alt"></i>
                                 </span>
                                 <span>Подробнее</span>
                             </a>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
