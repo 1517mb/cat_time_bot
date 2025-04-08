@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load markdownify %}
+
+{% block title %}{{ tip.title }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="card">
+            <div class="card-content">
+                <h1 class="title">{{ tip.title }}</h1>
+                <div class="content markdown-content">
+                    {{ tip.content|markdownify }}
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'tips' %}" class="button">
+                        <span class="icon">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                        <span>Назад к списку</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
