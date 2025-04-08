@@ -4,7 +4,7 @@ import string
 
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.template import loader
 from django.views.decorators.http import require_POST
 
@@ -82,3 +82,10 @@ def daily_tips_view(request):
         "current_page": current_page
     }
     return render(request, "tips.html", context)
+
+
+def daily_tip_detail(request, pk):
+    tip = get_object_or_404(DailytTips, pk=pk)
+    tip.views_count += 1
+    tip.save()
+    return render(request, "tip_detail.html", {"tip": tip})
