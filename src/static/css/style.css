@@ -92,3 +92,13 @@ body {
     border: 1px solid var(--bulma-border);
     padding: 0.5em 0.75em;
 }
+
+.icon-text .icon {
+    min-width: 1.5em;
+    justify-content: flex-start;
+}
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+}
