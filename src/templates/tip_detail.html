@@ -9,10 +9,49 @@
         <div class="card">
             <div class="card-content">
                 <h1 class="title">{{ tip.title }}</h1>
+                
+
+                <div class="subtitle is-6 has-text-grey mb-5">
+                    <div class="icon-text mb-2">
+                        <span class="icon">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <span>{{ tip.author.username }}</span>
+                    </div>
+                    
+                    <div class="icon-text mb-2">
+                        <span class="icon">
+                            <i class="far fa-calendar-alt"></i>
+                        </span>
+                        <span>{{ tip.pub_date|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    
+                    <div class="icon-text">
+                        <span class="icon">
+                            <i class="fas fa-eye"></i>
+                        </span>
+                        <span>{{ tip.views_count }} просмотров</span>
+                    </div>
+                </div>
+
+
                 <div class="content markdown-content">
                     {{ tip.content|markdownify }}
                 </div>
-                <div class="mt-4">
+
+                <div class="mt-4 buttons">
+                    {% if tip.external_link %}
+                    <a href="{{ tip.external_link }}" 
+                       class="button is-primary is-outlined"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        <span class="icon">
+                            <i class="fas fa-external-link-alt"></i>
+                        </span>
+                        <span>Источник</span>
+                    </a>
+                    {% endif %}
+                    
                     <a href="{% url 'tips' %}" class="button">
                         <span class="icon">
                             <i class="fas fa-arrow-left"></i>
