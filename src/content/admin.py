@@ -1,7 +1,7 @@
-from django_ckeditor_5.widgets import CKEditor5Widget
 from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
+from django_ckeditor_5.widgets import CKEditor5Widget
 
 from .models import News, Program
 

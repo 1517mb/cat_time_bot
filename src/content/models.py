@@ -1,9 +1,9 @@
-from django_ckeditor_5.fields import CKEditor5Field
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
+from django_ckeditor_5.fields import CKEditor5Field
 
 from core.constants import NewsCfg, ProgramCfg
 
