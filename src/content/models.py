@@ -1,3 +1,4 @@
+from django_ckeditor_5.fields import CKEditor5Field
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -12,8 +13,9 @@ class News(models.Model):
         max_length=NewsCfg.TITLE_MAX_LEN,
         verbose_name=NewsCfg.TITLE_V
     )
-    content = models.TextField(
-        verbose_name=NewsCfg.CONTENT_V
+    content = CKEditor5Field(
+        verbose_name=NewsCfg.CONTENT_V,
+        config_name="extends"
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -70,8 +72,9 @@ class Program(models.Model):
         max_length=ProgramCfg.NAME_MAX_LEN,
         verbose_name=ProgramCfg.NAME_V
     )
-    description = models.TextField(
-        verbose_name=ProgramCfg.DESCRIPTION_V
+    description = CKEditor5Field(
+        verbose_name=ProgramCfg.DESCRIPTION_V,
+        config_name="default"
     )
     external_download_link = models.URLField(
         verbose_name=ProgramCfg.EXT_DOWNLOAD_V,
