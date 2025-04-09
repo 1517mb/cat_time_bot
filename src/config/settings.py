@@ -35,8 +35,7 @@ INSTALLED_APPS = [
     "import_export",
     "markdownify",
     "markdownx",
-    "ckeditor",
-    "ckeditor_uploader",
+    "django_ckeditor_5",
 ]
 
 MIDDLEWARE = [
@@ -107,8 +106,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
-CKEDITOR_UPLOAD_PATH = "ckeditor_uploads/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -211,6 +208,57 @@ LOGGING = {
             "propagate": False,
         },
     },
+}
+
+CKEDITOR_5_CUSTOM_CSS = "css/ckeditor5-dark.css"
+CKEDITOR_5_FILE_STORAGE = "django_ckeditor_5.storage.Ckeditor5FileSystemStorage"
+CKEDITOR_5_ALLOW_ALL_FILE_TYPES = True
+
+CKEDITOR_5_CONFIGS = {
+    "default": {
+        "toolbar": [
+            "heading", "|",
+            "bold", "italic", "link", "bulletedList", "numberedList", "blockQuote",
+            "imageUpload", "undo", "redo"
+        ],
+        "language": "ru",
+        "mediaEmbed": {"previewsInData": "true"},
+    },
+    "extends": {
+        "blockToolbar": [
+            "paragraph", "heading1", "heading2", "heading3",
+            "|", "bulletedList", "numberedList",
+            "|", "blockQuote", "imageUpload"
+        ],
+        "language": "ru",
+        "mediaEmbed": {"previewsInData": "true"},
+        "toolbar": [
+            "heading", "|",
+            "outdent", "indent", "|",
+            "bold", "italic", "link", "underline", "strikethrough", "code",
+            "subscript", "superscript", "highlight", "|",
+            "codeBlock", "sourceEditing", "insertImage", "|",
+            "bulletedList", "numberedList", "todoList", "|",
+            "blockQuote", "imageUpload", "|",
+            "fontSize", "fontFamily", "fontColor", "fontBackgroundColor", "|",
+            "alignment", "|",
+            "undo", "redo"
+        ],
+        "image": {
+            "toolbar": ["imageTextAlternative", "|", "imageStyle:alignLeft", "imageStyle:alignRight", "imageStyle:alignCenter", "imageStyle:side", "|"],
+            "styles": ["full", "side", "alignLeft", "alignRight", "alignCenter"],
+        },
+        "table": {
+            "contentToolbar": ["tableColumn", "tableRow", "mergeTableCells"]
+        },
+        "heading": {
+            "options": [
+                {"model": "paragraph", "title": "Paragraph", "class": "ck-heading_paragraph"},
+                {"model": "heading1", "view": "h1", "title": "Heading 1", "class": "ck-heading_heading1"},
+                {"model": "heading2", "view": "h2", "title": "Heading 2", "class": "ck-heading_heading2"}
+            ]
+        }
+    }
 }
 
 if DEBUG:
