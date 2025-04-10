@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 @never_cache
 @require_http_methods(["GET", "HEAD"])
 def custom_403(request, exception=None):
-    """Handler for 403 Forbidden errors"""
+    """Обработчик ошибок 403 Forbidden"""
     return render(
         request,
         "errors/403.html",
@@ -22,7 +22,7 @@ def custom_403(request, exception=None):
 @never_cache
 @require_http_methods(["GET", "HEAD"])
 def custom_404(request, exception=None):
-    """Handler for 404 Not Found errors"""
+    """Обработчик ошибок 404 Not Found"""
     return render(
         request,
         "errors/404.html",
@@ -33,7 +33,7 @@ def custom_404(request, exception=None):
 @never_cache
 @require_http_methods(["GET", "HEAD"])
 def custom_500(request):
-    """Handler for 500 Internal Server Error"""
+    """Обработчик ошибок 500 Internal Server Error"""
     return render(
         request,
         "errors/500.html",
