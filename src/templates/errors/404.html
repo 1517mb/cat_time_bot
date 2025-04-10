@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}404 - Страница потерялась в космосе 🚀{% endblock %}
+
+{% block extra_head %}
+<style>
+    .astronaut {
+        animation: float 3s ease-in-out infinite;
+        max-width: 192px;
+        height: auto;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero is-fullheight has-background-black">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <figure class="image mx-auto">
+                        <img src="{% static 'images/astronaut.svg' %}" class="astronaut" alt="Lost astronaut">
+                    </figure>
+                    
+                    <h1 class="title is-1 has-text-white mt-5">
+                        404 | Страница в другом измерении
+                    </h1>
+                    
+                    <div class="block">
+                        <p class="subtitle is-4 has-text-light">
+                            Кажется, наш космонавт заблудился среди звёзд...
+                        </p>
+                    </div>
+
+                    <div class="buttons is-centered">
+                        <a href="/" class="button is-primary is-rounded is-large">
+                            <span class="icon">
+                                <i class="fas fa-rocket"></i>
+                            </span>
+                            <span>Вернуться на Землю</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

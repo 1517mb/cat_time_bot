@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}500 - Критическая ошибка сервера 💥{% endblock %}
+
+{% block extra_head %}
+<style>
+    .explosion {
+        animation: pulse 1.5s infinite;
+        max-width: 192px;
+        height: auto;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero is-fullheight">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <figure class="image mx-auto explosion">
+                        <img src="{% static 'images/explosion.png' %}" alt="Server explosion">
+                    </figure>
+                    
+                    <h1 class="title is-1 has-text-white mt-5">
+                        500 | Серверный апокалипсис
+                    </h1>
+                    
+                    <div class="block">
+                        <p class="subtitle is-4 has-text-light">
+                            Наши инженеры-обезьяны уже работают над проблемой!
+                        </p>
+                    </div>
+
+                    <div class="buttons is-centered">
+                        <a href="/" class="button is-warning is-rounded is-large">
+                            <span class="icon">
+                                <i class="fas fa-fire-extinguisher"></i>
+                            </span>
+                            <span>Потушить пожар</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
