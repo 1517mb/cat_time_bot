@@ -108,7 +108,7 @@ class ProgramCfg:
 
 class TagCfg:
     NAME_V = "Название тега"
-    SLUG_V = "URL-адрес"
+    SLUG_V = "URL-slug"
     META_NAME = "Тег"
     META_PL_NAME = "Теги"
     MAX_LEN_NAME = 100
