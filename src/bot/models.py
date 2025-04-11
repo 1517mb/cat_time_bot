@@ -1,8 +1,10 @@
+import itertools
+
 from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User
+from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils import timezone
-from django.utils.text import slugify
 from markdownx.models import MarkdownxField
 
 from core.constants import (
@@ -15,6 +17,7 @@ from core.constants import (
     TagCfg,
     UserActivityCfg,
 )
+from core.utils import cyrillic_slugify
 
 
 class Company(models.Model):
@@ -79,7 +82,11 @@ class Tag(models.Model):
     name = models.CharField(
         verbose_name=TagCfg.NAME_V,
         max_length=TagCfg.MAX_LEN_NAME,
-        unique=True
+        unique=True,
+        validators=[
+            MinLengthValidator(
+                limit_value=3,
+                message="Название тега должно содержать минимум 3 символа")]
     )
     slug = models.SlugField(
         verbose_name=TagCfg.SLUG_V,
@@ -96,9 +103,26 @@ class Tag(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
+        if self._should_regenerate_slug():
+            self.slug = self._generate_unique_slug(cyrillic_slugify(self.name))
         super().save(*args, **kwargs)
+
+    def _should_regenerate_slug(self):
+        return not self.slug or (
+            self.pk and self.name != self.__class__.objects.get(
+                pk=self.pk).name)
+
+    def _generate_unique_slug(self, base_slug):
+        for i in itertools.count(1):
+            slug_candidate = (base_slug if i == 1 else
+                              f"{base_slug}-{i - 1}")
+            if not (self.__class__.objects
+                    .filter(slug=slug_candidate)
+                    .exclude(pk=self.pk).exists()):
+                return slug_candidate[:TagCfg.MAX_LEN_SLUG]
+            if i > 100:
+                raise ValueError(
+                    "Генерация пули завершилась неудачей после 100 попыток")
 
 
 class DailytTips(models.Model):
