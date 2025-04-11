@@ -1200,6 +1200,8 @@ async def send_daily_tip(bot):
         if unpublished_tip:
             tip = unpublished_tip
             tip.is_published = True
+            tip.pub_date = timezone.now()
+            await sync_to_async(tip.save)()
             message_prefix = "🌟 *Новый совет дня!*\n\n"
         else:
             tip = await sync_to_async(DailytTips.objects.filter(
@@ -1216,6 +1218,12 @@ async def send_daily_tip(bot):
             f"📌 *{tip.title}*\n\n"
             f"{tip.content}\n\n"
         )
+
+        tags = await sync_to_async(list)(tip.tags.all())
+        if tags:
+            tag_list = " ".join(
+                [f"#{tag.slug.replace('-', r'\_')}" for tag in tags])
+            message += f"🏷 *Теги:* {tag_list}\n\n"
 
         if tip.external_link:
             message += f"🔗 [Подробнее]({tip.external_link})"
