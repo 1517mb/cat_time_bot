@@ -4,20 +4,20 @@ from .models import UserActivity
 
 
 class UserActivityResource(resources.ModelResource):
-    id = fields.Field(attribute="id",
-                      column_name="№")
-    user_id = fields.Field(attribute="user_id",
-                           column_name="ID пользователя")
-    username = fields.Field(attribute="username",
-                            column_name="Имя пользователя")
-    сompany = fields.Field(attribute="company",
-                           column_name="Компания")
-    join_time = fields.Field(attribute="join_time",
-                             column_name="Время прибытия")
-    leave_time = fields.Field(attribute="leave_time",
-                              column_name="Время ухода")
-    time_difference = fields.Field(attribute="time_difference",
-                                   column_name="Общее время")
+    id = fields.Field(
+        attribute="id", column_name="№")
+    user_id = fields.Field(
+        attribute="user_id", column_name="ID пользователя")
+    username = fields.Field(
+        attribute="username", column_name="Имя пользователя")
+    company = fields.Field(
+        attribute="company__name", column_name="Компания")
+    join_time = fields.Field(
+        attribute="join_time", column_name="Время прибытия")
+    leave_time = fields.Field(
+        attribute="leave_time", column_name="Время ухода")
+    time_difference = fields.Field(
+        attribute="time_difference", column_name="Общее время")
 
     class Meta:
         model = UserActivity
@@ -28,6 +28,7 @@ class UserActivityResource(resources.ModelResource):
                   "join_time",
                   "leave_time",
                   "time_difference")
+        export_order = fields
 
     def dehydrate_company(self, obj):
         """Возвращаем название компании"""
