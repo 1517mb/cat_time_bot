@@ -4,6 +4,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from content.views import robots_txt
+
 handler403 = "content.views.custom_403" # noqa
 handler404 = "content.views.custom_404" # noqa
 handler500 = "content.views.custom_500" # noqa
@@ -13,6 +15,7 @@ urlpatterns = [
     path("markdownx/", include("markdownx.urls")),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
     path("", include("generator.urls")),
+    path("robots.txt", robots_txt),
 ]
 
 

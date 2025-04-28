@@ -1,9 +1,10 @@
+import logging
+from http import HTTPStatus
+
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
-from http import HTTPStatus
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -39,3 +40,24 @@ def custom_500(request):
         "errors/500.html",
         status=HTTPStatus.INTERNAL_SERVER_ERROR
     )
+
+
+def robots_txt(request):
+    """
+    Возвращает содержимое файла robots.txt, которое инструктирует
+    веб-роботов, как взаимодействовать с сайтом. Он запрещает доступ к
+    определенным директориям и разрешает доступ к другим.
+    """
+
+    content = """
+    User-agent: *
+    Disallow: /admin/
+    Disallow: /accounts/
+    Disallow: /private/
+    Disallow: /catbot/
+    Disallow: /static/
+    Disallow: /media/
+    Allow: /
+    """
+    return HttpResponse(content,
+                        content_type="text/plain")
