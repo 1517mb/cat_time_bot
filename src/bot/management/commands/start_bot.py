@@ -55,7 +55,7 @@ logging.basicConfig(
 
 JOIN_CO, SELECT_CO = range(2)
 
-VALID_COMPANY_NAME_PATTERN = re.compile(r"^[А-Яа-яA-Za-z0-9\s\-]+$")
+VALID_COMPANY_NAME_PATTERN = re.compile(r"^[А-Яа-яЁёA-Za-z0-9\s\-]+$")
 
 
 scheduler = AsyncIOScheduler(timezone=ZoneInfo("Europe/Moscow"))
