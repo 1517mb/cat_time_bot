@@ -1295,6 +1295,48 @@ async def stop_dailytips(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Активная рассылка не найдена")
 
 
+async def handle_unknown_command(update: Update,
+                                 context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик только для неизвестных команд
+    (сообщений, начинающихся с /)"""
+    try:
+        message = update.message
+        command = message.text.split()[0].lower()
+
+        if not command.startswith("/"):
+            return
+
+        if command.lstrip("/") in BotMessages.AVAILABLE_COMMANDS:
+            return
+
+        user_input = command.lstrip("/")
+        matches = get_close_matches(user_input,
+                                    BotMessages.AVAILABLE_COMMANDS,
+                                    n=1, cutoff=0.4)
+
+        if matches:
+            suggestion = f"/{matches[0]}"
+            reply_text = (
+                f"🔍 *Неизвестная команда* `{command}`\n\n"
+                f"Возможно вы имели в виду: {suggestion}?\n\n"
+                "📝 Для списка команд используйте /help"
+            )
+        else:
+            reply_text = (
+                f"❌ *Неизвестная команда* `{command}`\n\n"
+                "📝 Используйте /help для просмотра доступных команд"
+            )
+
+        await message.reply_text(
+            reply_text,
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
+
+    except Exception as e:
+        logging.error(f"Ошибка обработки команды: {str(e)}", exc_info=True)
+
+
 class Command(BaseCommand):
     help = "Запуск бота Телеграмм"
 
@@ -1337,6 +1379,9 @@ class Command(BaseCommand):
             "start_dailytips", start_dailytips))
         application.add_handler(CommandHandler(
             "stop_dailytips", stop_dailytips))
+        application.add_handler(
+            MessageHandler(filters.COMMAND, handle_unknown_command)
+        )
 
         try:
             application.run_polling(allowed_updates=Update.ALL_TYPES)
