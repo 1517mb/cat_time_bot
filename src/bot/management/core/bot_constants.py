@@ -144,3 +144,8 @@ class BotMessages:
         "(где вы сейчас находитесь)\n"
         "— Время должно быть в формате `ЧЧ:ММ` (например: `08:45` или `14:00`)"
     )
+    AVAILABLE_COMMANDS = [
+        "help", "site", "get_chat_info", "leave", "mew", "start_weather",
+        "start_stats", "start_reminder", "stop_scheduler",
+        "edit", "edit_start", "edit_end", "start_dailytips",
+        "stop_dailytips", "join", "cancel"]
