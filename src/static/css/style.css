@@ -15,6 +15,56 @@ body {
     flex-shrink: 0;
 }
 
+.navbar-burger:hover {
+    background-color: hsla(var(--bulma-burger-h), var(--bulma-burger-s), var(--bulma-burger-l), .1);
+}
+
+.navbar-burger {
+    align-self: center;
+    color: var(--bulma-navbar-burger-color);
+    margin-inline-end: .375rem;
+    margin-inline-start: auto;
+}
+
+.navbar-burger {
+    align-items: center;
+    appearance: none;
+    background: none;
+    border: none;
+    border-radius: var(--bulma-burger-border-radius);
+    color: hsl(var(--bulma-burger-h), var(--bulma-burger-s), var(--bulma-burger-l));
+    cursor: pointer;
+    height: 2.5rem;
+    justify-content: center;
+    vertical-align: top;
+    width: 2.5rem;
+}
+
+.navbar-burger span {
+    background-color: currentColor;
+    display: block;
+    height: var(--bulma-burger-item-height);
+    left: calc(50% -(var(--bulma-burger-item-width)) / 2);
+    position: absolute;
+    transform-origin: center;
+    transition-duration: var(--bulma-duration);
+    transition-property: background-color, color, opacity, transform;
+    transition-timing-function: var(--bulma-easing);
+    width: var(--bulma-burger-item-width);
+}
+
+.navbar-burger span:first-child, .navbar-burger span:nth-child(2) {
+    top: calc(50% -(var(--bulma-burger-item-height)) / 2);
+}
+
+.navbar-custom-text {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+}
+
 .notification-container {
     position: fixed;
     top: 10px;
