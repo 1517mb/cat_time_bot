@@ -83,7 +83,7 @@
             {% for num in tips.paginator.page_range %}
                 {% if tips.number == num %}
                     <li>
-                        <a href="?page={{ num }}" class="pagination-link is-current" aria-label="Страница {{ num }}" aria-current="page">{{ num }}</a>
+                        <a href="?page={{ num }}" class="pagination-link has-background-primary" aria-label="Страница {{ num }}" aria-current="page">{{ num }}</a>
                     </li>
                 {% else %}
                     <li>
