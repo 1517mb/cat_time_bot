@@ -285,7 +285,7 @@ async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def get_weather():
-    """Асинхронная функция для получения погоды."""
+    """Асинхронная функция для получения погоды с HTML-разметкой."""
     api_key = os.getenv("OPENWEATHER_API_KEY")
     city = "Zelenograd"
     city_ru = "Зеленограде"
@@ -300,6 +300,14 @@ async def get_weather():
                 feels_like = data["main"]["feels_like"]
                 pressure_hpa = data["main"]["pressure"]
                 pressure_mmhg = pressure_hpa * 0.750062
+
+                if pressure_mmhg < 740:
+                    pressure_status = "низкое"
+                elif pressure_mmhg > 780:
+                    pressure_status = "высокое"
+                else:
+                    pressure_status = "нормальное"
+
                 humidity = data["main"]["humidity"]
                 description = data["weather"][0]["description"]
                 clouds = data["clouds"]["all"]
@@ -308,14 +316,6 @@ async def get_weather():
                 wind_deg = data["wind"].get("deg", 0)
 
                 def get_wind_direction(deg):
-                    """
-                    Определяет направление ветра по заданному углу.
-
-                    :param deg: Угол направления ветра.
-                    :return: Строка, представляющая кардинальное направление
-                    ветра.
-                    """
-
                     directions = [
                         "северный", "северо-восточный", "восточный",
                         "юго-восточный", "южный", "юго-западный",
@@ -331,39 +331,6 @@ async def get_weather():
                 sunset = datetime.fromtimestamp(
                     data["sys"]["sunset"]).strftime("%H:%M")
 
-                forecast_url = ("http://api.openweathermap.org/data/2.5/"
-                                + f"forecast?q={city}&appid={api_key}&"
-                                + "units=metric&lang=ru")
-                async with session.get(forecast_url) as forecast_response:
-                    forecast_data = await forecast_response.json()
-                    if forecast_data["cod"] == "200":
-                        current_date = datetime.now().date()
-
-                        morning_temp = None
-
-                        day_temp = None
-                        evening_temp = None
-
-                        for entry in forecast_data["list"]:
-                            entry_time = datetime.fromtimestamp(entry["dt"])
-                            if entry_time.date() == current_date:
-                                time = entry_time.strftime("%H:%M")
-                                if time == "09:00":
-                                    morning_temp = entry["main"]["temp"]
-                                elif time == "15:00":
-                                    day_temp = entry["main"]["temp"]
-                                elif time == "21:00":
-                                    evening_temp = entry["main"]["temp"]
-
-                        forecast_temp_message = (
-                            f"🌅 Утром: {morning_temp}°C\n"
-                            f"🌞 Днём: {day_temp}°C\n"
-                            f"🌇 Вечером: {evening_temp}°C"
-                        )
-                    else:
-                        forecast_temp_message = (
-                            "🚨 Не удалось получить прогноз температуры. 🚨")
-
                 weather_emoji = {
                     "дождь": "🌧️",
                     "небольшой дождь": "🌧️",
@@ -372,6 +339,7 @@ async def get_weather():
                     "небольшой снег": "🌨️",
                     "ясно": "☀️",
                     "облачно": "☁️",
+                    "небольшая облачность": "⛅",
                     "облачно с прояснениями": "⛅",
                     "пасмурно": "🌥️",
                     "небольшая морось": "🌧️",
@@ -383,40 +351,91 @@ async def get_weather():
 
                 emoji = weather_emoji.get(description.lower(), "❓")
 
-                weather_message = (
-                    f"Погода в {city_ru}:\n"
-                    f"{emoji} {description}\n"
-                    f"🌡 Температура: {temp}°C, ощущается как {feels_like}°C\n"
-                    f"🌥 Облачность: {clouds}%\n"
-                    f"💨 Скорость ветра: {wind_speed} м/с, {wind_direction}\n"
-                    f"🌬 Порывы ветра: {wind_gust} м/с\n"
-                    f"📊 Давление: {pressure_mmhg:.1f} мм рт. ст.\n"
-                    f"💧 Влажность: {humidity}%\n"
-                    f"\n"
-                    f"Длина дня в {city_ru}:\n"
-                    f"🌅 Восход: {sunrise}\n"
-                    f"🌇 Закат: {sunset}\n"
-                    f"\n"
-                    f"Прогноз температуры на сегодня:\n"
-                    f"{forecast_temp_message}\n"
-                    f"\n"
-                    f"** По данным openweathermap.org"
-                )
-                return weather_message
-            else:
-                return "🚨 Не удалось получить погоду. 🚨"
+                forecast_url = ("http://api.openweathermap.org/data/2.5/"
+                                + f"forecast?q={city}&appid={api_key}&"
+                                + "units=metric&lang=ru")
+                async with session.get(forecast_url) as forecast_response:
+                    forecast_data = await forecast_response.json()
+                    if forecast_data["cod"] == "200":
+                        current_date = datetime.now().date()
+                        morning_temp = morning_desc = None
+                        day_temp = day_desc = None
+                        evening_temp = evening_desc = None
+
+                        for entry in forecast_data["list"]:
+                            entry_time = datetime.fromtimestamp(entry["dt"])
+                            if entry_time.date() == current_date:
+                                time = entry_time.strftime("%H:%M")
+                                weather_desc = entry[
+                                    "weather"][0]["description"]
+                                if time == "09:00":
+                                    morning_temp = entry["main"]["temp"]
+                                    morning_desc = weather_desc
+                                elif time == "15:00":
+                                    day_temp = entry["main"]["temp"]
+                                    day_desc = weather_desc
+                                elif time == "21:00":
+                                    evening_temp = entry["main"]["temp"]
+                                    evening_desc = weather_desc
+
+                        forecast_html_lines = []
+                        for time_name, temp_val, desc in [
+                            ("Утром", morning_temp, morning_desc),
+                            ("Днём", day_temp, day_desc),
+                            ("Вечером", evening_temp, evening_desc)
+                        ]:
+                            if temp_val is not None and desc is not None:
+                                emoji_forecast = weather_emoji.get(
+                                    desc.lower(), "❓")
+                                forecast_html_lines.append(
+                                    f"<b>{emoji_forecast} {time_name}:</b>"
+                                    + f" {temp_val}°C ({desc})"
+                                )
+                            else:
+                                forecast_html_lines.append(
+                                    f"<b>❓ {time_name}:</b> нет данных")
+
+                        forecast_temp_html = "\n".join(forecast_html_lines)
+
+                        weather_message = (
+                            f"<b>🏙️ Погода в {city_ru}:</b> "
+                            + f"{emoji} {description.capitalize()}\n\n"
+                            f"<b>🌡 Основные параметры:</b>\n"
+                            f"- Температура: {temp}°C\n"
+                            f"- Ощущается как: {feels_like}°C\n"
+                            f"- Облачность: {clouds}%\n"
+                            f"- Ветер: {wind_speed} м/с, {wind_direction}\n"
+                            f"- Порывы: {wind_gust} м/с\n"
+                            f"- Давление: {pressure_mmhg:.1f} мм рт.ст."
+                            + f" ({pressure_status})\n"
+                            f"- Влажность: {humidity}%\n\n"
+                            f"<b>⏳ Длина дня в {city_ru}:</b>\n"
+                            f"- 🌅 Восход: {sunrise}\n"
+                            f"- 🌇 Закат: {sunset}\n\n"
+                            f"<b>🔮 Прогноз на сегодня:</b>\n"
+                            f"{forecast_temp_html}\n\n"
+                            f"<i>По данным openweathermap.org</i>"
+                        )
+                        return weather_message
 
 
 async def send_weather_to_group(bot):
-    """Асинхронная функция для отправки погоды в группу."""
+    """Асинхронная функция для отправки погоды в группу с HTML-разметкой."""
     try:
         weather_message = await get_weather()
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
-        await bot.send_message(chat_id=group_chat_id, text=weather_message)
+
+        await bot.send_message(
+            chat_id=group_chat_id,
+            text=weather_message,
+            parse_mode="HTML"
+        )
     except Exception as e:
         logging.error(f"Ошибка при отправке погоды: {e}")
         await bot.send_message(
-            chat_id=group_chat_id, text="🚨 Не удалось отправить погоду. 🚨"
+            chat_id=group_chat_id,
+            text="🚨 Не удалось отправить погоду. 🚨",
+            parse_mode="HTML"
         )
 
 
