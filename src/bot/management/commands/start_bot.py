@@ -812,6 +812,20 @@ async def edit_departure_time(update: Update,
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     await update_daily_statistics(user_id, username)
+    if "Успешно" in update.message.text or "😻" in update.message.text:
+        try:
+            activity = await sync_to_async(UserActivity.objects.select_related(
+                "company").filter(
+                    user_id=user_id).latest)("join_time")
+            await check_achievements(user_id, username, activity, context)
+            await update_daily_statistics(user_id, username)
+
+        except UserActivity.DoesNotExist:
+            logging.warning(
+                f"Активность не найдена для пользователя {username}")
+        except Exception as e:
+            logging.error(f"Ошибка при проверке достижений: {e}",
+                          exc_info=True)
 
 
 async def add_new_company(
