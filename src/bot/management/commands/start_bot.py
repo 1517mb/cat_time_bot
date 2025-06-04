@@ -339,6 +339,7 @@ async def get_weather():
                     "небольшой снег": "🌨️",
                     "ясно": "☀️",
                     "облачно": "☁️",
+                    "переменная облачность": "☁️",
                     "небольшая облачность": "⛅",
                     "облачно с прояснениями": "⛅",
                     "пасмурно": "🌥️",
@@ -679,17 +680,17 @@ async def _validate_and_update_time(
     )()
 
     if not active_activity:
-        await update.message.reply_text(
+        msg = await update.message.reply_text(
             f"🚨 *Ошибка!* 🚨\n"
             f"У вас нет активной организации, для "
             f"которой можно изменить {error_message_prefix}.",
             parse_mode="Markdown"
         )
-        return
+        return False, msg
 
     args = context.args
     if not args or len(args) != 1:
-        await update.message.reply_text(
+        msg = await update.message.reply_text(
             f"🚨 *Ошибка!* 🚨\n"
             f"⭕️ *Внимание! Неверный формат ввода*\n\n"
             f"🕒 Пожалуйста, укажите {error_message_prefix} "
@@ -699,28 +700,28 @@ async def _validate_and_update_time(
             f"используйте команду /help",
             parse_mode="Markdown"
         )
-        return
+        return False, msg
 
     try:
         new_time = datetime.strptime(args[0], '%H:%M').time()
     except ValueError:
-        await update.message.reply_text(
+        msg = await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Неверный формат времени. Пожалуйста, "
             "укажите время в формате *ЧЧ:ММ* (например, 09:15).",
             parse_mode="Markdown"
         )
-        return
+        return False, msg
 
     current_time = timezone.localtime(timezone.now()).time()
     if new_time > current_time:
-        await update.message.reply_text(
+        msg = await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Вы не можете выбрать время, которое больше текущего. "
             "Пожалуйста, укажите время, которое меньше или равно текущему.",
             parse_mode="Markdown"
         )
-        return
+        return False, msg
 
     current_tz = timezone.get_current_timezone()
     now = timezone.localtime(timezone.now())
@@ -730,26 +731,26 @@ async def _validate_and_update_time(
                                     ).astimezone(dt_timezone.utc)
 
     if time_field == "leave_time" and new_datetime < active_activity.join_time:
-        await update.message.reply_text(
+        msg = await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Время убытия не может быть раньше времени прибытия. "
             "Ваше время прибытия: "
             f"{active_activity.join_time.strftime('%H:%M')}.",
             parse_mode="Markdown"
         )
-        return
+        return False, msg
 
     if (time_field == "join_time"
         and active_activity.leave_time
             and new_datetime > active_activity.leave_time):
-        await update.message.reply_text(
+        msg = await update.message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Время прибытия не может быть позже времени убытия. "
             "Ваше время убытия: "
             f"{active_activity.leave_time.strftime('%H:%M')}.",
             parse_mode="Markdown"
         )
-        return
+        return False, msg
 
     setattr(active_activity, time_field, new_datetime)
     active_activity.edited = True
@@ -759,12 +760,13 @@ async def _validate_and_update_time(
     company_name = active_activity.company.name
     local_time = timezone.localtime(new_datetime).strftime('%H:%M')
 
-    await update.message.reply_text(
+    msg = await update.message.reply_text(
         f"😻 *Успешно!* 😻\n"
         f"{success_message.format(
             company_name=company_name, time=local_time)}.",
         parse_mode="Markdown"
     )
+    return True, msg
 
 
 async def edit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -797,10 +799,10 @@ async def edit_arrival_time(update: Update,
 
 async def edit_departure_time(update: Update,
                               context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Команда для изменения времени убытия из организации.
-    """
-    await _validate_and_update_time(
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+
+    success, _ = await _validate_and_update_time(
         update,
         context,
         time_field="leave_time",
@@ -809,23 +811,40 @@ async def edit_departure_time(update: Update,
                          "успешно изменено на {time}"),
     )
 
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
-    await update_daily_statistics(user_id, username)
-    if "Успешно" in update.message.text or "😻" in update.message.text:
+    if success:
         try:
-            activity = await sync_to_async(UserActivity.objects.select_related(
-                "company").filter(
-                    user_id=user_id).latest)("join_time")
-            await check_achievements(user_id, username, activity, context)
-            await update_daily_statistics(user_id, username)
+            activity = await sync_to_async(
+                UserActivity.objects.select_related("company").filter(
+                    user_id=user_id,
+                    leave_time__isnull=False).latest)("leave_time")
 
-        except UserActivity.DoesNotExist:
-            logging.warning(
-                f"Активность не найдена для пользователя {username}")
+            if activity:
+                await check_achievements(user_id, username, activity, context)
+
+                company_name = activity.company.name
+                spent_time = activity.get_spent_time
+
+                await update.message.reply_text(
+                    f"⌛ *Обновленные данные о посещении* ⌛\n"
+                    f"Организация: *{company_name}*\n"
+                    f"Новое затраченное время: {spent_time}.",
+                    parse_mode="Markdown"
+                )
+            else:
+                logging.warning(
+                    f"Активность не найдена для пользователя {user_id}")
+                await update.message.reply_text(
+                    "⚠️ *Предупреждение:* "
+                    + "Не удалось найти данные о посещении.",
+                    parse_mode="Markdown"
+                )
+
         except Exception as e:
-            logging.error(f"Ошибка при проверке достижений: {e}",
-                          exc_info=True)
+            logging.error(f"Ошибка при выполнении команды /edit_end: {e}")
+            await update.message.reply_text(
+                "🚨 *Произошла ошибка при обработке команды.* 🚨",
+                parse_mode="Markdown"
+            )
 
 
 async def add_new_company(
