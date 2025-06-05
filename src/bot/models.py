@@ -1,4 +1,5 @@
 import itertools
+from datetime import timedelta
 
 from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User
@@ -16,6 +17,7 @@ from core.constants import (
     QuoteCfg,
     TagCfg,
     UserActivityCfg,
+    UserRankCfg,
 )
 from core.utils import cyrillic_slugify
 
@@ -76,6 +78,35 @@ class UserActivity(models.Model):
     class Meta:
         verbose_name = UserActivityCfg.SPENT_TIME_V
         verbose_name_plural = UserActivityCfg.SPENT_TIME_PLURAL_V
+
+
+class UserRank(models.Model):
+    user_id = models.IntegerField(
+        unique=UserRankCfg.USER_ID_UNIQUE,
+        verbose_name=UserRankCfg.USER_ID_V
+    )
+    experience = models.PositiveIntegerField(
+        verbose_name=UserRankCfg.EXP_V,
+        default=UserRankCfg.EXP_DEFAULT)
+    level = models.PositiveIntegerField(
+        verbose_name=UserRankCfg.LEVEL_V,
+        default=UserRankCfg.LEVEL_DEFAULT
+    )
+    total_time = models.DurationField(
+        verbose_name=UserRankCfg.TOTAL_TIME_V,
+        default=timedelta()
+    )
+    visits_count = models.PositiveIntegerField(
+        verbose_name=UserRankCfg.VISITS_COUNT_V,
+        default=UserRankCfg.VISITS_COUNT_DEFAULT
+    )
+
+    class Meta:
+        verbose_name = UserRankCfg.META_NAME
+        verbose_name_plural = UserRankCfg.META_PL_NAME
+
+    def __str__(self):
+        return f"Уровень {self.level} (Опыт: {self.experience})"
 
 
 class Tag(models.Model):
