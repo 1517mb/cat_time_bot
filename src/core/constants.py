@@ -28,6 +28,20 @@ class UserActivityCfg:
     EDIT_COUNT_V = "Счетчик правок"
 
 
+class UserRankCfg:
+    USER_ID_V = "Telegram ID"
+    USER_ID_UNIQUE = True
+    EXP_V = "Опыт"
+    EXP_DEFAULT = 0
+    LEVEL_V = "Уровень"
+    LEVEL_DEFAULT = 1
+    TOTAL_TIME_V = "Общее время"
+    VISITS_COUNT_V = "Количество посещений"
+    VISITS_COUNT_DEFAULT = 0
+    META_NAME = "Ранг"
+    META_PL_NAME = "Ранги"
+
+
 class DailytTipsCfg:
     VERBOSE_NAME = "Название"
     CONTENT_V = "Текст (Markdown)"
