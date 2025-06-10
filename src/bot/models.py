@@ -2,6 +2,7 @@ import itertools
 from datetime import timedelta
 
 from asgiref.sync import sync_to_async
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
 from django.core.validators import MinLengthValidator
 from django.db import models
@@ -80,6 +81,137 @@ class UserActivity(models.Model):
         verbose_name_plural = UserActivityCfg.SPENT_TIME_PLURAL_V
 
 
+class LevelTitle(models.Model):
+    LEVEL_CATEGORIES = [
+        ("begginer", "Начинающий"),
+        ("intermediate", "Средний"),
+        ("advanced", "Продвинутый"),
+        ("expert", "Эксперт"),
+        ("legend", "Легенда"),
+    ]
+
+    level = models.PositiveIntegerField(
+        verbose_name="Уровень",
+        unique=True
+    )
+    title = models.CharField(
+        verbose_name="Название уровня",
+        max_length=100
+    )
+    description = models.TextField(
+        verbose_name="Описание уровня",
+        blank=True,
+        null=True
+    )
+    category = models.CharField(
+        verbose_name="Категория",
+        max_length=20,
+        choices=LEVEL_CATEGORIES,
+        default='beginner'
+    )
+    min_experience = models.PositiveIntegerField(
+        verbose_name="Минимальный опыт",
+        default=0
+    )
+
+    class Meta:
+        verbose_name = "Название уровня"
+        verbose_name_plural = "Названия уровней"
+        ordering = ["level"]
+
+    def __str__(self):
+        return f"{self.level} - {self.title}"
+
+
+class Season(models.Model):
+    SEASON_THEMES = [
+        ("winter", "❄️ Зимний сезон"),
+        ("spring", "🌸 Весенний сезон"),
+        ("summer", "☀️ Летний сезон"),
+        ("autumn", "🍂 Осенний сезон"),
+    ]
+
+    name = models.CharField(
+        verbose_name="Название сезона",
+        max_length=100
+    )
+    theme = models.CharField(
+        verbose_name="Тематика",
+        max_length=20,
+        choices=SEASON_THEMES,
+        default="winter"
+    )
+    start_date = models.DateField(
+        verbose_name="Дата начала",
+        default=timezone.now
+    )
+    end_date = models.DateField(
+        verbose_name="Дата окончания",
+        blank=True,
+        null=True
+    )
+    is_active = models.BooleanField(
+        verbose_name="Активный сезон",
+        default=True
+    )
+
+    class Meta:
+        verbose_name = "Сезон"
+        verbose_name_plural = "Сезоны"
+        ordering = ["-start_date"]
+
+    def __str__(self):
+        return f"{self.get_theme_display()} - {self.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.end_date and self.start_date:
+            self.end_date = self.start_date + relativedelta(months=+3)
+        super().save(*args, **kwargs)
+
+
+class SeasonRank(models.Model):
+    user_id = models.IntegerField()
+    season = models.ForeignKey(
+        Season,
+        on_delete=models.CASCADE,
+        related_name='ranks'
+    )
+    experience = models.PositiveIntegerField(default=0)
+    level = models.PositiveIntegerField(default=1)
+    total_time = models.DurationField(default=timedelta())
+    visits_count = models.PositiveIntegerField(default=0)
+    level_title = models.ForeignKey(
+        LevelTitle,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    achieved_at = models.DateTimeField(
+        verbose_name="Дата последнего обновления",
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = "Сезонный ранг"
+        verbose_name_plural = "Сезонные ранги"
+        unique_together = ("user_id", "season")
+
+    def __str__(self):
+        return f"{self.user_id} - {self.season} (Уровень {self.level})"
+
+    def save(self, *args, **kwargs):
+        if not self.level_title_id:
+            try:
+                title = LevelTitle.objects.filter(
+                    level__lte=self.level
+                ).order_by('-level').first()
+                if title:
+                    self.level_title = title
+            except LevelTitle.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+
+
 class UserRank(models.Model):
     user_id = models.IntegerField(
         unique=UserRankCfg.USER_ID_UNIQUE,
@@ -99,6 +231,13 @@ class UserRank(models.Model):
     visits_count = models.PositiveIntegerField(
         verbose_name=UserRankCfg.VISITS_COUNT_V,
         default=UserRankCfg.VISITS_COUNT_DEFAULT
+    )
+    level_title = models.ForeignKey(
+        LevelTitle,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ranks"
     )
 
     class Meta:
