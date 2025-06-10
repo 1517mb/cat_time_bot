@@ -38,8 +38,8 @@ class UserRankCfg:
     TOTAL_TIME_V = "Общее время"
     VISITS_COUNT_V = "Количество посещений"
     VISITS_COUNT_DEFAULT = 0
-    META_NAME = "Ранг"
-    META_PL_NAME = "Ранги"
+    META_NAME = "Текущий ранг"
+    META_PL_NAME = "Текущие ранги"
 
 
 class DailytTipsCfg:
