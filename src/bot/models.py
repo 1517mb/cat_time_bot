@@ -107,7 +107,7 @@ class LevelTitle(models.Model):
         verbose_name="Категория",
         max_length=20,
         choices=LEVEL_CATEGORIES,
-        default='beginner'
+        default="beginner"
     )
     min_experience = models.PositiveIntegerField(
         verbose_name="Минимальный опыт",
@@ -204,7 +204,7 @@ class SeasonRank(models.Model):
             try:
                 title = LevelTitle.objects.filter(
                     level__lte=self.level
-                ).order_by('-level').first()
+                ).order_by("-level").first()
                 if title:
                     self.level_title = title
             except LevelTitle.DoesNotExist:
