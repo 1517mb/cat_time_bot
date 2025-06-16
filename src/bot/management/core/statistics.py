@@ -1,4 +1,5 @@
 import random
+from datetime import timedelta
 
 from asgiref.sync import sync_to_async
 from django.utils import timezone
@@ -8,6 +9,7 @@ from bot.models import (
     DailyStatistics,
     Quote,
     Season,
+    UserActivity,
 )
 
 
@@ -111,4 +113,35 @@ async def get_daily_statistics():
         f"  - Среднее время: {avg_minutes} мин 📌"
         f"{achievements_text}"
         f"\n\n{quote}"
+    )
+
+
+async def update_daily_statistics(user_id, username):
+    """
+    Оптимизированное обновление статистики с batch-обработкой
+    """
+    today = timezone.now().date()
+
+    activities = await sync_to_async(list)(
+        UserActivity.objects.filter(
+            user_id=user_id,
+            join_time__date=today,
+            leave_time__isnull=False
+        ).values("join_time", "leave_time")
+    )
+
+    total_time = timedelta()
+    total_trips = len(activities)
+
+    for activity in activities:
+        total_time += activity["leave_time"] - activity["join_time"]
+
+    await sync_to_async(DailyStatistics.objects.update_or_create)(
+        user_id=user_id,
+        date=today,
+        defaults={
+            "username": username,
+            "total_time": total_time,
+            "total_trips": total_trips
+        }
     )
