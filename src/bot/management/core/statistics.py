@@ -2,6 +2,7 @@ import random
 from datetime import timedelta
 
 from asgiref.sync import sync_to_async
+from django.db.models import DurationField, Sum
 from django.utils import timezone
 
 from bot.models import (
@@ -23,6 +24,19 @@ async def get_random_quote():
 
 
 async def get_daily_statistics():
+    today = timezone.now().date()
+    stats = await sync_to_async(
+        DailyStatistics.objects.filter(date=today).aggregate)(
+        total_trips=Sum("total_trips"),
+        total_time=Sum("total_time", output_field=DurationField())
+    )
+    return {
+        "total_trips": stats["total_trips"] or 0,
+        "total_time": stats["total_time"] or timedelta()
+    }
+
+
+async def get_daily_statistics_message():
     """
     Возвращает словарь с двумя ключами: total_trips и total_time.
     total_trips - это сумма всех поездок, совершенных за сегодняшний день,
