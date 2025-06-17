@@ -44,7 +44,14 @@ from bot.management.core.statistics import (
     update_daily_statistics,
 )
 from bot.management.core.utils import is_holiday
-from bot.models import Achievement, Company, DailytTips, UserActivity
+from bot.models import (
+    Achievement,
+    Company,
+    DailytTips,
+    Season,
+    SeasonRank,
+    UserActivity,
+)
 
 load_dotenv()
 
@@ -1102,6 +1109,127 @@ async def send_daily_statistics_to_group(bot):
         logging.error(f"Ошибка отправки статистики: {str(e)}")
 
 
+async def get_current_season():
+    try:
+        return await sync_to_async(Season.objects.get)(is_active=True)
+    except Season.DoesNotExist:
+        return None
+
+
+async def update_season_rank(user_id: int,
+                             exp_earned: int,
+                             time_spent: timedelta):
+    season = await get_current_season()
+    if not season:
+        return None, False
+
+    rank, created = await sync_to_async(SeasonRank.objects.get_or_create)(
+        user_id=user_id,
+        season=season,
+        defaults={
+            "experience": exp_earned,
+            "total_time": time_spent,
+            "visits_count": 1
+        }
+    )
+
+    level_up = False
+    if not created:
+        rank.experience += exp_earned
+        rank.total_time += time_spent
+        rank.visits_count += 1
+
+        while rank.experience >= rank.level * 100:
+            rank.experience -= rank.level * 100
+            rank.level += 1
+            level_up = True
+
+        await sync_to_async(rank.save)()
+
+    return rank, level_up
+
+
+async def get_level_info(rank: SeasonRank) -> dict:
+    if not rank.level_title:
+        return {
+            "title": f"Уровень {rank.level}",
+            "category": "Новичок",
+            "progress": min(100, (rank.experience / (rank.level * 100)) * 100),
+            "current_exp": rank.experience,
+            "next_level_exp": rank.level * 100
+        }
+
+    title = await sync_to_async(lambda: rank.level_title.title)()
+    category = await sync_to_async(
+        lambda: rank.level_title.get_category_display())()
+    next_level_exp = rank.level * 100
+    progress = (rank.experience / next_level_exp) * 100
+
+    return {
+        "title": title,
+        "category": category,
+        "progress": progress,
+        "current_exp": rank.experience,
+        "next_level_exp": next_level_exp
+    }
+
+
+def create_progress_bar(progress: float, length: int = 10) -> str:
+    filled = min(length, max(0, int(progress / 100 * length)))
+    return f"[{'■' * filled}{'□' * (length - filled)}]"
+
+
+async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+
+    try:
+        season = await get_current_season()
+        if not season:
+            await update.message.reply_text(
+                "ℹ️ В данный момент сезон не активен. "
+                "Ожидайте начала нового сезона!",
+                parse_mode="Markdown"
+            )
+            return
+
+        rank = await sync_to_async(SeasonRank.objects.get)(
+            user_id=user_id,
+            season=season
+        )
+        level_info = await get_level_info(rank)
+
+        total_hours = int(rank.total_time.total_seconds() // 3600)
+        total_minutes = int((rank.total_time.total_seconds() % 3600) // 60)
+        time_str = f"{total_hours}ч {total_minutes}м"
+
+        now = timezone.now().date()
+        days_left = (season.end_date - now).days
+
+        progress_bar = create_progress_bar(level_info["progress"])
+
+        message = (
+            f"🏆 *Текущий сезон: {season.name}*\n"
+            f"⏳ До конца сезона: *{days_left} дней*\n\n"
+            "👤 *Ваш профиль*\n\n"
+            f"🎯 Уровень: *{rank.level}*\n"
+            f"🎖 Звание: *{level_info['title']}*\n"
+            f"📚 Категория: *{level_info['category']}*\n"
+            f"⭐ Опыт: *{level_info['current_exp']}/"
+            f"{level_info['next_level_exp']}*\n"
+            f"📊 Прогресс: {progress_bar} {int(level_info['progress'])}%\n"
+            f"⏱ Всего времени в организациях: *{time_str}*\n"
+            f"🚗 Всего выездов: *{rank.visits_count}*\n\n"
+            f"{season.get_theme_display()} продолжается! "
+            "Успейте достичь новых высот!"
+        )
+    except SeasonRank.DoesNotExist:
+        message = (
+            "👤 *Ваш профиль*\n\n"
+            "Вы ещё не совершали выездов в текущем сезоне.\n"
+            "Используйте команду /join чтобы начать!")
+    await update.message.reply_text(message, parse_mode="Markdown")
+
+
 async def start_weather(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск ежедневной отправки погоды в указанное время"""
     if not context.args:
@@ -1418,6 +1546,7 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler("mew", mew))
         application.add_handler(CommandHandler("start_weather", start_weather))
         application.add_handler(CommandHandler("start_stats", start_stats))
+        application.add_handler(CommandHandler("profile", profile))
         application.add_handler(
             CommandHandler("start_reminder", start_reminder))
         application.add_handler(CommandHandler(
