@@ -20,7 +20,9 @@ ACHIEVEMENT_BONUSES = {
 }
 
 
-def calculate_experience(activity, achievements) -> int:
+def calculate_experience(activity,
+                         achievements,
+                         daily_visits_count: int) -> int:
     """
     Рассчитывает опыт для активности с учетом времени,
     бонусов за организацию и достижений
@@ -29,7 +31,7 @@ def calculate_experience(activity, achievements) -> int:
     :param achievements: Список названий достижений
     :return: Количество опыта
     """
-    base_exp = 10
+    base_exp = 10 + min(20, (daily_visits_count - 1) * 5)
 
     time_spent = activity.leave_time - activity.join_time
     time_exp = int(time_spent.total_seconds() / 300)
