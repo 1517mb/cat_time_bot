@@ -171,10 +171,16 @@ class Season(models.Model):
 
 class SeasonRank(models.Model):
     user_id = models.IntegerField()
+    username = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Telegram username"
+    )
     season = models.ForeignKey(
         Season,
         on_delete=models.CASCADE,
-        related_name='ranks'
+        related_name="ranks"
     )
     experience = models.PositiveIntegerField(default=0)
     level = models.PositiveIntegerField(default=1)
