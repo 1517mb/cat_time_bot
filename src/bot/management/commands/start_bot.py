@@ -39,12 +39,12 @@ from bot.management.core.bot_constants import (
     SiteCfg,
 )
 from bot.management.core.bot_instance import get_bot_application
-from bot.management.core.experience import calculate_experience
+from bot.management.core.experience import calculate_experience, get_level_info
 from bot.management.core.statistics import (
     get_daily_statistics_message,
     update_daily_statistics,
 )
-from bot.management.core.utils import is_holiday
+from bot.management.core.utils import create_progress_bar, is_holiday
 from bot.models import (
     Achievement,
     Company,
@@ -1180,39 +1180,6 @@ async def update_season_rank(user_id: int,
         await sync_to_async(rank.save)()
 
     return rank, level_up
-
-
-async def get_level_info(rank: SeasonRank) -> dict:
-
-    level_title = await sync_to_async(lambda: rank.level_title)()
-
-    if not level_title:
-        return {
-            "title": f"Уровень {rank.level}",
-            "category": "Новичок",
-            "progress": min(100, (rank.experience / (rank.level * 100)) * 100),
-            "current_exp": rank.experience,
-            "next_level_exp": rank.level * 100
-        }
-
-    title = await sync_to_async(lambda: rank.level_title.title)()
-    category = await sync_to_async(
-        lambda: rank.level_title.get_category_display())()
-    next_level_exp = rank.level * 100
-    progress = (rank.experience / next_level_exp) * 100
-
-    return {
-        "title": title,
-        "category": category,
-        "progress": progress,
-        "current_exp": rank.experience,
-        "next_level_exp": next_level_exp
-    }
-
-
-def create_progress_bar(progress: float, length: int = 10) -> str:
-    filled = min(length, max(0, int(progress / 100 * length)))
-    return f"[{'■' * filled}{'□' * (length - filled)}]"
 
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
