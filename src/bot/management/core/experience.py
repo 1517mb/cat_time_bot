@@ -1,4 +1,6 @@
 import re
+from asgiref.sync import sync_to_async
+from bot.models import SeasonRank
 
 COMPANY_BONUSES = {
     r'(?i)ум|ума|ум аркитекс': 50,
@@ -18,6 +20,34 @@ ACHIEVEMENT_BONUSES = {
     "А можно мне ещё выезд?": 10,
     "Читер: Часовщик": -20,
 }
+
+
+async def get_level_info(rank: SeasonRank) -> dict:
+
+    level_title = await sync_to_async(lambda: rank.level_title)()
+
+    if not level_title:
+        return {
+            "title": f"Уровень {rank.level}",
+            "category": "Новичок",
+            "progress": min(100, (rank.experience / (rank.level * 100)) * 100),
+            "current_exp": rank.experience,
+            "next_level_exp": rank.level * 100
+        }
+
+    title = await sync_to_async(lambda: rank.level_title.title)()
+    category = await sync_to_async(
+        lambda: rank.level_title.get_category_display())()
+    next_level_exp = rank.level * 100
+    progress = (rank.experience / next_level_exp) * 100
+
+    return {
+        "title": title,
+        "category": category,
+        "progress": progress,
+        "current_exp": rank.experience,
+        "next_level_exp": next_level_exp
+    }
 
 
 def calculate_experience(activity,
