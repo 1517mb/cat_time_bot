@@ -34,7 +34,19 @@ def calculate_experience(activity,
     base_exp = 10 + min(20, (daily_visits_count - 1) * 5)
 
     time_spent = activity.leave_time - activity.join_time
-    time_exp = int(time_spent.total_seconds() / 300)
+    total_minutes = time_spent.total_seconds() // 60
+
+    time_exp = 0
+    remaining_minutes = total_minutes
+    rate_period = 5
+    hour_block = 0
+    while remaining_minutes > 0:
+        block_minutes = min(remaining_minutes, 60)
+        block_exp = block_minutes // rate_period
+        time_exp += block_exp
+        remaining_minutes -= block_minutes
+        hour_block += 1
+        rate_period = 5 + 5 * hour_block
 
     company_bonus = 0
     company_name = activity.company.name
