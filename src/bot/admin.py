@@ -9,7 +9,10 @@ from bot.models import (
     Company,
     DailyStatistics,
     DailytTips,
+    LevelTitle,
     Quote,
+    Season,
+    SeasonRank,
     Tag,
     UserActivity,
 )
@@ -104,3 +107,129 @@ class QuoteAdmin(admin.ModelAdmin):
                     "text", "is_active")
     search_fields = ("author", "source", "text")
     list_filter = ("is_active",)
+
+
+@admin.register(SeasonRank)
+class SeasonRankAdmin(admin.ModelAdmin):
+    list_display = (
+        "user_id",
+        "username",
+        "season",
+        "level",
+        "experience",
+        "formatted_total_time",
+        "visits_count",
+        "level_title",
+        "achieved_at"
+    )
+    list_filter = (
+        "season",
+        "level_title",
+        "achieved_at"
+    )
+    search_fields = (
+        "user_id",
+        "username"
+    )
+    list_select_related = (
+        "season",
+        "level_title"
+    )
+    raw_id_fields = ("season", "level_title")
+    readonly_fields = ("achieved_at",)
+    list_editable = ("level", "experience", "level_title")
+    list_per_page = 25
+
+    def formatted_total_time(self, obj):
+        """Форматирует DurationField в читаемый вид (ДНИ ЧАСЫ:ММ:СС)"""
+        total_seconds = int(obj.total_time.total_seconds())
+        days, remainder = divmod(total_seconds, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{days}d {hours}:{minutes:02d}:{seconds:02d}"
+
+    formatted_total_time.short_description = "Общее время"
+    formatted_total_time.admin_order_field = "total_time"
+
+
+@admin.register(LevelTitle)
+class LevelTitleAdmin(admin.ModelAdmin):
+    list_display = (
+        "level",
+        "title",
+        "category_display",
+        "min_experience",
+        "short_description"
+    )
+    list_filter = ("category",)
+    search_fields = (
+        "title",
+        "description"
+    )
+    list_editable = (
+        "title",
+        "min_experience"
+    )
+    ordering = ("level",)
+    list_per_page = 25
+
+    def category_display(self, obj):
+        """Отображает человеко-читаемое название категории"""
+        return dict(
+            LevelTitle.LEVEL_CATEGORIES).get(obj.category, obj.category)
+
+    def short_description(self, obj):
+        """Сокращает описание для табличного вида"""
+        if obj.description:
+            return (obj.description[:50] + "..."
+                    if len(obj.description) > 50 else obj.description)
+        return "-"
+
+    category_display.short_description = "Категория"
+    short_description.short_description = "Описание"
+
+
+@admin.register(Season)
+class SeasonAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "theme_display",
+        "start_date",
+        "end_date",
+        "is_active",
+        "duration_days"
+    )
+    list_filter = (
+        "theme",
+        "is_active"
+    )
+    search_fields = ("name",)
+    list_editable = ("is_active",)
+    date_hierarchy = "start_date"
+    readonly_fields = ("duration_days",)
+    list_per_page = 25
+    fieldsets = (
+        (None, {
+            "fields": ("name", "theme", "is_active")
+        }),
+        ("Даты", {
+            "fields": ("start_date", "end_date")
+        }),
+        ("Дополнительно", {
+            "fields": ("duration_days",),
+            "classes": ("collapse",)
+        })
+    )
+
+    def theme_display(self, obj):
+        """Отображает тему с эмодзи"""
+        return obj.get_theme_display()
+
+    def duration_days(self, obj):
+        """Рассчитывает длительность сезона в днях"""
+        if obj.start_date and obj.end_date:
+            return (obj.end_date - obj.start_date).days
+        return "-"
+
+    theme_display.short_description = "Тематика"
+    duration_days.short_description = "Длит. (дней)"
