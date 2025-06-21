@@ -847,7 +847,8 @@ async def edit_departure_time(update: Update,
                 exp_earned = calculate_experience(activity, achievements_list,
                                                   daily_visits_count)
                 time_spent = activity.leave_time - activity.join_time
-                await update_season_rank(user_id, exp_earned, time_spent)
+                await update_season_rank(user_id, exp_earned,
+                                         time_spent, username)
                 await check_achievements(user_id, username, activity, context)
 
                 company_name = activity.company.name
@@ -959,7 +960,7 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                                           daily_visits_count)
         activity.leave_time = timezone.now()
         time_spent = activity.leave_time - activity.join_time
-        await update_season_rank(user_id, exp_earned, time_spent)
+        await update_season_rank(user_id, exp_earned, time_spent, username)
         await sync_to_async(activity.save)()
 
         await check_achievements(user_id, username, activity, context)
@@ -1150,7 +1151,8 @@ async def get_current_season():
 
 async def update_season_rank(user_id: int,
                              exp_earned: int,
-                             time_spent: timedelta):
+                             time_spent: timedelta,
+                             username: str):
     season = await get_current_season()
     if not season:
         return None, False
@@ -1159,6 +1161,7 @@ async def update_season_rank(user_id: int,
         user_id=user_id,
         season=season,
         defaults={
+            "username": username,
             "experience": exp_earned,
             "total_time": time_spent,
             "visits_count": 1
