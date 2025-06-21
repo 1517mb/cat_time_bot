@@ -44,6 +44,8 @@ def calculate_experience(activity,
             break
 
     achievements_exp = 0
+    if not achievements:
+        achievements = []
     for achievement in achievements:
         if achievement in ACHIEVEMENT_BONUSES:
             achievements_exp += ACHIEVEMENT_BONUSES[achievement]
