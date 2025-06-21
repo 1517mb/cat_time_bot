@@ -184,7 +184,8 @@ class SeasonRank(models.Model):
         LevelTitle,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
+        related_name="season_ranks"
     )
     achieved_at = models.DateTimeField(
         verbose_name="Дата последнего обновления",
