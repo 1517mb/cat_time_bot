@@ -518,8 +518,8 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if company:
             local_time = timezone.localtime(timezone.now())
             await update.message.reply_text(
-                f"🐱‍💻 *Вы прибыли в организацию {company_name}* 🐱‍💻\n"
-                f"Время прибытия: {local_time.strftime('%H:%M')}.",
+                f"🐱‍💻 *Вы прибыли в организацию `{company_name}`* 🐱‍💻\n"
+                f"⏳ Время прибытия: {local_time.strftime('%H:%M')}.",
                 parse_mode="Markdown"
             )
             await sync_to_async(UserActivity.objects.create)(
@@ -855,8 +855,9 @@ async def edit_departure_time(update: Update,
 
                 await update.message.reply_text(
                     f"⌛ *Обновленные данные о посещении* ⌛\n"
-                    f"Организация: *{company_name}*\n"
-                    f"Новое затраченное время: {spent_time}.",
+                    f"🏭 Организация: *{company_name}*\n"
+                    f"⏳ Новое затраченное время: {spent_time}.",
+                    f"🔰 Получено опыта: {exp_earned}",
                     parse_mode="Markdown"
                 )
             else:
@@ -970,8 +971,8 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         await update.message.reply_text(
             f"🐾👋 *Вы покинули организацию {company_name}* 🐾👋\n"
-            f"Время ухода: {local_time.strftime('%H:%M')}.\n"
-            f"Затраченное время: {spent_time}.\n"
+            f"⌛️ Время ухода: {local_time.strftime('%H:%M')}.\n"
+            f"⏳ Затраченное время: {spent_time}.\n"
             f"🔰 Получено опыта: {exp_earned}",
             parse_mode="Markdown"
         )
