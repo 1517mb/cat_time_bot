@@ -45,7 +45,7 @@ class Command(BaseCommand):
                 defaults={
                     "title": title,
                     "category": category,
-                    "min_experience": (level - 1) * 1000
+                    "min_experience": (level - 1) * 100
                 }
             )
         self.stdout.write(self.style.SUCCESS(
