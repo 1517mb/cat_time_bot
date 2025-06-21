@@ -3,13 +3,17 @@ import os
 import random
 from datetime import datetime, timedelta
 
-from asgiref.sync import async_to_sync
+from asgiref.sync import async_to_sync, sync_to_async
 from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
-from django.db.models import Sum, Avg
+from django.db.models import Avg, Sum
 from django.utils import timezone
 
-from bot.management.commands.start_bot import application
+from bot.management.core.bot_instance import (
+    get_bot_application,
+    initialize_bot_application,
+    shutdown_bot_application,
+)
 from bot.models import Achievement, Season, SeasonRank
 
 logger = logging.getLogger(__name__)
@@ -85,95 +89,143 @@ class Command(BaseCommand):
             "создание, завершение, уведомления")
 
     def handle(self, *args, **options):
-        """Основной обработчик команды управления сезонами"""
+        """Синхронный обработчик, запускающий асинхронную логику"""
+        async_to_sync(self.handle_async)(*args, **options)
+
+    async def handle_async(self, *args, **options):
+        """Асинхронный обработчик команды управления сезонами"""
         try:
-            self.process_expired_seasons()
-            self.activate_upcoming_seasons()
-            self.create_season_if_needed()
-            self.send_ending_soon_notifications()
+            await initialize_bot_application()
+            self.application = get_bot_application()
+            await self.process_expired_seasons()
+            await self.activate_upcoming_seasons()
+            await self.create_season_if_needed()
+            await self.send_ending_soon_notifications()
             logger.info("Управление сезонами успешно завершено")
         except Exception as e:
             logger.error(f"Критическая ошибка в manage_seasons: {e}",
                          exc_info=True)
-            self.send_telegram_message(
+            await self.send_telegram_message(
                 f"🚨 *Ошибка управления сезонами!* 🚨\n"
                 f"Система столкнулась с проблемой: `{str(e)}`\n"
                 f"Пожалуйста, проверьте логи для деталей."
             )
+        finally:
+            await shutdown_bot_application()
 
-    def process_expired_seasons(self):
+    async def process_expired_seasons(self):
         """Завершает истекшие сезоны и награждает победителей"""
         now = timezone.now().date()
-        expired_seasons = Season.objects.filter(
-            end_date__lt=now,
-            is_active=True
+        expired_seasons = await sync_to_async(list)(
+            Season.objects.filter(
+                end_date__lt=now,
+                is_active=True
+            )
         )
 
         for season in expired_seasons:
             try:
+                logger.info(f"Обработка завершенного сезона:"
+                            f" {season.name} (ID: {season.id})")
+                rank_count = await sync_to_async(
+                    SeasonRank.objects.filter(season=season).count
+                )()
+                logger.info(f"Найдено {rank_count} записей"
+                            f" в рейтинге для этого сезона")
                 season.is_active = False
-                season.save()
+                await sync_to_async(season.save)()
                 logger.info(f"Сезон завершен: {season.name}")
-                self.award_season_winners(season)
-                self.send_season_end_notification(season)
+                await self.award_season_winners(season)
+                await self.send_season_end_notification(season)
             except Exception as e:
                 logger.error(f"Ошибка обработки сезона {season.name}: {e}")
 
-    def activate_upcoming_seasons(self):
+    async def activate_upcoming_seasons(self):
         """Активирует сезоны, у которых наступила дата начала"""
         now = timezone.now().date()
-        upcoming_seasons = Season.objects.filter(
-            start_date__lte=now,
-            end_date__gte=now,
-            is_active=False
+        upcoming_seasons = await sync_to_async(list)(
+            Season.objects.filter(
+                start_date__lte=now,
+                end_date__gte=now,
+                is_active=False
+            )
         )
 
         for season in upcoming_seasons:
             try:
-                Season.objects.filter(is_active=True).update(is_active=False)
+                await sync_to_async(
+                    Season.objects.filter(is_active=True).update
+                )(is_active=False)
                 season.is_active = True
-                season.save()
+                await sync_to_async(season.save)()
                 logger.info(f"Активирован сезон: {season.name}")
-                self.send_season_start_notification(season)
+                await self.send_season_start_notification(season)
             except Exception as e:
                 logger.error(f"Ошибка активации сезона {season.name}: {e}")
 
-    def create_season_if_needed(self):
+    async def create_season_if_needed(self):
         """Создает новый сезон, если нет активных"""
-        if Season.objects.filter(is_active=True).exists():
+        exists = await sync_to_async(
+            Season.objects.filter(is_active=True).exists
+        )()
+        if exists:
             return
 
         today = timezone.now().date()
 
         try:
             theme = self.determine_season_theme()
-            season_name = self.generate_season_name(theme)
-            new_season = Season.objects.create(
+            season_name = await self.generate_season_name(theme)
+            new_season = await sync_to_async(Season.objects.create)(
                 name=season_name,
                 theme=theme,
                 start_date=today,
                 end_date=today + relativedelta(months=3)
             )
             logger.info(f"Создан новый сезон: {season_name}")
-            self.send_season_start_notification(new_season)
+            await self.send_season_start_notification(new_season)
         except Exception as e:
             logger.error(f"Ошибка создания нового сезона: {e}")
-            self.send_telegram_message(
+            await self.send_telegram_message(
                 f"🚨 *Не удалось создать новый сезон!* 🚨\n"
                 f"Ошибка: `{str(e)}`\n"
                 f"Текущий активный сезон отсутствует!"
             )
 
-    def send_ending_soon_notifications(self):
+    async def generate_season_name(self, theme: str) -> str:
+        """Генерирует уникальное IT-тематическое
+           название для сезона (асинхронная версия)"""
+        year = datetime.now().year
+        it_titles = SEASON_IT_NAMES.get(theme, [])
+        if not it_titles:
+            return f"Сезон {theme.capitalize()} {year}"
+
+        base_name = random.choice(it_titles)
+        season_name = f"{base_name} {year}"
+        counter = 1
+
+        while await sync_to_async(
+            Season.objects.filter(name=season_name).exists,
+            thread_sensitive=True
+        )():
+            season_name = f"{base_name} {year} v{counter}"
+            counter += 1
+
+        return season_name
+
+    async def send_ending_soon_notifications(self):
         """Уведомляет о скором окончании сезона (за 3 дня)"""
         warning_date = timezone.now().date() + timedelta(days=3)
-        ending_seasons = Season.objects.filter(
-            end_date=warning_date,
-            is_active=True
+
+        ending_seasons = await sync_to_async(list)(
+            Season.objects.filter(
+                end_date=warning_date,
+                is_active=True
+            )
         )
         for season in ending_seasons:
             try:
-                self.send_season_ending_soon_notification(season)
+                await self.send_season_ending_soon_notification(season)
             except Exception as e:
                 logger.error(
                     f"Ошибка уведомления о конце сезона {season.name}: {e}")
@@ -190,20 +242,6 @@ class Command(BaseCommand):
         else:
             return "autumn"
 
-    def generate_season_name(self, theme: str) -> str:
-        """Генерирует уникальное IT-тематическое название для сезона"""
-        year = datetime.now().year
-        it_titles = SEASON_IT_NAMES.get(theme, [])
-        if not it_titles:
-            return f"Сезон {theme.capitalize()} {year}"
-        base_name = random.choice(it_titles)
-        season_name = f"{base_name} {year}"
-        counter = 1
-        while Season.objects.filter(name=season_name).exists():
-            season_name = f"{base_name} {year} v{counter}"
-            counter += 1
-        return season_name
-
     def generate_it_stats(self) -> str:
         """Генерирует фейковую IT-статистику для уведомлений"""
         stats = [
@@ -217,23 +255,26 @@ class Command(BaseCommand):
         ]
         return "\n".join(stats)
 
-    def award_season_winners(self, season):
-        """Награждает топ-3 системных администраторов
-           сезона специальными достижениями"""
+    async def award_season_winners(self, season):
+        """Награждает топ-3 системных администраторов сезона"""
         try:
-            top_admins = SeasonRank.objects.filter(
-                season=season
-            ).order_by('-experience')[:3]
+            top_admins = await sync_to_async(list)(
+                SeasonRank.objects.filter(season=season)
+                .order_by('-experience')[:3]
+            )
+
             if not top_admins:
                 logger.info(
                     f"Нет данных для награждения в сезоне {season.name}")
                 return
+
             rewards = {1: "🥇", 2: "🥈", 3: "🥉"}
             roles = {
                 1: "Главный выездной системный администратор",
                 2: "Ведущий выездной системный администратор",
                 3: "Старший выездной системный администратор"
             }
+
             for position, admin in enumerate(top_admins, 1):
                 username = admin.username or f"admin_{admin.user_id}"
                 achievement_name = (
@@ -241,11 +282,13 @@ class Command(BaseCommand):
                     f" сезона {season.name} "
                     f"(Уровень {admin.level})"
                 )
-                Achievement.objects.create(
+
+                await sync_to_async(Achievement.objects.create)(
                     user_id=admin.user_id,
                     username=username,
                     achievement_name=achievement_name
                 )
+
             logger.info(
                 f"Награждены топ-3 выездных системных "
                 f"администратора сезона {season.name}")
@@ -253,23 +296,25 @@ class Command(BaseCommand):
             logger.error(
                 f"Ошибка награждения топ-админов сезона {season.name}: {e}")
 
-    def send_telegram_message(self, message: str):
-        """Отправляет сообщение в Telegram группу"""
+    async def send_telegram_message(self, message: str):
+        """Асинхронно отправляет сообщение в Telegram группу"""
         try:
             group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
             if not group_chat_id:
                 logger.error("TELEGRAM_GROUP_CHAT_ID не установлен в .env")
                 return
 
-            async_to_sync(application.bot.send_message)(
+            await self.application.bot.send_message(
                 chat_id=group_chat_id,
                 text=message,
                 parse_mode="Markdown"
             )
+            logger.info(
+                f"Сообщение успешно отправлено в Telegram: {message[:50]}...")
         except Exception as e:
-            logger.error(f"Ошибка отправки сообщения в Telegram: {e}")
+            logger.error(f"Ошибка отправки сообщения: {e}")
 
-    def send_season_start_notification(self, season):
+    async def send_season_start_notification(self, season):
         """Отправляет уведомление о начале IT-сезона"""
         meme = random.choice(IT_MEMES)
         stats = self.generate_it_stats()
@@ -288,14 +333,16 @@ class Command(BaseCommand):
             f"🏆 Топ-3 выездных специалиста получат "
             f"специальные награды в конце сезона! Нет. :)"
         )
-        self.send_telegram_message(message)
+        await self.send_telegram_message(message)
 
-    def send_season_end_notification(self, season):
+    async def send_season_end_notification(self, season):
         """Отправляет уведомление о завершении сезона"""
         try:
-            top_admin = SeasonRank.objects.filter(
-                season=season
-            ).order_by('-experience').first()
+            top_admin = await sync_to_async(
+                SeasonRank.objects.filter(
+                    season=season
+                ).order_by('-experience').first
+            )()
             winner_text = ""
             if top_admin:
                 username = top_admin.username or f"admin_{top_admin.user_id}"
@@ -304,7 +351,9 @@ class Command(BaseCommand):
                     f"@{username} "
                     f"(Уровень {top_admin.level})"
                 )
-            season_stats = SeasonRank.objects.filter(season=season).aggregate(
+            season_stats = await sync_to_async(
+                SeasonRank.objects.filter(season=season).aggregate
+            )(
                 total_visits=Sum("visits_count"),
                 avg_level=Avg("level")
             )
@@ -312,11 +361,14 @@ class Command(BaseCommand):
             total_visits = season_stats["total_visits"] or 0
             avg_level = season_stats["avg_level"] or 0
 
+            participants_count = await sync_to_async(
+                SeasonRank.objects.filter(season=season).count
+            )()
+
             message = (
                 f"🏁 *Сезон {season.name} завершен!*\n\n"
                 f"📊 Итоги сезона:\n"
-                f"- Участников: {SeasonRank.objects.filter(
-                    season=season).count()}\n"
+                f"- Участников: {participants_count}\n"
                 f"- Всего выездов: {total_visits}\n"
                 f"- Средний уровень: {avg_level:.1f}\n"
                 f"{winner_text}\n\n"
@@ -324,19 +376,21 @@ class Command(BaseCommand):
                 f"получили специальные награды!\n"
                 f"📝 Проверьте свой профиль командой /profile"
             )
-            self.send_telegram_message(message)
+            await self.send_telegram_message(message)
         except Exception as e:
             logger.error(
                 f"Ошибка отправки уведомления о завершении сезона: {e}")
 
-    def send_season_ending_soon_notification(self, season):
+    async def send_season_ending_soon_notification(self, season):
         """Уведомляет о скором окончании сезона (за 3 дня)"""
         days_left = (season.end_date - timezone.now().date()).days
         meme = random.choice(IT_MEMES)
 
-        leader = SeasonRank.objects.filter(
-            season=season
-        ).order_by('-experience').first()
+        leader = await sync_to_async(
+            SeasonRank.objects.filter(
+                season=season
+            ).order_by('-experience').first
+        )()
 
         leader_text = ""
         if leader:
@@ -353,4 +407,4 @@ class Command(BaseCommand):
             f"💡 {meme}\n\n"
             f"📊 Проверьте свой прогресс командой /profile"
         )
-        self.send_telegram_message(message)
+        await self.send_telegram_message(message)
