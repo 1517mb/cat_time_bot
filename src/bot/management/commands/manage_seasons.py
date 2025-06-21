@@ -218,33 +218,40 @@ class Command(BaseCommand):
         return "\n".join(stats)
 
     def award_season_winners(self, season):
-        """Награждает топ-3 игроков сезона специальными достижениями"""
+        """Награждает топ-3 системных администраторов
+           сезона специальными достижениями"""
         try:
-            top_players = SeasonRank.objects.filter(
+            top_admins = SeasonRank.objects.filter(
                 season=season
             ).order_by('-experience')[:3]
-
-            if not top_players:
+            if not top_admins:
                 logger.info(
-                    f"Нет игроков для награждения в сезоне {season.name}")
+                    f"Нет данных для награждения в сезоне {season.name}")
                 return
-
             rewards = {1: "🥇", 2: "🥈", 3: "🥉"}
-
-            for i, player in enumerate(top_players, 1):
+            roles = {
+                1: "Главный выездной системный администратор",
+                2: "Ведущий выездной системный администратор",
+                3: "Старший выездной системный администратор"
+            }
+            for position, admin in enumerate(top_admins, 1):
+                username = admin.username or f"admin_{admin.user_id}"
                 achievement_name = (
-                    f"{rewards[i]} Победитель сезона {season.name} "
-                    f"(Уровень {player.level})"
+                    f"{rewards[position]} {roles[position]}"
+                    f" сезона {season.name} "
+                    f"(Уровень {admin.level})"
                 )
                 Achievement.objects.create(
-                    user_id=player.user_id,
-                    username=player.username,
+                    user_id=admin.user_id,
+                    username=username,
                     achievement_name=achievement_name
                 )
-            logger.info(f"Награждены топ-3 игрока сезона {season.name}")
+            logger.info(
+                f"Награждены топ-3 выездных системных "
+                f"администратора сезона {season.name}")
         except Exception as e:
             logger.error(
-                f"Ошибка награждения победителей сезона {season.name}: {e}")
+                f"Ошибка награждения топ-админов сезона {season.name}: {e}")
 
     def send_telegram_message(self, message: str):
         """Отправляет сообщение в Telegram группу"""
@@ -279,22 +286,23 @@ class Command(BaseCommand):
             f"- Зарабатывайте опыт и повышайте уровень\n"
             f"- Следите за своим прогрессом командой /profile\n\n"
             f"🏆 Топ-3 выездных специалиста получат "
-            f"специальные награды в конце сезона! Нет."
+            f"специальные награды в конце сезона! Нет. :)"
         )
         self.send_telegram_message(message)
 
     def send_season_end_notification(self, season):
         """Отправляет уведомление о завершении сезона"""
         try:
-            winner = SeasonRank.objects.filter(
+            top_admin = SeasonRank.objects.filter(
                 season=season
-            ).order_by("-experience").first()
-
+            ).order_by('-experience').first()
             winner_text = ""
-            if winner:
+            if top_admin:
+                username = top_admin.username or f"admin_{top_admin.user_id}"
                 winner_text = (
-                    f"\n\n🏆 *Абсолютный победитель:* @{winner.username} "
-                    f"(Уровень {winner.level})"
+                    f"\n\n🏆 *Лучший системный администратор сезона:* "
+                    f"@{username} "
+                    f"(Уровень {top_admin.level})"
                 )
             season_stats = SeasonRank.objects.filter(season=season).aggregate(
                 total_visits=Sum("visits_count"),
@@ -307,12 +315,13 @@ class Command(BaseCommand):
             message = (
                 f"🏁 *Сезон {season.name} завершен!*\n\n"
                 f"📊 Итоги сезона:\n"
-                f"- Участников: "
-                f"{SeasonRank.objects.filter(season=season).count()}\n"
+                f"- Участников: {SeasonRank.objects.filter(
+                    season=season).count()}\n"
                 f"- Всего выездов: {total_visits}\n"
                 f"- Средний уровень: {avg_level:.1f}\n"
                 f"{winner_text}\n\n"
-                f"🏅 Топ-3 игроков получили специальные награды!\n"
+                f"🏅 Топ-3 выездных специалиста "
+                f"получили специальные награды!\n"
                 f"📝 Проверьте свой профиль командой /profile"
             )
             self.send_telegram_message(message)
@@ -327,18 +336,20 @@ class Command(BaseCommand):
 
         leader = SeasonRank.objects.filter(
             season=season
-        ).order_by("-experience").first()
+        ).order_by('-experience').first()
 
         leader_text = ""
         if leader:
-            leader_text = (f"\n👑 Текущий лидер: @{leader.username} "
+            username = leader.username or f"admin_{leader.user_id}"
+            leader_text = (f"\n👑 Текущий лидер: @{username} "
                            f"(Уровень {leader.level})")
 
         message = (
-            f"⏰ *Внимание! Осталось {days_left} дня до "
-            f"окончания сезона {season.name}*\n\n"
+            f"⏰ *Внимание! Осталось {days_left} дня "
+            f"до окончания сезона {season.name}*\n\n"
             f"🏃‍♂️ Успейте заработать последние очки опыта!\n"
-            f"🏆 Топ-3 игроков получат специальные награды!{leader_text}\n\n"
+            f"🏆 Топ-3 выездных админа получат "
+            f"специальные награды!{leader_text}\n\n"
             f"💡 {meme}\n\n"
             f"📊 Проверьте свой прогресс командой /profile"
         )
