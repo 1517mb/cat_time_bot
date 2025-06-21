@@ -26,7 +26,6 @@ from telegram import (
     Update,
 )
 from telegram.ext import (
-    ApplicationBuilder,
     CommandHandler,
     ContextTypes,
     ConversationHandler,
@@ -39,6 +38,7 @@ from bot.management.core.bot_constants import (
     BotMessages,
     SiteCfg,
 )
+from bot.management.core.bot_instance import get_bot_application
 from bot.management.core.experience import calculate_experience
 from bot.management.core.statistics import (
     get_daily_statistics_message,
@@ -54,14 +54,14 @@ from bot.models import (
     UserActivity,
 )
 
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
 )
-
-application = None
 
 JOIN_CO, SELECT_CO = range(2)
 
@@ -849,7 +849,6 @@ async def edit_departure_time(update: Update,
                 time_spent = activity.leave_time - activity.join_time
                 await update_season_rank(user_id, exp_earned,
                                          time_spent, username)
-                await check_achievements(user_id, username, activity, context)
 
                 company_name = activity.company.name
                 spent_time = activity.get_spent_time
@@ -956,14 +955,12 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             user_id=user_id,
             join_time__date=today,
         ).count)()
+        activity.leave_time = timezone.now()
         exp_earned = calculate_experience(activity, achievements_list,
                                           daily_visits_count)
-        activity.leave_time = timezone.now()
         time_spent = activity.leave_time - activity.join_time
         await update_season_rank(user_id, exp_earned, time_spent, username)
         await sync_to_async(activity.save)()
-
-        await check_achievements(user_id, username, activity, context)
 
         await update_daily_statistics(user_id, username)
 
@@ -974,7 +971,8 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(
             f"🐾👋 *Вы покинули организацию {company_name}* 🐾👋\n"
             f"Время ухода: {local_time.strftime('%H:%M')}.\n"
-            f"Затраченное время: {spent_time}.",
+            f"Затраченное время: {spent_time}.\n"
+            f"🔰 Получено опыта: {exp_earned}",
             parse_mode="Markdown"
         )
 
@@ -1185,7 +1183,10 @@ async def update_season_rank(user_id: int,
 
 
 async def get_level_info(rank: SeasonRank) -> dict:
-    if not rank.level_title:
+
+    level_title = await sync_to_async(lambda: rank.level_title)()
+
+    if not level_title:
         return {
             "title": f"Уровень {rank.level}",
             "category": "Новичок",
@@ -1227,10 +1228,11 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             )
             return
 
-        rank = await sync_to_async(SeasonRank.objects.get)(
-            user_id=user_id,
-            season=season
-        )
+        rank = await sync_to_async(
+            SeasonRank.objects.select_related("level_title")
+            .get
+        )(user_id=user_id, season=season)
+
         level_info = await get_level_info(rank)
 
         total_hours = int(rank.total_time.total_seconds() // 3600)
@@ -1556,9 +1558,7 @@ class Command(BaseCommand):
     help = "Запуск бота Телеграмм"
 
     def handle(self, *args, **options):
-        global application
-        application = ApplicationBuilder().token(
-            settings.TELEGRAM_BOT_TOKEN).build()
+        application = get_bot_application()
 
         conv_handler = ConversationHandler(
             entry_points=[
@@ -1601,7 +1601,11 @@ class Command(BaseCommand):
         )
 
         try:
+            logger.info("Запуск бота в режиме polling...")
             application.run_polling(allowed_updates=Update.ALL_TYPES)
         except KeyboardInterrupt:
+            logger.info("Бот остановлен по запросу пользователя")
             self.stdout.write(self.style.SUCCESS("Бот остановлен."))
             application.stop()
+        except Exception as e:
+            logger.error(f"Критическая ошибка при работе бота: {e}")
