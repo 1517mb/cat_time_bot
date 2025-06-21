@@ -1,3 +1,4 @@
+import logging
 import random
 from datetime import timedelta
 
@@ -5,13 +6,18 @@ from asgiref.sync import sync_to_async
 from django.db.models import DurationField, Sum
 from django.utils import timezone
 
+from bot.management.core.experience import get_level_info
+from bot.management.core.utils import create_progress_bar
 from bot.models import (
     Achievement,
     DailyStatistics,
     Quote,
     Season,
+    SeasonRank,
     UserActivity,
 )
+
+logger = logging.getLogger(__name__)
 
 
 async def get_random_quote():
@@ -38,31 +44,35 @@ async def get_daily_statistics():
 
 async def get_daily_statistics_message():
     """
-    Возвращает словарь с двумя ключами: total_trips и total_time.
-    total_trips - это сумма всех поездок, совершенных за сегодняшний день,
-    а total_time - это сумма всего времени,
-    проведенного в приложении за сегодняшний день.
+    Функция для сбора и формирования ежедневной статистики
 
-    : возвращает: Словарь, как описано выше
+    Функция собирает информацию о количестве выездов, общем времени
+    и среднем времени, а также информацию о рангах и статистике
+    пользователей. Затем на основе этой информации формирует и
+    возвращает готовое сообщение со статистикой.
     """
+    today = timezone.now().date()
     stats = await get_daily_statistics()
     header = "📊 *Общая статистика за сегодня:*"
     quote = await get_random_quote()
-    today = timezone.now().date()
 
     season_info = ""
+    max_level = 0
+    max_level_user = ""
+    total_exp_earned = 0
+
     try:
         season = await sync_to_async(Season.objects.get)(is_active=True)
         season_info = f"🏆 *Текущий сезон: {season.name}*\n"
         now = timezone.now().date()
         days_left = (season.end_date - now).days
-        season_info += f"⏳ До конца сезона: *{days_left} дней*\n\n"
+        season_info += f"⏳ До конца сезона: *{days_left} дней*\n"
     except Season.DoesNotExist:
-        season_info = "ℹ️ *В данный момент сезон не активен*\n\n"
+        season_info = "ℹ️ *В данный момент сезон не активен*\n"
 
     user_stats = await sync_to_async(list)(
         DailyStatistics.objects.filter(date=today)
-        .values("username", "total_trips", "total_time")
+        .values("user_id", "username", "total_trips", "total_time")
         .order_by("-total_trips")
     )
 
@@ -71,69 +81,80 @@ async def get_daily_statistics_message():
         .values("username", "achievement_name")
     )
 
-    achievements_text = "\n\n🏆 *Персональная статистика:*\n"
+    user_info = []
 
-    for user in user_stats[:5]:
+    for user in user_stats:
+        rank = None
+        level_info = {}
+        if season:
+            rank = await sync_to_async(SeasonRank.objects.filter(
+                user_id=user["user_id"],
+                season=season
+            ).first)()
+            if rank:
+                level_info = await get_level_info(rank)
+                if rank.level > max_level:
+                    max_level = rank.level
+                    max_level_user = user["username"]
+                total_exp_earned += rank.experience
         if user["total_trips"] > 0:
             avg_time = user["total_time"].total_seconds() / user["total_trips"]
             avg_min = int(avg_time // 60)
             avg_sec = int(avg_time % 60)
+            avg_time_str = f"{avg_min} мин {avg_sec} сек"
         else:
-            avg_min = avg_sec = 0
-
+            avg_time_str = "0 мин"
         user_achs = [
             a["achievement_name"] for a in achievements
             if a["username"] == user["username"]]
         unique_achs = list(set(user_achs))[:3]
-
-        achievements_text += (
-            f"👤 @{user['username']}\n"
-            f"   ▸ Выездов: {user['total_trips']} 🚗\n"
+        achievements_str = (", ".join(unique_achs)
+                            if unique_achs else "Пока нет")
+        user_text = f"👤 *@{user['username']}*\n"
+        if rank and level_info:
+            progress_bar = create_progress_bar(level_info["progress"])
+            user_text += (
+                f"▸ Уровень: *{rank.level}* | *{level_info['title']}*\n"
+                f"▸ Прогресс: {progress_bar} "
+                f"*{int(level_info['progress'])}%*\n"
+                f"▸ Опыт: *{level_info['current_exp']}/"
+                f"{level_info['next_level_exp']}*\n"
+            )
+        user_text += (
+            f"▸ Выездов: *{user['total_trips']}* 🚗\n"
+            f"▸ Среднее время: *{avg_time_str}* ⏱\n"
+            f"▸ Достижения: {achievements_str}\n"
         )
-
-        if user["total_trips"] > 0:
-            achievements_text += (f"   ▸ Среднее время: {avg_min} мин"
-                                  f" {avg_sec} сек ⏱\n")
-
-        if unique_achs:
-            achievements_text += f"   ▸ Достижения: {', '.join(unique_achs)}\n"
-
-        achievements_text += "\n"
-
-    if not user_stats:
-        achievements_text = "\n\n🏆 *Сегодня ещё никто не отметился*"
-
-    if stats["total_trips"] == 0:
-        return (
-            f"{season_info}"
-            f"{header}\n"
-            f"📌 *Текущая ситуация:*\n"
-            f"   Ого, сегодня ещё ни одного выезда! ☘️\n"
-            f"{achievements_text}"
-            f"\n✨ *А вот и обещанная цитата:*\n{quote}"
-        )
-
+        user_info.append(user_text)
+    general_info = (
+        f"{season_info}"
+        f"⭐ *Общий опыт за день:* {total_exp_earned}\n"
+        f"👑 *Максимальный уровень:* @{max_level_user}"
+        f" (уровень {max_level})\n\n"
+    )
     total_time = stats["total_time"]
     hours = int(total_time.total_seconds() // 3600)
     minutes = int((total_time.total_seconds() % 3600) // 60)
-    avg_minutes = int(total_time.total_seconds() // stats["total_trips"] // 60)
     time_format = f"{hours} ч" + (f" {minutes} мин" if minutes else "")
 
-    return (
-        f"{season_info}"
-        f"{header}\n"
-        f"  - Всего выездов: {stats['total_trips']} 🚗\n"
-        f"  - Общее время: {time_format} ⏱\n"
-        f"  - Среднее время: {avg_minutes} мин 📌"
-        f"{achievements_text}"
-        f"\n\n{quote}"
+    stats_info = (
+        f"  - Всего выездов: *{stats['total_trips']}* 🚗\n"
+        f"  - Общее время: *{time_format}* ⏱\n"
+        f"  - Среднее время: *{avg_time_str}* 📌\n\n"
     )
+
+    message = (
+        f"{header}\n\n"
+        f"{general_info}"
+        f"{stats_info}"
+        f"🏅 *Прогресс и статистика участников:*\n\n"
+        f"{'\n\n'.join(user_info)}\n\n"
+        f"✨ *Мудрая мысль дня:*\n{quote}"
+    )
+    return message
 
 
 async def update_daily_statistics(user_id, username):
-    """
-    Оптимизированное обновление статистики с batch-обработкой
-    """
     today = timezone.now().date()
 
     activities = await sync_to_async(list)(
@@ -145,10 +166,18 @@ async def update_daily_statistics(user_id, username):
     )
 
     total_time = timedelta()
-    total_trips = len(activities)
-
+    valid_trips = 0
     for activity in activities:
-        total_time += activity["leave_time"] - activity["join_time"]
+        join_time = activity["join_time"]
+        leave_time = activity["leave_time"]
+
+        if join_time is not None and leave_time is not None:
+            total_time += leave_time - join_time
+            valid_trips += 1
+        else:
+            logger.warning(
+                f"Найдена запись с пустым временем: user={user_id},"
+                f" join={join_time}, leave={leave_time}")
 
     await sync_to_async(DailyStatistics.objects.update_or_create)(
         user_id=user_id,
@@ -156,6 +185,6 @@ async def update_daily_statistics(user_id, username):
         defaults={
             "username": username,
             "total_time": total_time,
-            "total_trips": total_trips
+            "total_trips": valid_trips
         }
     )
