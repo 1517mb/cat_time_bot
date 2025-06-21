@@ -39,6 +39,7 @@ from bot.management.core.bot_constants import (
     BotMessages,
     SiteCfg,
 )
+from bot.management.core.experience import calculate_experience
 from bot.management.core.statistics import (
     get_daily_statistics_message,
     update_daily_statistics,
@@ -257,6 +258,13 @@ async def check_achievements(
             ),
             parse_mode="Markdown"
         )
+        achievement_names = []
+        for ach in new_achievements:
+            if " " in ach:
+                achievement_names.append(ach.split(" ", 1)[1])
+            else:
+                achievement_names.append(ach)
+        return achievement_names
 
     except Exception as e:
         logging.error(
@@ -826,6 +834,18 @@ async def edit_departure_time(update: Update,
                     leave_time__isnull=False).latest)("leave_time")
 
             if activity:
+                achievements_list = await check_achievements(user_id, username,
+                                                             activity, context)
+                today = timezone.now().date()
+                daily_visits_count = await sync_to_async(
+                    UserActivity.objects.filter(
+                        user_id=user_id,
+                        join_time__date=today
+                    ).count)()
+                exp_earned = calculate_experience(activity, achievements_list,
+                                                  daily_visits_count)
+                time_spent = activity.leave_time - activity.join_time
+                await update_season_rank(user_id, exp_earned, time_spent)
                 await check_achievements(user_id, username, activity, context)
 
                 company_name = activity.company.name
@@ -926,8 +946,18 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "company").filter(
                 user_id=user_id,
                 leave_time__isnull=True).latest)("join_time")
-
+        achievements_list = await check_achievements(user_id, username,
+                                                     activity, context)
+        today = timezone.now().date()
+        daily_visits_count = await sync_to_async(UserActivity.objects.filter(
+            user_id=user_id,
+            join_time__date=today,
+        ).count)()
+        exp_earned = calculate_experience(activity, achievements_list,
+                                          daily_visits_count)
         activity.leave_time = timezone.now()
+        time_spent = activity.leave_time - activity.join_time
+        await update_season_rank(user_id, exp_earned, time_spent)
         await sync_to_async(activity.save)()
 
         await check_achievements(user_id, username, activity, context)
