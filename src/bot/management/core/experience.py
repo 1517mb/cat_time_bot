@@ -31,22 +31,29 @@ def calculate_experience(activity,
     :param achievements: Список названий достижений
     :return: Количество опыта
     """
-    base_exp = 10 + min(20, (daily_visits_count - 1) * 5)
+    base_exp = 10 + min(20, max(0, (daily_visits_count - 1)) * 5)
 
     time_spent = activity.leave_time - activity.join_time
-    total_minutes = time_spent.total_seconds() // 60
+    total_minutes = time_spent.total_seconds() / 60
 
     time_exp = 0
-    remaining_minutes = total_minutes
-    rate_period = 5
-    hour_block = 0
-    while remaining_minutes > 0:
-        block_minutes = min(remaining_minutes, 60)
-        block_exp = block_minutes // rate_period
-        time_exp += block_exp
-        remaining_minutes -= block_minutes
-        hour_block += 1
-        rate_period = 5 + 5 * hour_block
+    hour_blocks = total_minutes // 60
+
+    for hour in range(int(hour_blocks)):
+        if hour == 0:
+            time_exp += 12
+        elif hour == 1:
+            time_exp += 6
+        else:
+            time_exp += 4
+
+    remaining_minutes = total_minutes % 60
+    if hour_blocks == 0:
+        time_exp += remaining_minutes / 5
+    elif hour_blocks == 1:
+        time_exp += remaining_minutes / 10
+    else:
+        time_exp += remaining_minutes / 15
 
     company_bonus = 0
     company_name = activity.company.name
