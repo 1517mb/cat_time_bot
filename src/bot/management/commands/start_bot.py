@@ -61,6 +61,8 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+application = None
+
 JOIN_CO, SELECT_CO = range(2)
 
 VALID_COMPANY_NAME_PATTERN = re.compile(r"^[А-Яа-яЁёA-Za-z0-9\s\-]+$")
@@ -1551,6 +1553,7 @@ class Command(BaseCommand):
     help = "Запуск бота Телеграмм"
 
     def handle(self, *args, **options):
+        global application
         application = ApplicationBuilder().token(
             settings.TELEGRAM_BOT_TOKEN).build()
 
