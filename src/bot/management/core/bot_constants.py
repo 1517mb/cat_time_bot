@@ -149,4 +149,4 @@ class BotMessages:
         "help", "site", "get_chat_info", "leave", "mew", "start_weather",
         "start_stats", "start_reminder", "stop_scheduler",
         "edit", "edit_start", "edit_end", "start_dailytips",
-        "stop_dailytips", "join", "cancel"]
+        "stop_dailytips", "join", "cancel", "profile"]
