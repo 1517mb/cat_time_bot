@@ -61,29 +61,29 @@ def calculate_experience(activity,
     :param achievements: Список названий достижений
     :return: Количество опыта
     """
+
+    if activity.leave_time < activity.join_time:
+        return 0
+
     base_exp = 10 + min(20, max(0, (daily_visits_count - 1)) * 5)
 
     time_spent = activity.leave_time - activity.join_time
     total_minutes = time_spent.total_seconds() / 60
 
+    if total_minutes >= 721:
+        return 0
+
     time_exp = 0
-    hour_blocks = total_minutes // 60
 
-    for hour in range(int(hour_blocks)):
-        if hour == 0:
-            time_exp += 12
-        elif hour == 1:
-            time_exp += 6
-        else:
-            time_exp += 4
-
-    remaining_minutes = total_minutes % 60
-    if hour_blocks == 0:
-        time_exp += remaining_minutes / 5
-    elif hour_blocks == 1:
-        time_exp += remaining_minutes / 10
+    if total_minutes <= 40:
+        time_exp = total_minutes * 0.12
+    elif total_minutes <= 80:
+        time_exp = 4.8 + (total_minutes - 40) * 0.28
+    elif total_minutes <= 120:
+        time_exp = 15.2 + (total_minutes - 80) * 0.12
     else:
-        time_exp += remaining_minutes / 15
+        extra_time = total_minutes - 120
+        time_exp = 20.0 + (extra_time ** 0.7) * 0.05
 
     company_bonus = 0
     company_name = activity.company.name
@@ -98,5 +98,5 @@ def calculate_experience(activity,
     for achievement in achievements:
         if achievement in ACHIEVEMENT_BONUSES:
             achievements_exp += ACHIEVEMENT_BONUSES[achievement]
-
-    return base_exp + time_exp + company_bonus + achievements_exp
+    total_exp = base_exp + time_exp + company_bonus + achievements_exp
+    return max(0, int(round(total_exp)))
