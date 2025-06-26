@@ -49,6 +49,7 @@ from bot.models import (
     Achievement,
     Company,
     DailytTips,
+    LevelTitle,
     Season,
     SeasonRank,
     UserActivity,
@@ -1177,6 +1178,13 @@ async def update_season_rank(user_id: int,
             rank.experience -= rank.level * 100
             rank.level += 1
             level_up = True
+        if level_up:
+            try:
+                new_level_title = await sync_to_async(
+                    LevelTitle.objects.get)(level=rank.level)
+                rank.level_title = new_level_title
+            except LevelTitle.DoesNotExist:
+                pass
 
         await sync_to_async(rank.save)()
 
