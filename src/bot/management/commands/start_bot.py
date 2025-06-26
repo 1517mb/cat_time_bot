@@ -848,19 +848,28 @@ async def edit_departure_time(update: Update,
                 exp_earned = calculate_experience(activity, achievements_list,
                                                   daily_visits_count)
                 time_spent = activity.leave_time - activity.join_time
-                await update_season_rank(user_id, exp_earned,
-                                         time_spent, username)
+                rank, level_up, new_level = await update_season_rank(
+                    user_id, exp_earned, time_spent, username)
 
                 company_name = activity.company.name
                 spent_time = activity.get_spent_time
 
-                await update.message.reply_text(
+                message = (
                     f"⌛ *Обновленные данные о посещении* ⌛\n"
                     f"🏭 Организация: *{company_name}*\n"
                     f"⏳ Новое затраченное время: {spent_time}.",
                     f"🔰 Получено опыта: {exp_earned}",
-                    parse_mode="Markdown"
                 )
+                if level_up:
+                    level_info = await get_level_info(rank)
+                    message += (
+                        "\n\n🎉 *Поздравляем с повышением уровня!* 🎉\n"
+                        f"🏆 Новый уровень: *{new_level} - "
+                        f"{level_info['title']}*\n"
+                        f"📚 Категория: *{level_info['category']}*"
+                    )
+
+                await update.message.reply_text(message, parse_mode="Markdown")
             else:
                 logging.warning(
                     f"Активность не найдена для пользователя {user_id}")
@@ -961,7 +970,8 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         exp_earned = calculate_experience(activity, achievements_list,
                                           daily_visits_count)
         time_spent = activity.leave_time - activity.join_time
-        await update_season_rank(user_id, exp_earned, time_spent, username)
+        rank, level_up, new_level = await update_season_rank(
+            user_id, exp_earned, time_spent, username)
         await sync_to_async(activity.save)()
 
         await update_daily_statistics(user_id, username)
@@ -970,13 +980,21 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         spent_time = activity.get_spent_time
         local_time = timezone.localtime(timezone.now())
 
-        await update.message.reply_text(
+        message = (
             f"🐾👋 *Вы покинули организацию {company_name}* 🐾👋\n"
             f"⌛️ Время ухода: {local_time.strftime('%H:%M')}.\n"
             f"⏳ Затраченное время: {spent_time}.\n"
-            f"🔰 Получено опыта: {exp_earned}",
-            parse_mode="Markdown"
+            f"🔰 Получено опыта: {exp_earned}"
         )
+
+        if level_up:
+            level_info = await get_level_info(rank)
+            message += (
+                "\n\n🎉 *Поздравляем с повышением уровня!* 🎉\n"
+                f"🏆 Новый уровень: *{new_level} - {level_info['title']}*\n"
+                f"📚 Категория: *{level_info['category']}*"
+            )
+        await update.message.reply_text(message, parse_mode="Markdown")
 
     except UserActivity.DoesNotExist:
         await update.message.reply_text(
@@ -1155,7 +1173,7 @@ async def update_season_rank(user_id: int,
                              username: str):
     season = await get_current_season()
     if not season:
-        return None, False
+        return None, False, 0
 
     rank, created = await sync_to_async(SeasonRank.objects.get_or_create)(
         user_id=user_id,
@@ -1167,7 +1185,7 @@ async def update_season_rank(user_id: int,
             "visits_count": 1
         }
     )
-
+    old_level = rank.level
     level_up = False
     if not created:
         rank.experience += exp_earned
@@ -1188,7 +1206,9 @@ async def update_season_rank(user_id: int,
 
         await sync_to_async(rank.save)()
 
-    return rank, level_up
+    new_level = rank.level if level_up else old_level
+
+    return rank, level_up, new_level
 
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
