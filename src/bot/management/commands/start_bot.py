@@ -1550,6 +1550,54 @@ async def handle_unknown_command(update: Update,
         logging.error(f"Ошибка обработки команды: {str(e)}", exc_info=True)
 
 
+async def active_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Показывает всех сотрудников, находящихся в организациях в данный момент.
+    """
+    try:
+        active_activities = await sync_to_async(list)(
+            UserActivity.objects.select_related("company", "user")
+            .filter(leave_time__isnull=True)
+        )
+        if not active_activities:
+            await update.message.reply_text(
+                "ℹ️ *Статус:* В данный момент "
+                "никто не находится в организациях.",
+                parse_mode="Markdown"
+            )
+            return
+
+        companies = {}
+        for activity in active_activities:
+            company_name = activity.company.name
+            join_time = timezone.localtime(
+                activity.join_time).strftime("%H:%M")
+            username = (f"@{activity.username}"
+                        if activity.username
+                        else f"ID:{activity.user_id}")
+
+            if company_name not in companies:
+                companies[company_name] = []
+            companies[company_name].append((username, join_time))
+
+        message_lines = ["🚀 *Сотрудники в организациях:*\n"]
+
+        for company, users in companies.items():
+            message_lines.append(f"\n🏢 *{company}*:")
+            for i, (username, join_time) in enumerate(users, 1):
+                message_lines.append(f"{i}. {username} - прибыл в {join_time}")
+
+        message = "\n".join(message_lines)
+        await update.message.reply_text(message, parse_mode="Markdown")
+
+    except Exception as e:
+        logging.error(f"Ошибка при выполнении команды /all_status: {e}")
+        await update.message.reply_text(
+            "🚨 *Произошла ошибка при получении статуса сотрудников.* 🚨",
+            parse_mode="Markdown"
+        )
+
+
 class Command(BaseCommand):
     help = "Запуск бота Телеграмм"
 
@@ -1595,6 +1643,7 @@ class Command(BaseCommand):
         application.add_handler(
             MessageHandler(filters.COMMAND, handle_unknown_command)
         )
+        application.add_handler(CommandHandler("status", active_users))
 
         try:
             logger.info("Запуск бота в режиме polling...")
