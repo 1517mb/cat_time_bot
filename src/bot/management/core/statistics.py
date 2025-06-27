@@ -57,8 +57,7 @@ async def get_daily_statistics_message():
     quote = await get_random_quote()
 
     season_info = ""
-    max_level = 0
-    max_level_user = ""
+    best_user = None
     total_exp_earned = 0
 
     try:
@@ -82,6 +81,8 @@ async def get_daily_statistics_message():
     )
 
     user_info = []
+    user_ranks = []
+    all_users_have_ranks = False
 
     for user in user_stats:
         rank = None
@@ -92,11 +93,16 @@ async def get_daily_statistics_message():
                 season=season
             ).first)()
             if rank:
+                all_users_have_ranks = True
                 level_info = await get_level_info(rank)
-                if rank.level > max_level:
-                    max_level = rank.level
-                    max_level_user = user["username"]
                 total_exp_earned += rank.experience
+                user_ranks.append({
+                    "username": user["username"],
+                    "level": rank.level,
+                    "exp": rank.experience,
+                    "visits": rank.visits_count,
+                    "rank_obj": rank
+                })
         if user["total_trips"] > 0:
             avg_time = user["total_time"].total_seconds() / user["total_trips"]
             avg_min = int(avg_time // 60)
@@ -126,22 +132,52 @@ async def get_daily_statistics_message():
             f"▸ Достижения: {achievements_str}\n"
         )
         user_info.append(user_text)
-    general_info = (
-        f"{season_info}"
-        f"⭐ *Общий опыт за день:* {total_exp_earned}\n"
-        f"👑 *Максимальный уровень:* @{max_level_user}"
-        f" (уровень {max_level})\n\n"
-    )
+    if user_ranks:
+        user_ranks.sort(key=lambda x: (
+            -x["level"],
+            -x["exp"],
+            -x["visits"]
+        ))
+        best_user = user_ranks[0]
     total_time = stats["total_time"]
     hours = int(total_time.total_seconds() // 3600)
     minutes = int((total_time.total_seconds() % 3600) // 60)
     time_format = f"{hours} ч" + (f" {minutes} мин" if minutes else "")
 
+    leader_info = ""
+    if best_user:
+        level_info = best_user["level_info"]
+        leader_info = (
+            f"👑 *Лидер сезона:* @{best_user['username']}\n"
+            f"▸ Уровень: *{best_user['level']} - {level_info['title']}*\n"
+            f"▸ Опыт: *{best_user['exp']}*\n"
+            f"▸ Выездов: *{best_user['visits']}*\n\n"
+        )
+    elif all_users_have_ranks:
+        leader_info = "👑 *Лидер сезона:* Пока не определен\n\n"
+
+    general_info = (
+        f"{season_info}\n"
+        f"⭐ *Общий опыт за день:* {total_exp_earned}\n\n"
+        f"{leader_info}"
+    )
+
     stats_info = (
+        "📈 *Общие показатели за день:*\n"
         f"  - Всего выездов: *{stats['total_trips']}* 🚗\n"
         f"  - Общее время: *{time_format}* ⏱\n"
         f"  - Среднее время: *{avg_time_str}* 📌\n\n"
     )
+    if user_ranks:
+        rank_map = {u["username"]: u for u in user_ranks}
+        user_info.sort(key=lambda text: (
+            -rank_map.get(
+                text.split('*@')[1].split('*')[0], {}).get("level", 0),
+            -rank_map.get(
+                text.split('*@')[1].split('*')[0], {}).get("exp", 0),
+            -rank_map.get(
+                text.split('*@')[1].split('*')[0], {}).get("visits", 0)
+        ))
 
     message = (
         f"{header}\n\n"
