@@ -23,6 +23,8 @@ class SiteCfg:
         "/edit\\_end <ЧЧ:ММ> - Изменить время убытия из текущей организации."
         "(только для активной в данной момент организации)"
         "\n"
+        "/status - показывает актуальный статус всех сотрудников:"
+        " кто где находится и с какого времени.\n"
         "\n"
         "*Планировщик:*\n"
         "/start\\_weather <ЧЧ:ММ> - Установить время отправки погоды\n"
@@ -149,4 +151,4 @@ class BotMessages:
         "help", "site", "get_chat_info", "leave", "mew", "start_weather",
         "start_stats", "start_reminder", "stop_scheduler",
         "edit", "edit_start", "edit_end", "start_dailytips",
-        "stop_dailytips", "join", "cancel", "profile"]
+        "stop_dailytips", "join", "cancel", "profile", "status"]
