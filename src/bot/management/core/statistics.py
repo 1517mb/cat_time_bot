@@ -84,6 +84,16 @@ async def get_daily_statistics_message():
     user_ranks = []
     all_users_have_ranks = False
 
+    total_trips = stats["total_trips"]
+    total_seconds = stats["total_time"].total_seconds()
+    if total_trips > 0:
+        avg_seconds = total_seconds / total_trips
+        avg_min = int(avg_seconds // 60)
+        avg_sec = int(avg_seconds % 60)
+        avg_time_str = f"{avg_min} мин {avg_sec} сек"
+    else:
+        avg_time_str = "0 мин"
+
     for user in user_stats:
         rank = None
         level_info = {}
@@ -101,15 +111,19 @@ async def get_daily_statistics_message():
                     "level": rank.level,
                     "exp": rank.experience,
                     "visits": rank.visits_count,
-                    "rank_obj": rank
+                    "rank_obj": rank,
+                    "level_info": level_info
                 })
+
         if user["total_trips"] > 0:
-            avg_time = user["total_time"].total_seconds() / user["total_trips"]
-            avg_min = int(avg_time // 60)
-            avg_sec = int(avg_time % 60)
-            avg_time_str = f"{avg_min} мин {avg_sec} сек"
+            user_avg_time = (
+                user["total_time"].total_seconds() / user["total_trips"])
+            user_avg_min = int(user_avg_time // 60)
+            user_avg_sec = int(user_avg_time % 60)
+            user_avg_time_str = f"{user_avg_min} мин {user_avg_sec} сек"
         else:
-            avg_time_str = "0 мин"
+            user_avg_time_str = "0 мин"
+
         user_achs = [
             a["achievement_name"] for a in achievements
             if a["username"] == user["username"]]
@@ -128,10 +142,11 @@ async def get_daily_statistics_message():
             )
         user_text += (
             f"▸ Выездов: *{user['total_trips']}* 🚗\n"
-            f"▸ Среднее время: *{avg_time_str}* ⏱\n"
+            f"▸ Среднее время: *{user_avg_time_str}* ⏱\n"
             f"▸ Достижения: {achievements_str}\n"
         )
         user_info.append(user_text)
+
     if user_ranks:
         user_ranks.sort(key=lambda x: (
             -x["level"],
@@ -139,6 +154,7 @@ async def get_daily_statistics_message():
             -x["visits"]
         ))
         best_user = user_ranks[0]
+
     total_time = stats["total_time"]
     hours = int(total_time.total_seconds() // 3600)
     minutes = int((total_time.total_seconds() % 3600) // 60)
@@ -168,6 +184,7 @@ async def get_daily_statistics_message():
         f"  - Общее время: *{time_format}* ⏱\n"
         f"  - Среднее время: *{avg_time_str}* 📌\n\n"
     )
+
     if user_ranks:
         rank_map = {u["username"]: u for u in user_ranks}
         user_info.sort(key=lambda text: (
