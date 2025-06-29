@@ -1,3 +1,6 @@
+from core.constants import VERSION
+
+
 class SiteCfg:
     SITE = "https://www.riopass.ru/"
     MSG_SITE = (
@@ -9,6 +12,7 @@ class SiteCfg:
         f"🔗 Ссылка: [перейти на сайт]({SITE})"
     )
     HELP_TEXT = (
+        f"*CatBot v{VERSION}*\n\n"
         "😺👋 Привет! Вот список доступных команд:\n"
         "\n"
         "*Основные команды:*\n"
