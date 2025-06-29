@@ -864,7 +864,7 @@ async def edit_departure_time(update: Update,
                     level_info = await get_level_info(rank)
                     message += (
                         "\n\n🎉 *Поздравляем с повышением уровня!* 🎉\n"
-                        f"🏆 Новый уровень: *{new_level} - "
+                        f"🏆 Новый уровень: *{new_level} lvl - "
                         f"{level_info['title']}*\n"
                         f"📚 Категория: *{level_info['category']}*"
                     )
@@ -991,7 +991,7 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             level_info = await get_level_info(rank)
             message += (
                 "\n\n🎉 *Поздравляем с повышением уровня!* 🎉\n"
-                f"🏆 Новый уровень: *{new_level} - {level_info['title']}*\n"
+                f"🏆 Новый уровень: *{new_level} lvl - {level_info['title']}*\n"
                 f"📚 Категория: *{level_info['category']}*"
             )
         await update.message.reply_text(message, parse_mode="Markdown")

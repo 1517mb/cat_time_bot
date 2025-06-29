@@ -165,7 +165,7 @@ async def get_daily_statistics_message():
         level_info = best_user["level_info"]
         leader_info = (
             f"👑 *Лидер сезона:* @{best_user['username']}\n"
-            f"▸ Уровень: *{best_user['level']} - {level_info['title']}*\n"
+            f"▸ Уровень: *{best_user['level']} lvl - {level_info['title']}*\n"
             f"▸ Опыт: *{best_user['exp']}*\n"
             f"▸ Выездов: *{best_user['visits']}*\n\n"
         )
