@@ -12,7 +12,7 @@ def create_progress_bar(progress: float, length: int = 10) -> str:
 @lru_cache(maxsize=365)
 def _is_holiday_sync(check_date: date) -> bool:
     """Проверяет, является ли дата выходным или праздником в России"""
-    if check_date.weekday() >= 7:
+    if check_date.weekday() >= 5:
         return True
 
     if check_date.month == 1 and 1 <= check_date.day <= 8:
