@@ -442,3 +442,28 @@ class Quote(models.Model):
 
     def __str__(self):
         return f"{self.author} - {self.source}"
+
+
+class CurrencyRate(models.Model):
+    CURRENCY_CHOICES = [
+        ("USD", "Доллар США"),
+        ("EUR", "Евро"),
+        ("CNY", "Китайский юань"),
+        ("BTC_RUB", "Биткоин (RUB)"),
+        ("BTC_USD", "Биткоин (USD)"),
+    ]
+
+    currency = models.CharField(
+        max_length=10,
+        choices=CURRENCY_CHOICES
+    )
+    rate = models.FloatField()
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Курс валюты"
+        verbose_name_plural = "Курсы валют"
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"{self.get_currency_display()}: {self.rate} ({self.date})"
