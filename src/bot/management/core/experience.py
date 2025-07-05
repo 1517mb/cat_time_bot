@@ -1,5 +1,7 @@
 import re
+
 from asgiref.sync import sync_to_async
+
 from bot.models import SeasonRank
 
 COMPANY_BONUSES = {
