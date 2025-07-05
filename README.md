@@ -29,7 +29,7 @@
 
 ## Технологии
 - Python 3.12
-- Django
+- Django 5
 - django-import-export
 - python-telegram-bot
 - aiohttp (для асинхронных HTTP-запросов)
