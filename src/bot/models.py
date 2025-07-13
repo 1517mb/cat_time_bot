@@ -463,7 +463,14 @@ class CurrencyRate(models.Model):
     class Meta:
         verbose_name = "Курс валюты"
         verbose_name_plural = "Курсы валют"
-        ordering = ["-date"]
+        ordering = ("-date",)
+        get_latest_by = "date"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["currency", "date"],
+                name="unique_currency_rate_per_date"
+            )
+        ]
 
     def __str__(self):
         return f"{self.get_currency_display()}: {self.rate} ({self.date})"
