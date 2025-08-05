@@ -15,6 +15,7 @@ from bot.models import (
     SeasonRank,
     Tag,
     UserActivity,
+    CurrencyRate,
 )
 from bot.resources import UserActivityResource
 from core.constants import SITE_HEADER, SITE_TITLE
@@ -233,3 +234,30 @@ class SeasonAdmin(admin.ModelAdmin):
 
     theme_display.short_description = "Тематика"
     duration_days.short_description = "Длит. (дней)"
+
+
+@admin.register(CurrencyRate)
+class CurrencyRateAdmin(admin.ModelAdmin):
+    list_display = ("currency", "get_currency_display_name", "rate", "date")
+    list_filter = ("currency", "date")
+    search_fields = ("currency",)
+    ordering = ("-date", "currency")
+    list_per_page = 20
+    date_hierarchy = "date"
+
+    fields = ("currency", "rate", "date")
+    readonly_fields = ("date",)
+
+    def get_currency_display_name(self, obj):
+        return obj.get_currency_display()
+    get_currency_display_name.short_description = "Валюта"
+    get_currency_display_name.admin_order_field = "currency"
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(
+            request, queryset, search_term)
+        return queryset, use_distinct
