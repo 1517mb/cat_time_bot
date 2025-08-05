@@ -14,7 +14,6 @@ import telegram
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asgiref.sync import sync_to_async
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.models import Avg, F
 from django.utils import timezone
@@ -39,6 +38,11 @@ from bot.management.core.bot_constants import (
     SiteCfg,
 )
 from bot.management.core.bot_instance import get_bot_application
+from bot.management.core.currency_utils import (
+    fetch_currency_rates,
+    get_currency_changes,
+    save_currency_rates,
+)
 from bot.management.core.experience import calculate_experience, get_level_info
 from bot.management.core.statistics import (
     get_daily_statistics_message,
@@ -48,6 +52,7 @@ from bot.management.core.utils import create_progress_bar, is_holiday
 from bot.models import (
     Achievement,
     Company,
+    CurrencyRate,
     DailytTips,
     LevelTitle,
     Season,
@@ -1600,6 +1605,98 @@ async def active_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def send_currency_rates_to_group(bot):
+    try:
+        rates = await fetch_currency_rates()
+        await save_currency_rates(rates)
+        changes = await get_currency_changes()
+        message_lines = ["💱 *Актуальные курсы валют:*"]
+        currencies = {
+            "USD": "🇺🇸 USD/RUB",
+            "EUR": "🇪🇺 EUR/RUB",
+            "CNY": "🇨🇳 CNY/RUB",
+            "BTC_USD": "₿ BTC/USD",
+            "BTC_RUB": "₿ BTC/RUB"
+        }
+        for code, name in currencies.items():
+            if code in changes:
+                data = changes[code]
+                trend = "📈" if data["change"] >= 0 else "📉"
+                message_lines.append(
+                    f"{name}: {data['current']:.2f} {trend} "
+                    f"({abs(data['change']):.2f} /  "
+                    f"{abs(data['percent']):.2f}%)"
+                )
+            else:
+                last_rate = await sync_to_async(
+                    CurrencyRate.objects.filter(
+                        currency=code
+                    ).order_by("-date").first
+                )()
+                if last_rate:
+                    message_lines.append(
+                        f"{name}: {last_rate.rate:.2f} (данные из кэша)"
+                    )
+        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        await bot.send_message(
+            chat_id=group_chat_id,
+            text="\n".join(message_lines),
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при отправке курсов: {e}")
+
+
+async def start_currency(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Запуск ежедневной отправки курсов в указанное время"""
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Укажите время в формате ЧЧ:ММ (например: /start_currency 8:00)"
+        )
+        return
+
+    time_str = context.args[0]
+    try:
+        hour, minute = map(int, time_str.split(':'))
+        if not (0 <= hour <= 23 and 0 <= minute <= 59):
+            raise ValueError
+    except ValueError:
+        await update.message.reply_text("❌ Неверный формат времени")
+        return
+
+    try:
+        scheduler.remove_job("currency_job")
+    except JobLookupError:
+        pass
+
+    scheduler.add_job(
+        send_currency_rates_to_group,
+        trigger="cron",
+        hour=hour,
+        minute=minute,
+        args=[context.bot],
+        id="currency_job",
+        timezone=ZoneInfo("Europe/Moscow")
+    )
+
+    if not scheduler.running:
+        scheduler.start()
+
+    await update.message.reply_text(
+        f"💱 Задание для отправки курсов установлено на {hour:02}:{minute:02}\n"
+        "Курс будет обновляться ежедневно в это время"
+    )
+
+
+async def stop_currency(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Остановка ежедневной рассылки курсов"""
+    try:
+        scheduler.remove_job("currency_job")
+        await update.message.reply_text("✅ Рассылка курсов остановлена")
+    except JobLookupError:
+        await update.message.reply_text("⚠️ Активная рассылка не найдена")
+
+
 class Command(BaseCommand):
     help = "Запуск бота Телеграмм"
 
@@ -1643,6 +1740,10 @@ class Command(BaseCommand):
         application.add_handler(CommandHandler(
             "stop_dailytips", stop_dailytips))
         application.add_handler(CommandHandler("status", active_users))
+        application.add_handler(CommandHandler(
+            "start_currency", start_currency))
+        application.add_handler(CommandHandler(
+            "stop_currency", stop_currency))
         application.add_handler(
             MessageHandler(filters.COMMAND, handle_unknown_command)
         )
