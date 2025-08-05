@@ -16,23 +16,49 @@
             <a class="navbar-item {% if request.path == '/' %}is-active{% endif %}" href="/">
                 Главная
             </a>
-            <a class="navbar-item {% if request.path == '/tips/' %}is-active{% endif %}" href="{% url 'tips' %}">
-                Полезные Советы
+            
+            <!-- Кнопка с анимацией WIPE -->
+            <a class="navbar-item tips-link {% if request.path == '/tips/' %}is-active{% endif %}" 
+            href="{% url 'tips' %}"
+            data-effect="wipe">
+                <span class="text">Полезные Советы</span>
+                <span class="shimmer"></span>
             </a>
+
+            <!-- Выпадающее меню для новостей -->
+            <div class="navbar-item has-dropdown is-hoverable">
+                <a class="navbar-link {% if '/content/' in request.path %}is-active{% endif %}">
+                    Новости
+                </a>
+                <div class="navbar-dropdown">
+                    <a class="navbar-item" href="{% url 'content:list' %}">
+                        Все новости
+                    </a>
+                    <a class="navbar-item" href="{% url 'content:archive' %}">
+                        Архив
+                    </a>
+                    <hr class="navbar-divider">
+                    <a class="navbar-item" href="{% url 'content:latest' %}">
+                        Последние
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="navbar-item">
-        <button id="theme-toggle" class="button is-primary" aria-label="Переключить тему">
-            <span class="icon">
-            <i id="theme-icon" class="fas fa-lg fa-moon"></i>
-            </span>
-        </button>
-        </div>
-        <div class="navbar-item">
-        <button id="search-toggle" class="button is-primary">
-            <span class="icon">
-            <i class="fas fa-search fa-lg"></i>
-            </span>
-        </button>
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <button id="theme-toggle" class="button is-primary" aria-label="Переключить тему">
+                    <span class="icon">
+                        <i id="theme-icon" class="fas fa-lg fa-moon"></i>
+                    </span>
+                </button>
+            </div>
+            <div class="navbar-item">
+                <button id="search-toggle" class="button is-primary">
+                    <span class="icon">
+                        <i class="fas fa-search fa-lg"></i>
+                    </span>
+                </button>
+            </div>
         </div>
     </div>
 </nav>
