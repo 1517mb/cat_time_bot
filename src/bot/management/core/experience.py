@@ -5,11 +5,11 @@ from asgiref.sync import sync_to_async
 from bot.models import SeasonRank
 
 COMPANY_BONUSES = {
-    r'(?i)ум|ума|ум аркитекс': 50,
-    r'(?i)прогресс|фирма прогресс': 25,
-    r'(?i)инел|дисплей': 30,
-    r'(?i)тсн|tsn': 15,
-    r'(?i)имбиан|imbian|имбиан лаб': 15,
+    r'(?i)\b(ум|ума|ум аркитекс)\b': 50,
+    r'(?i)\b(прогресс|фирма прогресс)\b': 25,
+    r'(?i)\b(инел|дисплей)\b': 30,
+    r'(?i)\b(тсн|tsn)\b': 15,
+    r'(?i)\b(имбиан|imbian|имбиан лаб)\b': 15,
 }
 
 ACHIEVEMENT_BONUSES = {
