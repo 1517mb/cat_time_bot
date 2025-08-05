@@ -152,3 +152,117 @@ body {
     height: auto;
     margin: 1rem 0;
 }
+
+/* Переменные, соответствующие Bulma primary color (#00d1b2) */
+:root {
+    --shimmer-hue-1: 171deg;  /* Основной цвет Bulma primary */
+    --shimmer-sat-1: 100%;
+    --shimmer-lit-1: 91%;
+    --shimmer-hue-2: 171deg;  /* Тот же оттенок для градиента */
+    --shimmer-sat-2: 80%;
+    --shimmer-lit-2: 86%;
+    --shimmer-hue-3: 171deg;  /* Более насыщенный оттенок */
+    --shimmer-sat-3: 70%;
+    --shimmer-lit-3: 89%;
+    --glow-hue: 171deg;
+}
+
+@keyframes wipe {
+    0% {
+        mask-position: 200% center;
+    }
+    100% {
+        mask-position: 0% center;
+    }
+}
+
+/* Стили для кнопки с эффектом в navbar */
+.tips-link {
+    color: white !important;
+    font-weight: 600;
+    position: relative;
+    isolation: isolate;
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    scale: 1;
+    transition: all 0.3s ease;
+    background: transparent;
+    padding: 0 !important;
+    margin: 0.25rem 0;
+}
+
+.tips-link .text {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: white;
+    background-color: #00d1b2; /* Bulma primary color */
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.tips-link:hover:not(:active):not([disabled]) {
+    scale: 1.05;
+}
+
+.tips-link:active:not([disabled]) {
+    scale: 1.02;
+}
+
+/* Shimmer элемент */
+.shimmer {
+    position: absolute;
+    inset: -8px;
+    border-radius: inherit;
+    mix-blend-mode: plus-lighter;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.shimmer::before,
+.shimmer::after {
+    opacity: 1; /* Всегда видимый */
+    content: "";
+    border-radius: inherit;
+    position: absolute;
+    inset: 8px;
+}
+
+.shimmer::before {
+    box-shadow: 
+        0 0 3px 2px hsl(var(--shimmer-hue-1) var(--shimmer-sat-1) 95%),
+        0 0 7px 4px hsl(var(--shimmer-hue-1) var(--shimmer-sat-1) 85%),
+        0 0 13px 8px hsl(var(--shimmer-hue-2) var(--shimmer-sat-2) 70%),
+        0 0 22px 6px hsl(var(--shimmer-hue-2) var(--shimmer-sat-2) 50%);
+    z-index: -1;
+}
+
+.shimmer::after {
+    box-shadow: 
+        inset 0 0 0 1px hsl(var(--shimmer-hue-2) 90% 95%),
+        inset 0 0 3px 1px hsl(var(--shimmer-hue-2) 100% 85%),
+        inset 0 0 9px 1px hsl(var(--shimmer-hue-2) 100% 75%);
+    z-index: 2;
+}
+
+/* Активное состояние */
+.tips-link.is-active .text {
+    background-color: #009e86; /* Более темный оттенок Bulma primary */
+}
+
+/* Эффект WIPE - всегда активен */
+.tips-link:not([disabled]) .shimmer {
+    mask-image: linear-gradient(
+        90deg, transparent 20%, white 88%, transparent 90%
+    );
+    mask-size: 200% 200%;
+    mask-position: center;
+    animation: wipe 1.5s linear infinite both;
+}
+
+/* Отключаем анимацию при фокусе/активации */
+.tips-link:focus .shimmer,
+.tips-link:active .shimmer {
+    animation-play-state: paused !important;
+    mask-image: none !important;
+}
