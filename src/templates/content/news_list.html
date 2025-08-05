@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Новости{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <h1 class="title is-1 has-text-centered mb-6">
+            📰 Последние новости
+        </h1>
+        
+        {% if news_list %}
+            {% for news in news_list %}
+                <div class="card mb-5">
+                    {% if news.image %}
+                    <div class="card-image">
+                        <figure class="image is-16by9">
+                            <img src="{{ news.image.url }}" alt="{{ news.title }}">
+                        </figure>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card-content">
+                        <div class="media">
+                            <div class="media-content">
+                                <h2 class="title is-4">{{ news.title }}</h2>
+                                <div class="tags has-addons">
+                                    <span class="tag is-info is-light">
+                                        📅 {{ news.created_at|date:"d.m.Y H:i" }}
+                                    </span>
+                                    <span class="tag is-primary is-light">
+                                        👤 {{ news.author.get_full_name|default:news.author.username }}
+                                    </span>
+                                    {% if not news.is_published %}
+                                    <span class="tag is-warning">
+                                        🚧 Черновик
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="content">
+                            {{ news.content|truncatewords_html:30|safe }}
+                            <a href="{% url 'news:detail' news.slug %}" class="button is-link is-outlined mt-3">
+                                Читать далее →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            {% if is_paginated %}
+            <nav class="pagination is-centered" role="navigation">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="pagination-previous">Назад</a>
+                {% endif %}
+                
+                <ul class="pagination-list">
+                    <li>
+                        <span class="pagination-ellipsis">
+                            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                </ul>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="pagination-next">Вперед</a>
+                {% endif %}
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="message is-primary">
+                <div class="message-body has-text-centered">
+                    <div class="block">
+                        <span class="icon is-large">
+                            <i class="fas fa-newspaper fa-3x"></i>
+                        </span>
+                    </div>
+                    <h2 class="title is-4">Новостей пока нет</h2>
+                    <p class="subtitle is-5">Следите за обновлениями!</p>
+                    <div class="block">
+                        <button class="button is-primary is-outlined" onclick="location.reload()">
+                            <span class="icon">
+                                <i class="fas fa-sync"></i>
+                            </span>
+                            <span>Проверить снова</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
