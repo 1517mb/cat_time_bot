@@ -1610,22 +1610,26 @@ async def send_currency_rates_to_group(bot):
         rates = await fetch_currency_rates()
         await save_currency_rates(rates)
         changes = await get_currency_changes()
-        message_lines = ["💱 *Актуальные курсы валют:*"]
-        currencies = {
-            "USD": "🇺🇸 USD/RUB",
-            "EUR": "🇪🇺 EUR/RUB",
-            "CNY": "🇨🇳 CNY/RUB",
-            "BTC_USD": "₿ BTC/USD",
-            "BTC_RUB": "₿ BTC/RUB"
+        message_lines = ["*💱 Актуальные курсы валют:*", ""]
+        fiat_currencies = {
+            "USD": "🇺🇸 *USD/RUB*",
+            "EUR": "🇪🇺 *EUR/RUB*",
+            "CNY": "🇨🇳 *CNY/RUB*"
         }
-        for code, name in currencies.items():
+        crypto_currencies = {
+            "BTC_USD": "₿ *BTC/USD*",
+            "BTC_RUB": "₿ *BTC/RUB*"
+        }
+        message_lines.append("*📌 Фиатные валюты:*")
+        for code, name in fiat_currencies.items():
             if code in changes:
                 data = changes[code]
-                trend = "📈" if data["change"] >= 0 else "📉"
+                trend = "📈" if data["change"] > 0 else ("📉" if data["change"] < 0 else "📊")
+                change_sign = "+" if data["change"] > 0 else ""
                 message_lines.append(
-                    f"{name}: {data['current']:.2f} {trend} "
-                    f"({abs(data['change']):.2f} /  "
-                    f"{abs(data['percent']):.2f}%)"
+                    f"{name}: *{data['current']:.2f}* {trend} "
+                    f"(`{change_sign}{data['change']:.2f}` / "
+                    f"`{change_sign}{data['percent']:.2f}%`)"
                 )
             else:
                 last_rate = await sync_to_async(
@@ -1635,8 +1639,32 @@ async def send_currency_rates_to_group(bot):
                 )()
                 if last_rate:
                     message_lines.append(
-                        f"{name}: {last_rate.rate:.2f} (данные из кэша)"
+                        f"{name}: *{last_rate.rate:.2f}* `(данные из кэша)`"
                     )
+        message_lines.append("") 
+        message_lines.append("*⚡ Криптовалюты:*")
+        for code, name in crypto_currencies.items():
+            if code in changes:
+                data = changes[code]
+                trend = "📈" if data["change"] > 0 else ("📉" if data["change"] < 0 else "📊")
+                change_sign = "+" if data["change"] > 0 else ""
+                message_lines.append(
+                    f"{name}: *{data['current']:.2f}* {trend} "
+                    f"(`{change_sign}{data['change']:.2f}` / "
+                    f"`{change_sign}{data['percent']:.2f}%`)"
+                )
+            else:
+                last_rate = await sync_to_async(
+                    CurrencyRate.objects.filter(
+                        currency=code
+                    ).order_by("-date").first
+                )()
+                if last_rate:
+                    message_lines.append(
+                        f"{name}: *{last_rate.rate:.2f}* `(данные из кэша)`"
+                    )
+        timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
+        message_lines.append(f"\n*🕒 Обновлено:* `{timestamp}`")
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
         await bot.send_message(
             chat_id=group_chat_id,
