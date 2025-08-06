@@ -1,7 +1,81 @@
 <footer class="footer">
-    <div class="content has-text-centered">
-        <p>
-           Все права защищены &copy; 2024 - {% now "Y" %}.
-        </p>
+  <div class="container">
+    <div class="notification has-text-centered mb-5">
+      <strong>Совет администраторам:</strong> Всегда используйте уникальные пароли для разных систем и регулярно их обновляйте
     </div>
+
+    <div class="columns is-multiline">
+      <div class="column is-one-third-tablet is-full-mobile">
+        <h3 class="title is-6 mb-3">Навигация</h3>
+        <ul class="menu-list">
+          <li><a href="/"><span class="icon"><i class="fas fa-home"></i></span> Главная</a></li>
+          <li><a href="/"><span class="icon"><i class="fas fa-cogs"></i></span> Программы</a></li>
+          <li><a href="{% url 'tips' %}"><span class="icon"><i class="fas fa-lightbulb"></i></span> Полезные Советы</a></li>
+          <li><a href="{% url 'content:list' %}"><span class="icon"><i class="fas fa-newspaper"></i></span> Новости</a></li>
+        </ul>
+      </div>
+      
+      <div class="column is-one-third-tablet is-full-mobile">
+        <h3 class="title is-6 mb-3">Ресурсы</h3>
+        <ul class="menu-list">
+          <li><a href="/password-guide"><span class="icon"><i class="fas fa-key"></i></span> Создать надежный пароль</a></li>
+          <li><a href="/admin-checklist"><span class="icon"><i class="fas fa-tasks"></i></span> Чек-лист администратора</a></li>
+          <li><a href="/security-tools"><span class="icon"><i class="fas fa-shield-alt"></i></span> Инструменты безопасности</a></li>
+          <li><a href="/faq"><span class="icon"><i class="fas fa-question-circle"></i></span> Частые вопросы</a></li>
+        </ul>
+      </div>
+
+      <div class="column is-one-third-tablet is-full-mobile">
+        <h3 class="title is-6 mb-3">Свяжитесь с нами</h3>
+        <div class="mb-3">
+          <span class="icon-text">
+            <span class="icon has-text-info">
+              <i class="fas fa-envelope"></i>
+            </span>
+            {% comment %} <span>email@example.com</span> {% endcomment %}
+          </span>
+        </div>
+        <div class="field is-grouped">
+          <p class="control">
+            <a class="button is-info is-outlined" href="#">
+              <span class="icon">
+                <i class="fab fa-telegram"></i>
+              </span>
+            </a>
+          </p>
+          <p class="control">
+            <a class="button is-dark" href="#">
+              <span class="icon">
+                <i class="fab fa-github"></i>
+              </span>
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="field is-grouped is-grouped-centered my-5">
+      <p class="control">
+        <button id="back-to-top" class="button is-info is-light">
+          <span class="icon"><i class="fas fa-arrow-up"></i></span>
+          <span>Наверх</span>
+        </button>
+      </p>
+    </div>
+    <div class="has-text-centered mt-4">
+      <p class="is-size-7">
+        <a href="/privacy" class="has-text-grey">Политика конфиденциальности</a> | 
+        <a href="/terms" class="has-text-grey">Условия использования</a>
+      </p>
+      <p class="mt-2">
+        Все права защищены &copy; 2024 - {% now "Y" %}
+      </p>
+    </div>
+  </div>
 </footer>
+
+<script>
+  // Кнопка "Наверх"
+  document.getElementById('back-to-top').addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
