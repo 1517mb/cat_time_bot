@@ -3,11 +3,12 @@ import secrets
 import string
 
 from django.core.paginator import Paginator
+from django.db.models import Q, F
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods, require_POST
 
-from bot.models import DailytTips
+from bot.models import DailytTips, Tag
 from .forms import PasswordGeneratorForm
 
 logger = logging.getLogger(__name__)
@@ -110,39 +111,44 @@ def copy_password(request):
 
 
 def daily_tips_view(request):
-    """Список полезных советов с пагинацией"""
+    """Список полезных советов с пагинацией, поиском и фильтрацией по тегам"""
     tips_list = DailytTips.objects.filter(
-        is_published=True
-    ).order_by("-pub_date")
+        is_published=True).order_by("-pub_date")
+    all_tags = Tag.objects.all()
+    search_query = request.GET.get('q')
+    if search_query:
+        tips_list = tips_list.filter(
+            Q(title__icontains=search_query) | Q(
+                content__icontains=search_query)
+        )
+    selected_tag_ids = request.GET.getlist('tags')
+    if selected_tag_ids:
+        try:
+            selected_tag_ids = [int(id) for id in selected_tag_ids]
+            tips_list = tips_list.filter(
+                tags__id__in=selected_tag_ids).distinct()
+        except (ValueError, TypeError):
+            selected_tag_ids = []
 
     paginator = Paginator(tips_list, 6)
     page_number = request.GET.get("page")
     tips = paginator.get_page(page_number)
-
-    current_page = tips.number
-    total_pages = paginator.num_pages
-
-    start_page = max(1, current_page - 2)
-    end_page = min(total_pages, current_page + 2)
-    page_range = range(start_page, end_page + 1)
-
     context = {
         "tips": tips,
-        "page_range": page_range,
-        "current_page": current_page,
-        "total_pages": total_pages
+        "search_query": search_query or '',
+        "all_tags": all_tags,
+        "selected_tag_ids": selected_tag_ids,
+        "current_page": tips.number,
+        "total_pages": paginator.num_pages
     }
     return render(request, "tips.html", context)
 
 
 def daily_tip_detail_view(request, pk):
     """Детальный просмотр совета"""
-    tip = get_object_or_404(DailytTips, pk=pk, is_published=True)
-
-    from django.db.models import F
-    DailytTips.objects.filter(pk=tip.pk).update(
-        views_count=F('views_count') + 1)
-
+    tip = get_object_or_404(DailytTips, pk=pk)
+    DailytTips.objects.filter(
+        pk=tip.pk).update(views_count=F('views_count') + 1)
     tip.refresh_from_db()
 
     return render(request, "tip_detail.html", {"tip": tip})
