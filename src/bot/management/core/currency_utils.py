@@ -1,7 +1,9 @@
-import aiohttp
-import logging
-from bot.models import CurrencyRate
 import json
+import logging
+
+import aiohttp
+
+from bot.models import CurrencyRate
 
 logger = logging.getLogger(__name__)
 
