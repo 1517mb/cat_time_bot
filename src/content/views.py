@@ -11,8 +11,9 @@ from django.views.decorators.http import require_http_methods
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 
-from .models import News
 from bot.models import DailytTips
+
+from .models import News
 
 logger = logging.getLogger(__name__)
 
