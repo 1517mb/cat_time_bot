@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load markdownify %}
+
+{% block title %}Поиск по сайту{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <h1 class="title">Результаты поиска</h1>
+
+        <div class="box mb-6">
+            <form method="GET" action="{% url 'content:global_search' %}">
+                <div class="field has-addons">
+                    <div class="control is-expanded">
+                        <input class="input" type="search" name="q" placeholder="Поиск по всему сайту..." value="{{ query }}" required>
+                    </div>
+                    <div class="control">
+                        <button type="submit" class="button is-primary">
+                            <span class="icon"><i class="fas fa-search"></i></span>
+                            <span>Найти</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% if query %}
+            <div class="content">
+                <h2 class="subtitle">По запросу <strong>"{{ query }}"</strong> найдено:</h2>
+            </div>
+            {% if tips_results %}
+            <div class="box">
+                <h3 class="title is-4">Полезные Советы <span class="tag is-primary">{{ tips_results|length }}</span></h3>
+                <div class="columns is-multiline">
+                    {% for tip in tips_results %}
+                    <div class="column is-one-third">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title is-5">{{ tip.title }}</p>
+                                <div class="content">
+                                    {{ tip.content|markdownify|truncatechars_html:100 }}
+                                </div>
+                                <a href="{% url 'tip_detail' tip.pk %}" class="button is-primary is-outlined is-small">Читать</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% if news_results %}
+            <div class="box">
+                <h3 class="title is-4">Новости <span class="tag is-info">{{ news_results|length }}</span></h3>
+                <div class="columns is-multiline">
+                     {% for news in news_results %}
+                    <div class="column is-one-third">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title is-5">{{ news.title }}</p>
+                                {% if news.image %}
+                                    <figure class="image is-16by9">
+                                        <img src="{{ news.image.url }}" alt="{{ news.title }}">
+                                    </figure>
+                                {% endif %}
+                                <div class="content">
+                                    {{ news.content|truncatewords_html:20|safe }}
+                                </div>
+                                 <a href="{% url 'content:detail' news.slug %}" class="button is-info is-outlined is-small">Читать</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% if not tips_results and not news_results %}
+            <div class="box has-text-centered">
+                <p class="subtitle">📭 Ничего не найдено</p>
+                <p>Попробуйте изменить поисковый запрос.</p>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="box has-text-centered">
+                <p class="subtitle">🔍 Введите поисковый запрос</p>
+                <p>Найдем что-нибудь интересное для вас!</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
