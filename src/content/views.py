@@ -12,6 +12,7 @@ from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
 
 from .models import News
+from bot.models import DailytTips
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,32 @@ def robots_txt(request):
     """
     return HttpResponse(content,
                         content_type="text/plain")
+
+
+def global_search_view(request):
+    """Страница глобального поиска по сайту"""
+    query = request.GET.get("q", "").strip()
+    tips_results = []
+    news_results = []
+
+    if query:
+        tips_results = DailytTips.objects.filter(
+            is_published=True
+        ).filter(
+            Q(title__icontains=query) | Q(content__icontains=query)
+        ).distinct()
+        news_results = News.objects.filter(
+            is_published=True
+        ).filter(
+            Q(title__icontains=query) | Q(content__icontains=query)
+        ).distinct()
+
+    context = {
+        "query": query,
+        "tips_results": tips_results,
+        "news_results": news_results,
+    }
+    return render(request, "content/search_results.html", context)
 
 
 class NewsListView(ListView):
