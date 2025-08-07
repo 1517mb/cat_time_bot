@@ -211,8 +211,11 @@ LOGGING = {
 }
 
 CKEDITOR_5_CUSTOM_CSS = "css/ckeditor5-dark.css"
-CKEDITOR_5_FILE_STORAGE = "django_ckeditor_5.storage.Ckeditor5FileSystemStorage"
+CKEDITOR_5_UPLOAD_PATH = "uploads/"
 CKEDITOR_5_ALLOW_ALL_FILE_TYPES = True
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
 
 CKEDITOR_5_CONFIGS = {
     "default": {
@@ -260,9 +263,3 @@ CKEDITOR_5_CONFIGS = {
         }
     }
 }
-
-if DEBUG:
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, "static"),
-    ]
-    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
