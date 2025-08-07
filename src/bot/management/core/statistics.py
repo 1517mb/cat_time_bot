@@ -29,6 +29,23 @@ async def get_random_quote():
     return f"«{quote.text}»\n— {quote.source} | {quote.author}"
 
 
+async def has_any_trips_on_date(target_date):
+    """
+    Проверяет, были ли зарегистрированы выезды (UserActivity) в указанный день.
+    Проверяется по наличию записей с join_time в этот день.
+    """
+    try:
+        has_trips = await sync_to_async(
+            UserActivity.objects.filter(
+                join_time__date=target_date
+            ).exists()
+        )()
+        return has_trips
+    except Exception as e:
+        logger.error(f"Ошибка при проверке выездов за {target_date}: {e}")
+        return True
+
+
 async def get_daily_statistics():
     today = timezone.now().date()
     stats = await sync_to_async(
