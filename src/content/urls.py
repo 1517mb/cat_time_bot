@@ -10,5 +10,6 @@ urlpatterns = [
     path("author/<int:author_id>/", views.NewsByAuthorView.as_view(),
          name="by_author"),
     path("latest/", views.LatestNewsView.as_view(), name="latest"),
+    path("search/", views.global_search_view, name="global_search"),
     path("<slug:slug>/", views.NewsDetailView.as_view(), name="detail"),
 ]
