@@ -45,10 +45,12 @@ from bot.management.core.currency_utils import (
 )
 from bot.management.core.experience import calculate_experience, get_level_info
 from bot.management.core.statistics import (
+    get_daily_statistics,
     get_daily_statistics_message,
+    has_any_trips_on_date,
     update_daily_statistics,
 )
-from bot.management.core.utils import create_progress_bar, is_holiday
+from bot.management.core.utils import create_progress_bar
 from bot.models import (
     Achievement,
     Company,
@@ -1151,18 +1153,29 @@ async def send_daily_statistics_to_group(bot):
     try:
         tz = pytz.timezone("Europe/Moscow")
         now = datetime.now(tz)
-        if await is_holiday(now.date()):
-            logging.info(f"Пропуск статистики {now.date()} - "
-                         "праздник/выходной")
-            return
+        today_date = now.date()
+        any_trips_today = await has_any_trips_on_date(today_date)
 
+        if not any_trips_today:
+            logging.info(f"Пропуск статистики {today_date} - нет выездов.")
+            return
+        stats = await get_daily_statistics()
+        if stats["total_trips"] <= 0 and stats["total_time"].total_seconds() <= 0:
+            logging.info(
+                f"Пропуск статистики {today_date} - нет данных для отправки.")
+            return
+        # Только если есть данные, формируем и отправляем сообщение
         message = await get_daily_statistics_message()
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        if not group_chat_id:
+            logging.error("TELEGRAM_GROUP_CHAT_ID не установлен в .env")
+            return
         await bot.send_message(chat_id=group_chat_id,
                                text=message,
                                parse_mode="Markdown")
+        logging.info(f"Статистика за {today_date} успешно отправлена.")
     except Exception as e:
-        logging.error(f"Ошибка отправки статистики: {str(e)}")
+        logging.error(f"Ошибка отправки статистики: {str(e)}", exc_info=True)
 
 
 async def get_current_season():
