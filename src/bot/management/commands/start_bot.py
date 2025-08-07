@@ -1444,20 +1444,28 @@ async def send_daily_tip(bot):
             logging.warning("Нет доступных советов для отправки")
             return
 
+        max_preview_length = 50
+        content_preview = tip.content[:max_preview_length].rstrip()
+        if len(tip.content) > max_preview_length:
+            content_preview += "..."
+        site_base_url = os.getenv("SITE_URL")
+        tip_detail_url = f"{site_base_url}/tips/{tip.id}/"
+
         message = (
             f"{message_prefix}"
             f"📌 *{tip.title}*\n\n"
-            f"{tip.content}\n\n"
+            f"{content_preview}\n\n"
         )
+        message += f"👁‍🗨 Просмотров: {tip.views_count}\n\n"
 
         tags = await sync_to_async(list)(tip.tags.all())
         if tags:
             tag_list = " ".join(
                 [f"#{tag.slug.replace('-', r'\_')}" for tag in tags])
             message += f"🏷 *Теги:* {tag_list}\n\n"
-
+        message += f"🔗 [Читать полностью]({tip_detail_url})\n\n"
         if tip.external_link:
-            message += f"🔗 [Подробнее]({tip.external_link})"
+            message += f"ℹ️ [Дополнительная информация]({tip.external_link})"
 
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
         await bot.send_message(
