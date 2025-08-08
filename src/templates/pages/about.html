@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}О проекте | {{ site_name|default:"riopass" }}{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="has-text-centered mb-6">
+      <h1 class="title is-2 has-text-weight-bold mb-4">О проекте {{ site_name|default:"riopass" }}</h1>
+      <div class="content is-medium">
+        <p class="subtitle">
+          <strong>{{ site_name|default:"riopass" }}</strong> — некоммерческий проект о цифровой безопасности, 
+          защите данных и современных технологиях
+        </p>
+      </div>
+    </div>
+
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="notification has-text-centered mb-6">
+          <p class="is-size-5">
+            Наша миссия — сделать интернет безопаснее, а технологии доступнее 
+            для каждого пользователя
+          </p>
+        </div>
+
+        <div class="box">
+          <h2 class="title is-3 has-text-centered mb-5">Что мы предлагаем</h2>
+          
+          <div class="columns is-vcentered">
+            <div class="column">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon has-text-info is-large">
+                    <i class="fas fa-key fa-2x"></i>
+                  </span>
+                </div>
+                <div class="media-content">
+                  <h3 class="title is-5">Генератор паролей</h3>
+                  <p>Создание криптостойких паролей для защиты ваших аккаунтов</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="column">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon has-text-success is-large">
+                    <i class="fas fa-shield-alt fa-2x"></i>
+                  </span>
+                </div>
+                <div class="media-content">
+                  <h3 class="title is-5">Экспертные руководства</h3>
+                  <p>Практические советы по кибербезопасности и системному администрированию</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="columns is-vcentered mt-5">
+            <div class="column">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon has-text-warning is-large">
+                    <i class="fas fa-newspaper fa-2x"></i>
+                  </span>
+                </div>
+                <div class="media-content">
+                  <h3 class="title is-5">IT-новости</h3>
+                  <p>Актуальные обновления из мира технологий и цифровой безопасности</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="column">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon has-text-danger is-large">
+                    <i class="fas fa-graduation-cap fa-2x"></i>
+                  </span>
+                </div>
+                <div class="media-content">
+                  <h3 class="title is-5">Цифровая грамотность</h3>
+                  <p>Образовательные материалы для защиты от современных угроз</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-6">
+          <div class="card-content">
+            <h2 class="title is-3 has-text-centered mb-4">Наша история</h2>
+            <div class="content is-medium">
+              <p class="mb-4">
+                Проект родился в начале 2024 года как Telegram-бот для управления временем. 
+                Изначально это было простое решение для личного использования.
+              </p>
+              <p class="mb-4">
+                Со временем инструмент эволюционировал в полноценную платформу с полезными 
+                материалами по системному администрированию, настройке ПО и цифровой безопасности.
+              </p>
+              <p>
+                Сегодня мы продолжаем развиваться, создавая ресурс, который помогает 
+                пользователям уверенно ориентироваться в цифровом мире.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="columns is-vcentered mt-6">
+          <div class="column is-one-third has-text-centered">
+            <figure class="image is-128x128 is-inline-block">
+              <img class="is-rounded" src="https://avatars.githubusercontent.com/u/43341579?v=4" alt="Основатель проекта">
+            </figure>
+          </div>
+          <div class="column">
+            <div class="box">
+              <h2 class="title is-3 mb-4">Основатель проекта</h2>
+              <div class="content">
+                <p>
+                  Проект создан и поддерживается <strong><a href="https://github.com/1517mb" target="_blank" rel="noopener">1517mb</a></strong> — 
+                  специалистом в области разработки и системного администрирования.
+                </p>
+                <p class="mt-3">
+                  "Моя цель — превращать сложные технологии в простые и доступные решения. 
+                  Я верю, что цифровая грамотность должна быть доступна каждому, 
+                  независимо от уровня технической подготовки."
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-6">
+          <div class="card-content has-text-centered">
+            <h2 class="title is-3">Свяжитесь с нами</h2>
+            <div class="content is-medium">
+              <p>
+                Нашли ошибку? Есть идея для улучшения? Хотите сотрудничать?
+              </p>
+              <p class="mt-3">
+                Пишите нам: <a href="mailto:support@riopass.ru" class="has-text-weight-bold">support@riopass.ru</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
