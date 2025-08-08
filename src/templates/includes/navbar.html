@@ -43,7 +43,12 @@
                     </a>
                 </div>
             </div>
+            <a class="navbar-item {% if request.path == '/about/' %}is-active{% endif %}" 
+               href="{% url 'pages:about' %}">
+                О проекте
+            </a>
         </div>
+        
         <div class="navbar-end">
             <div class="navbar-item">
                 <button id="theme-toggle" class="button is-primary" aria-label="Переключить тему">
