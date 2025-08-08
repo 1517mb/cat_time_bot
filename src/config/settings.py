@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "generator.apps.GeneratorConfig",
     "content.apps.ContentConfig",
+    "pages.apps.PagesConfig",
     "import_export",
     "markdownify",
     "markdownx",
