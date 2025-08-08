@@ -63,8 +63,8 @@
     </div>
     <div class="has-text-centered mt-4">
       <p class="is-size-7">
-        <a href="/privacy" class="has-text-grey">Политика конфиденциальности</a> | 
-        <a href="/terms" class="has-text-grey">Условия использования</a>
+        <a href="{% url 'pages:privacy_policy' %}" class="has-text-grey">Политика конфиденциальности</a> | 
+        <a href="{% url 'pages:terms_of_use' %}" class="has-text-grey">Условия использования</a>
       </p>
       <p class="mt-2">
         Все права защищены &copy; 2024 - {% now "Y" %}
