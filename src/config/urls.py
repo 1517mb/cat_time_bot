@@ -16,6 +16,7 @@ urlpatterns = [
     path("ckeditor5/", include("django_ckeditor_5.urls")),
     path("", include("generator.urls")),
     path("content/", include("content.urls")),
+    path("pages/", include("pages.urls")),
     path("robots.txt", robots_txt),
 ]
 
