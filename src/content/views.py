@@ -189,7 +189,7 @@ class NewsByAuthorView(ListView):
 
 class LatestNewsView(TemplateView):
     """Последние новости (для виджетов)"""
-    template_name = "news/latest.html"
+    template_name = "content/news_latest.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
