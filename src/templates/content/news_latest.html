@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Последние Новости{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <h1 class="title is-1 has-text-centered mb-6">
+            ⚡ Последние новости
+        </h1>
+
+        {% if latest_news %}
+            <div class="columns is-multiline">
+                {% for news in latest_news %}
+                    <div class="column is-one-third">
+                        <div class="card">
+                            {% if news.image %}
+                            <div class="card-image">
+                                <figure class="image is-16by9">
+                                    <img src="{{ news.image.url }}" alt="{{ news.title }}">
+                                </figure>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="card-content">
+                                <div class="media">
+                                    <div class="media-content">
+                                        <h2 class="title is-4">{{ news.title }}</h2>
+                                        <div class="tags">
+                                            <span class="tag is-info is-light">
+                                                📅 {{ news.created_at|date:"d.m.Y" }}
+                                            </span>
+                                            <span class="tag is-primary is-light">
+                                                👤 {{ news.author.get_full_name|default:news.author.username }}
+                                            </span>
+                                            {% if not news.is_published %}
+                                            <span class="tag is-warning">
+                                                🚧 Черновик
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="content">
+                                    {{ news.content|truncatewords_html:20|safe }}
+                                    <div class="has-text-centered mt-4">
+                                        <a href="{% url 'content:detail' news.slug %}" class="button is-link is-outlined">
+                                            Читать далее →
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="has-text-centered mt-6">
+                <a href="{% url 'content:list' %}" class="button is-primary">
+                    <span class="icon">
+                        <i class="fas fa-newspaper"></i>
+                    </span>
+                    <span>Все новости</span>
+                </a>
+            </div>
+        {% else %}
+            <div class="message is-primary">
+                <div class="message-body has-text-centered">
+                    <div class="block">
+                        <span class="icon is-large">
+                            <i class="fas fa-newspaper fa-3x"></i>
+                        </span>
+                    </div>
+                    <h2 class="title is-4">Новостей пока нет</h2>
+                    <p class="subtitle is-5">Следите за обновлениями!</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
