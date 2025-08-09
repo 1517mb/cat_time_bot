@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Каталог программ{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="container">
+        
+        <h1 class="title is-2 mb-6">Каталог программ</h1>
+        
+        <!-- Форма фильтрации -->
+        <div class="filter-card">
+            <form method="get" class="mb-4">
+                <div class="columns is-multiline filter-fields">
+                    <div class="column is-4">
+                        <div class="field">
+                            <label class="label">Поиск</label>
+                            <div class="control">
+                                {{ form.search }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column is-2">
+                        <div class="field">
+                            <label class="label">Где искать</label>
+                            <div class="control">
+                                {{ form.search_in }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column is-2">
+                        <div class="field">
+                            <label class="label">Сортировать по</label>
+                            <div class="control">
+                                {{ form.sort_by }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column is-2">
+                        <div class="field">
+                            <label class="label">Мин. рейтинг</label>
+                            <div class="control">
+                                {{ form.min_rating }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column is-2">
+                        <div class="field">
+                            <label class="label">&nbsp;</label>
+                            <div class="control">
+                                <button type="submit" class="button is-primary is-fullwidth">
+                                    <span class="icon">
+                                        <i class="fas fa-filter"></i>
+                                    </span>
+                                    <span>Применить</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Список программ -->
+        <div class="columns is-multiline">
+            {% for program in programs %}
+                <div class="column is-one-third">
+                    <div class="card program-card">
+                        <div class="card-content">
+                            <p class="title is-4">{{ program.name }}</p>
+                            <p class="subtitle is-6">
+                                <span class="icon has-text-warning">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                                Рейтинг: {{ program.rating }}
+                            </p>
+                            <div class="content">
+                                {{ program.description|truncatewords:20|safe }}
+                            </div>
+                            <footer class="card-footer">
+                                <a href="{{ program.get_absolute_url }}" class="card-footer-item">Подробнее</a>
+                                {% if program.file %}
+                                    <a href="{{ program.file.url }}" class="card-footer-item">Скачать</a>
+                                {% endif %}
+                                {% if program.external_download_link %}
+                                    <a href="{{ program.external_download_link }}" class="card-footer-item" target="_blank">Ссылка</a>
+                                {% endif %}
+                            </footer>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="column is-full">
+                    <div class="notification is-warning">
+                        <div class="content has-text-centered">
+                            <p class="title is-4">Программы не найдены</p>
+                            <p>Попробуйте изменить параметры поиска или фильтрации.</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Пагинация -->
+        {% if programs.has_other_pages %}
+            <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+                {% if programs.has_previous %}
+                    <a href="?page={{ programs.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-previous">Назад</a>
+                {% else %}
+                    <a class="pagination-previous" disabled>Назад</a>
+                {% endif %}
+                
+                {% if programs.has_next %}
+                    <a href="?page={{ programs.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-next">Вперед</a>
+                {% else %}
+                    <a class="pagination-next" disabled>Вперед</a>
+                {% endif %}
+                
+                <ul class="pagination-list">
+                    {% for num in programs.paginator.page_range %}
+                        {% if programs.number == num %}
+                            <li><a class="pagination-link is-current" aria-label="Страница {{ num }}" aria-current="page">{{ num }}</a></li>
+                        {% else %}
+                            <li><a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link" aria-label="Перейти к странице {{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Автоматическое применение фильтров при изменении селектов
+    document.addEventListener('DOMContentLoaded', function() {
+        const selects = document.querySelectorAll('select');
+        selects.forEach(function(select) {
+            select.addEventListener('change', function() {
+                this.form.submit();
+            });
+        });
+    });
+</script>
+{% endblock %}
