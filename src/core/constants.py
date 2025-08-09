@@ -109,15 +109,17 @@ class ProgramCfg:
     META_PL_NAME = "Программы"
     DOWNLOADS_V = "Количество скачиваний"
     DOWNLOADS_DEFAULT = 0
-    RATING_V = "Рейтинг"
-    RATING_DEFAULT = 0.0
     VERIFIED_V = "Проверено"
     VERIFIED_DEFAULT = False
     CREATED_V = "Дата создания"
-    CREATTED_AUTO_NOW_ADD = True
+    CREATED_AUTO_NOW_ADD = True
     UPDATED_V = "Дата обновления"
     UPDATED_AUTO_NOW = True
     ORDERING = ("-created_at",)
+    RATING_SUM_DEFAULT = 0.00
+    RATING_SUM_V = "Сумма рейтингов"
+    RATINGS_COUNT_DEFAULT = 0
+    RATINGS_COUNT_V = "Количество оценок"
 
 
 class TagCfg:
