@@ -29,7 +29,7 @@
                         <span class="icon">
                             <i class="fas fa-star"></i>
                         </span>
-                        <span class="current-rating">Рейтинг: {{ program.rating }}</span>
+                        <span class="current-rating">Рейтинг: {{ program.rating|floatformat:1 }}</span>
                     </span>
                     {% if program.ratings_count > 0 %}
                         <span class="tag is-light">
@@ -60,44 +60,29 @@
                 </div>
                 
                 <!-- Форма для оценки -->
-                <div class="rating-section">
-                    <h2 class="subtitle is-4">Оцените программу</h2>
+                <div class="rating-section mt-5">
+                    <h3 class="title is-5 has-text-weight-semibold mb-3">Оцените программу</h3>
+
                     {% if has_voted %}
-                        <div class="notification is-info">
-                            {% if vote_method == 'cookie' %}
-                                Вы уже оценили эту программу (по куки). Спасибо!
-                            {% elif vote_method == 'ip' %}
-                                Вы уже оценили эту программу (по IP). Спасибо!
-                            {% else %}
-                                Вы уже оценили эту программу. Спасибо!
-                            {% endif %}
+                        <div class="notification is-info is-light">
+                            Спасибо, ваш голос учтён!
                         </div>
                     {% else %}
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="notification is-{{ message.tags }}">
-                                    {{ message }}
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                        
                         <form method="post" class="rating-form">
                             {% csrf_token %}
                             <div class="field">
-                                <label class="label">{{ rating_form.rating.label }}</label>
                                 <div class="control">
-                                    {% for radio in rating_form.rating %}
-                                        <label class="radio">
-                                            {{ radio.tag }}
-                                            {{ radio.choice_label }}
-                                        </label>
-                                    {% endfor %}
+                                    <div class="rating-stars is-flex is-align-items-center" data-selected="0" style="gap: 0.5rem;">
+                                        {% for i in "12345" %}
+                                            <label style="cursor:pointer;">
+                                                <input type="radio" name="rating" value="{{ forloop.counter }}" style="display:none;">
+                                                <i class="far fa-star fa-2x" data-value="{{ forloop.counter }}"></i>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
                                 </div>
-                                {% if rating_form.rating.errors %}
-                                    <p class="help is-danger">{{ rating_form.rating.errors }}</p>
-                                {% endif %}
                             </div>
-                            <div class="field">
+                            <div class="field mt-4">
                                 <div class="control">
                                     <button type="submit" class="button is-primary">Отправить оценку</button>
                                 </div>
@@ -105,33 +90,27 @@
                         </form>
                     {% endif %}
                 </div>
-                
-                <div class="download-buttons buttons">
+
+                <!-- Кнопки -->
+                <div class="buttons mt-5">
                     {% if program.file %}
-                        <a href="{{ program.file.url }}" class="button is-primary is-medium">
-                            <span class="icon">
-                                <i class="fas fa-download"></i>
-                            </span>
+                        <a href="{{ program.file.url }}" class="button is-primary is-medium" download>
+                            <span class="icon"><i class="fas fa-download"></i></span>
                             <span>Скачать файл</span>
                         </a>
                     {% endif %}
-                    
+
                     {% if program.external_download_link %}
-                        <a href="{{ program.external_download_link }}" class="button is-link is-medium" target="_blank">
-                            <span class="icon">
-                                <i class="fas fa-external-link-alt"></i>
-                            </span>
-                            <span>Внешняя ссылка</span>
+                        <a href="{{ program.external_download_link }}" class="button is-link is-medium" target="_blank" rel="noopener noreferrer">
+                            <span class="icon"><i class="fas fa-external-link-alt"></i></span>
+                            <span>Скачать по внешней ссылке</span>
                         </a>
                     {% endif %}
-                    
+
                     <a href="{% url 'content:program_list' %}" class="button is-light is-medium">
-                        <span class="icon">
-                            <i class="fas fa-arrow-left"></i>
-                        </span>
+                        <span class="icon"><i class="fas fa-arrow-left"></i></span>
                         <span>Назад к списку</span>
                     </a>
-                </div>
             </div>
         </div>
     </div>
@@ -140,12 +119,38 @@
 
 {% block extra_scripts %}
 <script>
-    // Подсветка активного пункта меню
-    document.addEventListener('DOMContentLoaded', function() {
-        const newsLink = document.querySelector('a[href*="content"]');
-        if (newsLink) {
-            newsLink.classList.add('is-active');
+document.addEventListener('DOMContentLoaded', function() {
+    const ratingStars = document.querySelector('.rating-stars');
+    if (ratingStars) {
+        const stars = ratingStars.querySelectorAll('i');
+        let selected = 0;
+
+        stars.forEach(star => {
+            star.addEventListener('mouseover', function() {
+                highlightStars(parseInt(this.dataset.value));
+            });
+            star.addEventListener('mouseout', function() {
+                highlightStars(selected);
+            });
+            star.addEventListener('click', function() {
+                selected = parseInt(this.dataset.value);
+                ratingStars.querySelector(`input[value="${selected}"]`).checked = true;
+                highlightStars(selected);
+            });
+        });
+
+        function highlightStars(count) {
+            stars.forEach(star => {
+                if (parseInt(star.dataset.value) <= count) {
+                    star.classList.add('fas');
+                    star.classList.remove('far');
+                } else {
+                    star.classList.add('far');
+                    star.classList.remove('fas');
+                }
+            });
         }
-    });
+    }
+});
 </script>
 {% endblock %}
