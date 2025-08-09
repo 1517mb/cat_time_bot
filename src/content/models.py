@@ -1,12 +1,16 @@
+import hashlib
+import logging
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django_ckeditor_5.fields import CKEditor5Field
 
 from core.constants import NewsCfg, ProgramCfg
+
+logger = logging.getLogger(__name__)
 
 
 class News(models.Model):
@@ -93,15 +97,16 @@ class Program(models.Model):
         verbose_name=ProgramCfg.DOWNLOADS_V,
         db_index=True
     )
-    rating = models.DecimalField(
-        max_digits=3,
+
+    rating_sum = models.DecimalField(
+        max_digits=10,
         decimal_places=2,
-        default=ProgramCfg.RATING_DEFAULT,
-        validators=[
-            MinValueValidator(0.0),
-            MaxValueValidator(5.0)
-        ],
-        verbose_name=ProgramCfg.RATING_V,
+        default=0.00,
+        verbose_name="Сумма рейтингов"
+    )
+    ratings_count = models.PositiveIntegerField(
+        default=ProgramCfg.RATINGS_COUNT_DEFAULT,
+        verbose_name=ProgramCfg.RATINGS_COUNT_V,
         db_index=True
     )
     verified = models.BooleanField(
@@ -110,14 +115,28 @@ class Program(models.Model):
         db_index=True
     )
     created_at = models.DateTimeField(
-        auto_now_add=True,
+        auto_now_add=ProgramCfg.CREATED_AUTO_NOW_ADD,
         verbose_name=ProgramCfg.CREATED_V,
         db_index=True
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
+        auto_now=ProgramCfg.UPDATED_AUTO_NOW,
         verbose_name=ProgramCfg.UPDATED_V
     )
+
+    @property
+    def rating(self):
+        if self.ratings_count == 0:
+            return 0.00
+        return round(self.rating_sum / self.ratings_count, 2)
+
+    def add_rating(self, rating_value):
+        """Добавляет новую оценку к программе."""
+        if not (0 <= rating_value <= 5):
+            raise ValidationError("Рейтинг должен быть от 0 до 5.")
+        self.rating_sum += rating_value
+        self.ratings_count += 1
+        self.save(update_fields=["rating_sum", "ratings_count"])
 
     def clean(self):
         """Проверяет наличие файла или внешней ссылки"""
@@ -147,11 +166,81 @@ class Program(models.Model):
     class Meta:
         verbose_name = ProgramCfg.META_NAME
         verbose_name_plural = ProgramCfg.META_PL_NAME
-        ordering = ["-created_at"]
+        ordering = ProgramCfg.ORDERING
         constraints = [
             models.CheckConstraint(
                 check=(models.Q(file__isnull=False) | models.Q(
                     external_download_link__isnull=False)),
                 name="file_or_link_required"
+            ),
+            models.CheckConstraint(
+                check=models.Q(rating_sum__gte=0),
+                name="rating_sum_non_negative"
+            ),
+            models.CheckConstraint(
+                check=models.Q(ratings_count__gte=0),
+                name="ratings_count_non_negative"
             )
         ]
+
+
+class ProgramVote(models.Model):
+    program = models.ForeignKey(
+        "Program",
+        on_delete=models.CASCADE,
+        verbose_name="Программа",
+        related_name="votes"
+    )
+    ip_hash = models.CharField(
+        max_length=64,
+        verbose_name="Хэш IP адреса",
+        db_index=True
+    )
+    voted_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата голосования")
+
+    class Meta:
+        unique_together = ("program", "ip_hash")
+        verbose_name = "Голос"
+        verbose_name_plural = "Голоса"
+        ordering = ("-voted_at",)
+        indexes = [
+            models.Index(fields=["-voted_at"])
+        ]
+
+    def __str__(self):
+        return f"Голос за {self.program.name} от {self.ip_hash[:8]}..."
+
+    @classmethod
+    def create_vote(cls, program, ip_address):
+        """Безопасное создание записи о голосовании"""
+        salt = getattr(settings, "VOTE_SALT", "default_salt")
+        ip_hash = hashlib.sha256(f"{salt}{ip_address}".encode()).hexdigest()
+
+        try:
+            existing_vote = cls.objects.get(program=program, ip_hash=ip_hash)
+            logger.info(f"Vote already exists for program {program.id}"
+                        f" from IP hash {ip_hash[:8]}...")
+            return existing_vote, False
+
+        except ObjectDoesNotExist:
+            try:
+                vote = cls(program=program, ip_hash=ip_hash)
+                vote.save()
+                logger.info(
+                    f"New vote created for program {program.id}"
+                    f" from IP hash {ip_hash[:8]}...")
+                return vote, True
+
+            except Exception as e:
+                logger.error(
+                    f"Vote creation error for program {program.id}: {str(e)}")
+                return None, False
+
+        except MultipleObjectsReturned:
+            vote = cls.objects.filter(program=program, ip_hash=ip_hash).first()
+            logger.warning(
+                f"Multiple votes found for program {program.id},"
+                "  returning first")
+            return vote, False
