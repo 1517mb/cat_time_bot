@@ -9,7 +9,7 @@
         <h3 class="title is-6 mb-3">Навигация</h3>
         <ul class="menu-list">
           <li><a href="/"><span class="icon"><i class="fas fa-home"></i></span> Главная</a></li>
-          <li><a href="/"><span class="icon"><i class="fas fa-cogs"></i></span> Программы</a></li>
+          <li><a href="{% url 'content:program_list' %}"><span class="icon"><i class="fas fa-cogs"></i></span> Программы</a></li>
           <li><a href="{% url 'tips' %}"><span class="icon"><i class="fas fa-lightbulb"></i></span> Полезные Советы</a></li>
           <li><a href="{% url 'content:list' %}"><span class="icon"><i class="fas fa-newspaper"></i></span> Новости</a></li>
         </ul>
