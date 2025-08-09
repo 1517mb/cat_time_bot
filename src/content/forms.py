@@ -31,27 +31,38 @@ class ProgramFilterForm(forms.Form):
 
     search = forms.CharField(
         required=False,
+        label="",
         widget=forms.TextInput(attrs={
-            "class": "input",
+            "class": "input is-fullwidth",
             "placeholder": "Поиск..."
         })
     )
+
     search_in = forms.ChoiceField(
         choices=SEARCH_CHOICES,
         initial="all",
-        widget=forms.Select(attrs={"class": "select"})
+        label="",
+        widget=forms.Select(attrs={
+            "class": "select is-fullwidth"
+        })
     )
+
     sort_by = forms.ChoiceField(
         choices=SORT_CHOICES,
         initial="-created_at",
-        widget=forms.Select(attrs={"class": "select"})
+        label="",
+        widget=forms.Select(attrs={
+            "class": "select is-fullwidth"
+        })
     )
+
     min_rating = forms.DecimalField(
         required=False,
         max_digits=3,
         decimal_places=2,
+        label="",
         widget=forms.NumberInput(attrs={
-            "class": "input",
+            "class": "input is-fullwidth",
             "placeholder": "Мин. рейтинг",
             "min": "0",
             "max": "5",
