@@ -27,7 +27,7 @@
 
             <!-- Выпадающее меню для новостей -->
             <div class="navbar-item has-dropdown is-hoverable">
-                <a class="navbar-link {% if '/content/' in request.path %}is-active{% endif %}">
+                <a class="navbar-link {% if '/content/' in request.path and not '/programs/' in request.path %}is-active{% endif %}">
                     Новости
                 </a>
                 <div class="navbar-dropdown">
@@ -43,6 +43,12 @@
                     </a>
                 </div>
             </div>
+
+            <a class="navbar-item {% if '/programs/' in request.path %}is-active{% endif %}" 
+               href="{% url 'content:program_list' %}">
+                Программы
+            </a>
+
             <a class="navbar-item {% if request.path == '/about/' %}is-active{% endif %}" 
                href="{% url 'pages:about' %}">
                 О проекте
