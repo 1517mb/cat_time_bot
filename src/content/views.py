@@ -1,18 +1,27 @@
 import logging
 from http import HTTPStatus
 
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Q
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import (
+    Case,
+    Count,
+    ExpressionWrapper,
+    F,
+    FloatField,
+    Q,
+    When,
+)
 from django.db.models.functions import ExtractMonth, ExtractYear
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render, redirect
-from django.urls import reverse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
-from django.core.exceptions import ValidationError
-from django.contrib import messages
 
 from bot.models import DailytTips
 
@@ -21,49 +30,29 @@ from .models import News, Program, ProgramVote
 
 logger = logging.getLogger(__name__)
 
-User = get_user_model
+User = get_user_model()
 
 
 @never_cache
 @require_http_methods(["GET", "HEAD"])
 def custom_403(request, exception=None):
-    """Обработчик ошибок 403 Forbidden"""
-    return render(
-        request,
-        "errors/403.html",
-        status=HTTPStatus.FORBIDDEN
-    )
+    return render(request, "errors/403.html", status=HTTPStatus.FORBIDDEN)
 
 
 @never_cache
 @require_http_methods(["GET", "HEAD"])
 def custom_404(request, exception=None):
-    """Обработчик ошибок 404 Not Found"""
-    return render(
-        request,
-        "errors/404.html",
-        status=HTTPStatus.NOT_FOUND
-    )
+    return render(request, "errors/404.html", status=HTTPStatus.NOT_FOUND)
 
 
 @never_cache
 @require_http_methods(["GET", "HEAD"])
 def custom_500(request):
-    """Обработчик ошибок 500 Internal Server Error"""
-    return render(
-        request,
-        "errors/500.html",
-        status=HTTPStatus.INTERNAL_SERVER_ERROR
-    )
+    return render(request, "errors/500.html",
+                  status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 def robots_txt(request):
-    """
-    Возвращает содержимое файла robots.txt, которое инструктирует
-    веб-роботов, как взаимодействовать с сайтом. Он запрещает доступ к
-    определенным директориям и разрешает доступ к другим.
-    """
-
     content = """
     User-agent: *
     Disallow: /admin/
@@ -74,12 +63,10 @@ def robots_txt(request):
     Disallow: /media/
     Allow: /
     """
-    return HttpResponse(content,
-                        content_type="text/plain")
+    return HttpResponse(content, content_type="text/plain")
 
 
 def global_search_view(request):
-    """Страница глобального поиска по сайту"""
     query = request.GET.get("q", "").strip()
     tips_results = []
     news_results = []
@@ -105,7 +92,6 @@ def global_search_view(request):
 
 
 class NewsListView(ListView):
-    """Список новостей"""
     model = News
     template_name = "content/list.html"
     context_object_name = "news_list"
@@ -119,8 +105,8 @@ class NewsListView(ListView):
         search_query = self.request.GET.get("q")
         if search_query:
             queryset = queryset.filter(
-                Q(title__icontains=search_query) | # noqa
-                Q(content__icontains=search_query)
+                Q(title__icontains=search_query) | Q(
+                    content__icontains=search_query)
             )
 
         return queryset
@@ -135,7 +121,6 @@ class NewsListView(ListView):
 
 
 class NewsDetailView(DetailView):
-    """Детальный просмотр новости"""
     model = News
     template_name = "content/news_detail.html"
     context_object_name = "news"
@@ -211,6 +196,18 @@ class ProgramListView(ListView):
 
     def get_queryset(self):
         queryset = Program.objects.filter(verified=True)
+        # Оптимизированная аннотация рейтинга
+        queryset = queryset.annotate(
+            calculated_rating=ExpressionWrapper(
+                Case(
+                    When(ratings_count=0, then=0.0),
+                    default=1.0 * F("rating_sum") / F("ratings_count"),
+                    output_field=FloatField()
+                ),
+                output_field=FloatField()
+            )
+        )
+
         form = ProgramFilterForm(self.request.GET)
 
         if form.is_valid():
@@ -219,7 +216,6 @@ class ProgramListView(ListView):
             sort_by = form.cleaned_data.get("sort_by")
             min_rating = form.cleaned_data.get("min_rating")
 
-            # Поиск
             if search:
                 if search_in == "name":
                     queryset = queryset.filter(name__icontains=search)
@@ -231,22 +227,20 @@ class ProgramListView(ListView):
                             description__icontains=search)
                     )
 
-            # Минимальный рейтинг
             if min_rating is not None:
                 queryset = queryset.filter(
-                    calculated_rating__gte=float(min_rating))
+                    calculated_rating__gte=float(min_rating)
+                )
 
-            # Сортировка
             if sort_by:
                 if sort_by == "-rating":
-                    # Сортируем по аннотированному полю
-                    queryset = queryset.order_by('-calculated_rating')
+                    queryset = queryset.order_by("-calculated_rating")
                 elif sort_by == "rating":
-                    queryset = queryset.order_by('calculated_rating')
+                    queryset = queryset.order_by("calculated_rating")
                 elif sort_by == "-downloads":
-                    queryset = queryset.order_by('-downloads')
+                    queryset = queryset.order_by("-downloads")
                 elif sort_by == "-created_at":
-                    queryset = queryset.order_by('-created_at')
+                    queryset = queryset.order_by("-created_at")
 
         return queryset
 
@@ -262,26 +256,20 @@ class ProgramDetailView(DetailView):
     context_object_name = "program"
 
     def get_client_ip(self, request):
-        """Получает IP-адрес клиента."""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0].strip()
+            ip = x_forwarded_for.split(",")[0].strip()
         else:
-            ip = request.META.get('REMOTE_ADDR')
+            ip = request.META.get("REMOTE_ADDR")
         return ip
 
     def has_user_voted(self, program_id, client_ip):
-        """
-        Проверяет, голосовал ли пользователь по IP за эту программу.
-        """
-        try:
-            program = Program.objects.get(pk=program_id)
-            return ProgramVote.has_voted(program, client_ip)
-        except Program.DoesNotExist:
-            return False
-        except Exception as e:
-            logger.error(f"Error checking vote: {str(e)}")
-            return False
+        """Проверяет, голосовал ли пользователь по IP за программу"""
+        ip_hash = ProgramVote.get_ip_hash(client_ip)
+        return ProgramVote.objects.filter(
+            program_id=program_id,
+            ip_hash=ip_hash
+        ).exists()
 
     def get_queryset(self):
         return Program.objects.filter(verified=True)
@@ -295,52 +283,70 @@ class ProgramDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         program_id = self.object.pk
         client_ip = self.get_client_ip(self.request)
-        # Проверяем голосование по куки и IP
+        # Проверка флага в сессии о только что совершенном голосовании
+        session_key = f"just_voted_{program_id}"
+        just_voted = self.request.session.get(session_key, False)
+        if just_voted:
+            # Удаляем флаг из сессии после использования
+            del self.request.session[session_key]
+        # Проверка голосования по куки и IP
         cookie_name = f"voted_program_{program_id}"
         has_voted_cookie = cookie_name in self.request.COOKIES
         has_voted_ip = self.has_user_voted(program_id, client_ip)
         context["rating_form"] = RatingForm()
-        context["has_voted"] = has_voted_cookie or has_voted_ip
-        context["vote_method"] = "cookie" if has_voted_cookie else ("ip" if has_voted_ip else None) # noqa
+        context["has_voted"] = has_voted_cookie or has_voted_ip or just_voted
+        if just_voted:
+            context["vote_method"] = "just_voted"
+        else:
+            context["vote_method"] = "cookie" if has_voted_cookie else ("ip" if has_voted_ip else None) # noqa
         return context
 
     def post(self, request, *args, **kwargs):
-        """Обрабатывает POST-запрос для добавления рейтинга."""
         self.object = self.get_object()
         program_id = self.object.pk
         client_ip = self.get_client_ip(request)
-
-        # Проверка на повторное голосование
         cookie_name = f"voted_program_{program_id}"
+        # Проверка на повторное голосование по куки
         if cookie_name in request.COOKIES:
             messages.error(request, "Вы уже оценили эту программу (по куки).")
             return redirect("content:program_detail", pk=program_id)
-
+        # Проверка на повторное голосование по IP
         if self.has_user_voted(program_id, client_ip):
             messages.error(request, "Вы уже оценили эту программу (по IP).")
-            # Устанавливаем куку, чтобы не проверять IP при следующих запросах
             response = redirect("content:program_detail", pk=program_id)
-            response.set_cookie(cookie_name,
-                                "voted",
-                                max_age=365 * 24 * 60 * 60,
-                                httponly=True,
-                                samesite="Lax")
+            response.set_cookie(
+                cookie_name,
+                "voted",
+                max_age=365 * 24 * 60 * 60,
+                httponly=True,
+                samesite="Lax"
+            )
             return response
         form = RatingForm(request.POST)
         if form.is_valid():
             rating_value = int(form.cleaned_data["rating"])
             try:
-                self.object.add_rating(rating_value)
-                ProgramVote.create_vote(self.object, client_ip)
-                messages.success(request, "Спасибо за вашу оценку!")
-                response = redirect("content:program_detail", pk=program_id)
-                response.set_cookie(cookie_name, "voted",
-                                    max_age=365 * 24 * 60 * 60,
-                                    httponly=True,
-                                    samesite="Lax")
-                return response
+                with transaction.atomic():
+                    self.object.add_rating(rating_value)
+                    ProgramVote.create_vote(self.object, client_ip)
+                    messages.success(request, "Спасибо за вашу оценку!")
+                    response = redirect("content:program_detail",
+                                        pk=program_id)
+                    response.set_cookie(
+                        cookie_name,
+                        "voted",
+                        max_age=365 * 24 * 60 * 60,
+                        httponly=True,
+                        samesite="Lax"
+                    )
+                    request.session[f"just_voted_{program_id}"] = True
+                    return response
             except ValidationError as e:
-                messages.error(request, e.message)
+                messages.error(request, str(e))
+            except Exception as e:
+                logger.error(f"Ошибка при голосовании: {str(e)}")
+                messages.error(request,
+                               "Произошла ошибка при обработке вашего голоса.")
         else:
             messages.error(request, "Пожалуйста, выберите оценку.")
         return redirect("content:program_detail", pk=program_id)
