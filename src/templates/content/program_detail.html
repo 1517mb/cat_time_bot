@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ program.name }}{% endblock %}
+
+{% block content %}
+<div class="section">
+    <div class="container">
+        <nav class="breadcrumb" aria-label="breadcrumbs">
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li><a href="{% url 'content:program_list' %}">Каталог программ</a></li>
+                <li class="is-active"><a href="#" aria-current="page">{{ program.name }}</a></li>
+            </ul>
+        </nav>
+        
+        <div class="program-detail-card">
+            <div class="card-content">
+                <h1 class="title is-2">{{ program.name }}</h1>
+                
+                <div class="program-meta-tags tags are-medium">
+                    <span class="tag is-info">
+                        <span class="icon">
+                            <i class="fas fa-download"></i>
+                        </span>
+                        <span>Скачиваний: {{ program.downloads }}</span>
+                    </span>
+                    <span class="tag is-warning">
+                        <span class="icon">
+                            <i class="fas fa-star"></i>
+                        </span>
+                        <span>Рейтинг: {{ program.rating }}</span>
+                    </span>
+                    <span class="tag is-success">
+                        <span class="icon">
+                            <i class="fas fa-calendar"></i>
+                        </span>
+                        <span>Дата: {{ program.created_at|date:"d.m.Y" }}</span>
+                    </span>
+                    {% if program.verified %}
+                        <span class="tag is-primary">
+                            <span class="icon">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            <span>Проверено</span>
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <div class="program-description content">
+                    {{ program.description|safe }}
+                </div>
+                
+                <div class="download-buttons buttons">
+                    {% if program.file %}
+                        <a href="{{ program.file.url }}" class="button is-primary is-medium">
+                            <span class="icon">
+                                <i class="fas fa-download"></i>
+                            </span>
+                            <span>Скачать файл</span>
+                        </a>
+                    {% endif %}
+                    
+                    {% if program.external_download_link %}
+                        <a href="{{ program.external_download_link }}" class="button is-link is-medium" target="_blank">
+                            <span class="icon">
+                                <i class="fas fa-external-link-alt"></i>
+                            </span>
+                            <span>Внешняя ссылка</span>
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'content:program_list' %}" class="button is-light is-medium">
+                        <span class="icon">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                        <span>Назад к списку</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Подсветка активного пункта меню
+    document.addEventListener('DOMContentLoaded', function() {
+        const newsLink = document.querySelector('a[href*="content"]');
+        if (newsLink) {
+            newsLink.classList.add('is-active');
+        }
+    });
+</script>
+{% endblock %}
