@@ -244,3 +244,17 @@ class ProgramVote(models.Model):
                 f"Multiple votes found for program {program.id},"
                 "  returning first")
             return vote, False
+
+    @classmethod
+    def has_voted(cls, program, ip_address):
+        """Проверяет, голосовал ли пользователь"""
+        salt = getattr(settings, "VOTE_SALT", "default_salt")
+        ip_hash = hashlib.sha256(f"{salt}{ip_address}".encode()).hexdigest()
+        try:
+            return cls.objects.filter(
+                program=program,
+                ip_hash=ip_hash
+            ).exists()
+        except Exception as e:
+            logger.error(f"Error checking vote status: {str(e)}")
+            return False
