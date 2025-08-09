@@ -13,7 +13,8 @@ from django.views.generic.base import TemplateView
 
 from bot.models import DailytTips
 
-from .models import News
+from .forms import ProgramFilterForm
+from .models import News, Program
 
 logger = logging.getLogger(__name__)
 
@@ -197,3 +198,59 @@ class LatestNewsView(TemplateView):
             is_published=True
         ).order_by("-created_at")[:5]
         return context
+
+
+class ProgramListView(ListView):
+    model = Program
+    template_name = "content/program_list.html"
+    context_object_name = "programs"
+    paginate_by = 9
+
+    def get_queryset(self):
+        queryset = Program.objects.filter(verified=True)
+        form = ProgramFilterForm(self.request.GET)
+
+        if form.is_valid():
+            search = form.cleaned_data.get("search")
+            search_in = form.cleaned_data.get("search_in")
+            sort_by = form.cleaned_data.get("sort_by")
+            min_rating = form.cleaned_data.get("min_rating")
+
+            # Поиск
+            if search:
+                if search_in == "name":
+                    queryset = queryset.filter(name__icontains=search)
+                elif search_in == "description":
+                    queryset = queryset.filter(description__icontains=search)
+                else:
+                    queryset = queryset.filter(
+                        Q(name__icontains=search) | Q(
+                            description__icontains=search)
+                    )
+
+            if min_rating is not None:
+                queryset = queryset.filter(rating__gte=min_rating)
+
+            if sort_by:
+                queryset = queryset.order_by(sort_by)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = ProgramFilterForm(self.request.GET)
+        return context
+
+
+class ProgramDetailView(DetailView):
+    model = Program
+    template_name = "content/program_detail.html"
+    context_object_name = "program"
+
+    def get_queryset(self):
+        return Program.objects.filter(verified=True)
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        obj.increment_downloads()
+        return obj
