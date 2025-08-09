@@ -60,6 +60,10 @@ class UserActivity(models.Model):
     edit_count = models.PositiveIntegerField(
         default=UserActivityCfg.EDIT_COUNT_DEFAULT,
         verbose_name=UserActivityCfg.EDIT_COUNT_V)
+    experience_gained = models.PositiveIntegerField(
+        verbose_name="Опыт, полученный за активность",
+        default=0
+    )
 
     def __str__(self) -> str:
         return f"{self.username} в {self.company.name}"
