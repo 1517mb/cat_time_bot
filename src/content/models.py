@@ -1,8 +1,8 @@
 import hashlib
 import logging
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -198,52 +198,34 @@ class ProgramVote(models.Model):
     )
     voted_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name="Дата голосования")
+        verbose_name="Дата голосования"
+    )
 
     class Meta:
         unique_together = ("program", "ip_hash")
         verbose_name = "Голос"
         verbose_name_plural = "Голоса"
         ordering = ("-voted_at",)
-        indexes = [
-            models.Index(fields=["-voted_at"])
-        ]
 
     def __str__(self):
         return f"Голос за {self.program.name} от {self.ip_hash[:8]}..."
 
     @classmethod
+    def get_ip_hash(cls, ip_address):
+        """Генерирует безопасный хэш IP-адреса"""
+        salt = getattr(settings, "SECRET_SALT", settings.SECRET_KEY)
+        return hashlib.sha256(f"{salt}{ip_address}".encode()).hexdigest()
+
+    @classmethod
     def create_vote(cls, program, ip_address):
-        """Безопасное создание записи о голосовании"""
-        salt = getattr(settings, "VOTE_SALT", "default_salt")
-        ip_hash = hashlib.sha256(f"{salt}{ip_address}".encode()).hexdigest()
-
-        try:
-            existing_vote = cls.objects.get(program=program, ip_hash=ip_hash)
-            logger.info(f"Vote already exists for program {program.id}"
-                        f" from IP hash {ip_hash[:8]}...")
-            return existing_vote, False
-
-        except ObjectDoesNotExist:
-            try:
-                vote = cls(program=program, ip_hash=ip_hash)
-                vote.save()
-                logger.info(
-                    f"New vote created for program {program.id}"
-                    f" from IP hash {ip_hash[:8]}...")
-                return vote, True
-
-            except Exception as e:
-                logger.error(
-                    f"Vote creation error for program {program.id}: {str(e)}")
-                return None, False
-
-        except MultipleObjectsReturned:
-            vote = cls.objects.filter(program=program, ip_hash=ip_hash).first()
-            logger.warning(
-                f"Multiple votes found for program {program.id},"
-                "  returning first")
-            return vote, False
+        """Создает запись о голосовании"""
+        ip_hash = cls.get_ip_hash(ip_address)
+        vote, created = cls.objects.get_or_create(
+            program=program,
+            ip_hash=ip_hash,
+            defaults={"voted_at": timezone.now()}
+        )
+        return vote, created
 
     @classmethod
     def has_voted(cls, program, ip_address):
