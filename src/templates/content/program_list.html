@@ -6,6 +6,12 @@
 {% block content %}
 <div class="section">
     <div class="container">
+        <nav class="breadcrumb" aria-label="breadcrumbs">
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li class="is-active"><a href="#" aria-current="page">Каталог программ</a></li>
+            </ul>
+        </nav>
         
         <h1 class="title is-2 mb-6">Каталог программ</h1>
         
@@ -71,14 +77,45 @@
             {% for program in programs %}
                 <div class="column is-one-third">
                     <div class="card program-card">
+                        {% if program.image %}
+                            <div class="card-image">
+                                <figure class="image is-4by3">
+                                    <img src="{{ program.image.url }}" alt="{{ program.name }}" class="program-card-image">
+                                </figure>
+                            </div>
+                        {% endif %}
                         <div class="card-content">
                             <p class="title is-4">{{ program.name }}</p>
-                            <p class="subtitle is-6">
-                                <span class="icon has-text-warning">
-                                    <i class="fas fa-star"></i>
+                            <div class="program-meta">
+                                <span class="tag is-warning">
+                                    <span class="icon">
+                                        <i class="fas fa-star"></i>
+                                    </span>
+                                    <span>{{ program.rating }}</span>
                                 </span>
-                                Рейтинг: {{ program.rating }}
-                            </p>
+                                <span class="tag is-info">
+                                    <span class="icon">
+                                        <i class="fas fa-download"></i>
+                                    </span>
+                                    <span>{{ program.downloads }}</span>
+                                </span>
+                                {% if program.ratings_count > 0 %}
+                                    <span class="tag is-light">
+                                        <span class="icon">
+                                            <i class="fas fa-users"></i>
+                                        </span>
+                                        <span>{{ program.ratings_count }}</span>
+                                    </span>
+                                {% endif %}
+                                {% if program.verified %}
+                                    <span class="tag is-success">
+                                        <span class="icon">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </span>
+                                        <span>Проверено</span>
+                                    </span>
+                                {% endif %}
+                            </div>
                             <div class="content">
                                 {{ program.description|truncatewords:20|safe }}
                             </div>
