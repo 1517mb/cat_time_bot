@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django_ckeditor_5.fields import CKEditor5Field
 
@@ -89,7 +90,8 @@ class Program(models.Model):
     )
     downloads = models.PositiveIntegerField(
         default=ProgramCfg.DOWNLOADS_DEFAULT,
-        verbose_name=ProgramCfg.DOWNLOADS_V
+        verbose_name=ProgramCfg.DOWNLOADS_V,
+        db_index=True
     )
     rating = models.DecimalField(
         max_digits=3,
@@ -99,27 +101,31 @@ class Program(models.Model):
             MinValueValidator(0.0),
             MaxValueValidator(5.0)
         ],
-        verbose_name=ProgramCfg.RATING_V
+        verbose_name=ProgramCfg.RATING_V,
+        db_index=True
     )
     verified = models.BooleanField(
         default=ProgramCfg.VERIFIED_DEFAULT,
-        verbose_name=ProgramCfg.VERIFIED_V
+        verbose_name=ProgramCfg.VERIFIED_V,
+        db_index=True
     )
     created_at = models.DateTimeField(
-        auto_now_add=ProgramCfg.CREATTED_AUTO_NOW_ADD,
-        verbose_name=ProgramCfg.CREATED_V
+        auto_now_add=True,
+        verbose_name=ProgramCfg.CREATED_V,
+        db_index=True
     )
     updated_at = models.DateTimeField(
-        auto_now=ProgramCfg.UPDATED_AUTO_NOW,
+        auto_now=True,
         verbose_name=ProgramCfg.UPDATED_V
     )
 
     def clean(self):
         """Проверяет наличие файла или внешней ссылки"""
+        super().clean()
         if not self.file and not self.external_download_link:
-            raise ValidationError(
+            raise ValidationError({
                 "Необходимо указать файл или внешнюю ссылку для скачивания."
-            )
+            })
 
     def save(self, *args, **kwargs):
         """Принудительная валидация при сохранении"""
@@ -131,10 +137,21 @@ class Program(models.Model):
         self.downloads += 1
         self.save(update_fields=["downloads"])
 
+    def get_absolute_url(self):
+        """Возвращает абсолютный URL для детальной страницы"""
+        return reverse("content:program_detail", kwargs={"pk": self.pk})
+
     def __str__(self):
         return self.name
 
     class Meta:
         verbose_name = ProgramCfg.META_NAME
         verbose_name_plural = ProgramCfg.META_PL_NAME
-        ordering = ProgramCfg.ORDERING
+        ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                check=(models.Q(file__isnull=False) | models.Q(
+                    external_download_link__isnull=False)),
+                name="file_or_link_required"
+            )
+        ]
