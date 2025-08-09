@@ -11,3 +11,19 @@ class PrivacyPolicyView(TemplateView):
 
 class TermsOfUseView(TemplateView):
     template_name = "pages/terms_of_use.html"
+
+
+class PasswordGuideView(TemplateView):
+    template_name = "pages/password_guide.html"
+
+
+class AdminChecklistView(TemplateView):
+    template_name = "pages/admin_checklist.html"
+
+
+class SecurityToolsView(TemplateView):
+    template_name = "pages/security_tools.html"
+
+
+class FAQView(TemplateView):
+    template_name = "pages/faq.html"
