@@ -11,5 +11,8 @@ urlpatterns = [
          name="by_author"),
     path("latest/", views.LatestNewsView.as_view(), name="latest"),
     path("search/", views.global_search_view, name="global_search"),
+    path("programs/", views.ProgramListView.as_view(), name="program_list"),
+    path("programs/<int:pk>/", views.ProgramDetailView.as_view(),
+         name="program_detail"),
     path("<slug:slug>/", views.NewsDetailView.as_view(), name="detail"),
 ]
