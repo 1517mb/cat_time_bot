@@ -18,10 +18,10 @@
       <div class="column is-one-third-tablet is-full-mobile">
         <h3 class="title is-6 mb-3">Ресурсы</h3>
         <ul class="menu-list">
-          <li><a href="/password-guide"><span class="icon"><i class="fas fa-key"></i></span> Создать надежный пароль</a></li>
-          <li><a href="/admin-checklist"><span class="icon"><i class="fas fa-tasks"></i></span> Чек-лист администратора</a></li>
-          <li><a href="/security-tools"><span class="icon"><i class="fas fa-shield-alt"></i></span> Инструменты безопасности</a></li>
-          <li><a href="/faq"><span class="icon"><i class="fas fa-question-circle"></i></span> Частые вопросы</a></li>
+          <li><a href="{% url 'pages:password_guide' %}"><span class="icon"><i class="fas fa-key"></i></span> Создать надежный пароль</a></li>
+          <li><a href="{% url 'pages:admin_checklist' %}"><span class="icon"><i class="fas fa-tasks"></i></span> Чек-лист администратора</a></li>
+          <li><a href="{% url 'pages:security_tools' %}"><span class="icon"><i class="fas fa-shield-alt"></i></span> Инструменты безопасности</a></li>
+          <li><a href="{% url 'pages:faq' %}"><span class="icon"><i class="fas fa-question-circle"></i></span> Частые вопросы</a></li>
         </ul>
       </div>
 
