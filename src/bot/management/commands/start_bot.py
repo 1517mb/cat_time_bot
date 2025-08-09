@@ -854,10 +854,12 @@ async def edit_departure_time(update: Update,
                     ).count)()
                 exp_earned = calculate_experience(activity, achievements_list,
                                                   daily_visits_count)
+                activity.experience_gained = exp_earned
                 time_spent = activity.leave_time - activity.join_time
                 rank, level_up, new_level = await update_season_rank(
                     user_id, exp_earned, time_spent, username)
-
+                await sync_to_async(activity.save)()
+                await update_daily_statistics(user_id, username)
                 company_name = activity.company.name
                 spent_time = activity.get_spent_time
 
@@ -976,6 +978,7 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         activity.leave_time = timezone.now()
         exp_earned = calculate_experience(activity, achievements_list,
                                           daily_visits_count)
+        activity.experience_gained = exp_earned
         time_spent = activity.leave_time - activity.join_time
         rank, level_up, new_level = await update_season_rank(
             user_id, exp_earned, time_spent, username)
@@ -1160,7 +1163,7 @@ async def send_daily_statistics_to_group(bot):
             logging.info(f"Пропуск статистики {today_date} - нет выездов.")
             return
         stats = await get_daily_statistics()
-        if stats["total_trips"] <= 0 and stats["total_time"].total_seconds() <= 0:
+        if stats["total_trips"] <= 0 and stats["total_time"].total_seconds() <= 0: # noqa
             logging.info(
                 f"Пропуск статистики {today_date} - нет данных для отправки.")
             return
@@ -1645,7 +1648,7 @@ async def send_currency_rates_to_group(bot):
         for code, name in fiat_currencies.items():
             if code in changes:
                 data = changes[code]
-                trend = "📈" if data["change"] > 0 else ("📉" if data["change"] < 0 else "📊")
+                trend = "📈" if data["change"] > 0 else ("📉" if data["change"] < 0 else "📊") # noqa
                 change_sign = "+" if data["change"] > 0 else ""
                 message_lines.append(
                     f"{name}: *{data['current']:.2f}* {trend} "
@@ -1662,12 +1665,12 @@ async def send_currency_rates_to_group(bot):
                     message_lines.append(
                         f"{name}: *{last_rate.rate:.2f}* `(данные из кэша)`"
                     )
-        message_lines.append("") 
+        message_lines.append("")
         message_lines.append("*⚡ Криптовалюты:*")
         for code, name in crypto_currencies.items():
             if code in changes:
                 data = changes[code]
-                trend = "📈" if data["change"] > 0 else ("📉" if data["change"] < 0 else "📊")
+                trend = "📈" if data["change"] > 0 else ("📉" if data["change"] < 0 else "📊") # noqa
                 change_sign = "+" if data["change"] > 0 else ""
                 message_lines.append(
                     f"{name}: *{data['current']:.2f}* {trend} "
