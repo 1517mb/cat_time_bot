@@ -5,16 +5,19 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
 from django.db.models.functions import ExtractMonth, ExtractYear
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateView
+from django.core.exceptions import ValidationError
+from django.contrib import messages
 
 from bot.models import DailytTips
 
-from .forms import ProgramFilterForm
-from .models import News, Program
+from .forms import ProgramFilterForm, RatingForm
+from .models import News, Program, ProgramVote
 
 logger = logging.getLogger(__name__)
 
@@ -228,11 +231,22 @@ class ProgramListView(ListView):
                             description__icontains=search)
                     )
 
+            # Минимальный рейтинг
             if min_rating is not None:
-                queryset = queryset.filter(rating__gte=min_rating)
+                queryset = queryset.filter(
+                    calculated_rating__gte=float(min_rating))
 
+            # Сортировка
             if sort_by:
-                queryset = queryset.order_by(sort_by)
+                if sort_by == "-rating":
+                    # Сортируем по аннотированному полю
+                    queryset = queryset.order_by('-calculated_rating')
+                elif sort_by == "rating":
+                    queryset = queryset.order_by('calculated_rating')
+                elif sort_by == "-downloads":
+                    queryset = queryset.order_by('-downloads')
+                elif sort_by == "-created_at":
+                    queryset = queryset.order_by('-created_at')
 
         return queryset
 
@@ -247,6 +261,28 @@ class ProgramDetailView(DetailView):
     template_name = "content/program_detail.html"
     context_object_name = "program"
 
+    def get_client_ip(self, request):
+        """Получает IP-адрес клиента."""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+    def has_user_voted(self, program_id, client_ip):
+        """
+        Проверяет, голосовал ли пользователь по IP за эту программу.
+        """
+        try:
+            program = Program.objects.get(pk=program_id)
+            return ProgramVote.has_voted(program, client_ip)
+        except Program.DoesNotExist:
+            return False
+        except Exception as e:
+            logger.error(f"Error checking vote: {str(e)}")
+            return False
+
     def get_queryset(self):
         return Program.objects.filter(verified=True)
 
@@ -254,3 +290,57 @@ class ProgramDetailView(DetailView):
         obj = super().get_object(queryset)
         obj.increment_downloads()
         return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        program_id = self.object.pk
+        client_ip = self.get_client_ip(self.request)
+        # Проверяем голосование по куки и IP
+        cookie_name = f"voted_program_{program_id}"
+        has_voted_cookie = cookie_name in self.request.COOKIES
+        has_voted_ip = self.has_user_voted(program_id, client_ip)
+        context["rating_form"] = RatingForm()
+        context["has_voted"] = has_voted_cookie or has_voted_ip
+        context["vote_method"] = "cookie" if has_voted_cookie else ("ip" if has_voted_ip else None) # noqa
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Обрабатывает POST-запрос для добавления рейтинга."""
+        self.object = self.get_object()
+        program_id = self.object.pk
+        client_ip = self.get_client_ip(request)
+
+        # Проверка на повторное голосование
+        cookie_name = f"voted_program_{program_id}"
+        if cookie_name in request.COOKIES:
+            messages.error(request, "Вы уже оценили эту программу (по куки).")
+            return redirect("content:program_detail", pk=program_id)
+
+        if self.has_user_voted(program_id, client_ip):
+            messages.error(request, "Вы уже оценили эту программу (по IP).")
+            # Устанавливаем куку, чтобы не проверять IP при следующих запросах
+            response = redirect("content:program_detail", pk=program_id)
+            response.set_cookie(cookie_name,
+                                "voted",
+                                max_age=365 * 24 * 60 * 60,
+                                httponly=True,
+                                samesite="Lax")
+            return response
+        form = RatingForm(request.POST)
+        if form.is_valid():
+            rating_value = int(form.cleaned_data["rating"])
+            try:
+                self.object.add_rating(rating_value)
+                ProgramVote.create_vote(self.object, client_ip)
+                messages.success(request, "Спасибо за вашу оценку!")
+                response = redirect("content:program_detail", pk=program_id)
+                response.set_cookie(cookie_name, "voted",
+                                    max_age=365 * 24 * 60 * 60,
+                                    httponly=True,
+                                    samesite="Lax")
+                return response
+            except ValidationError as e:
+                messages.error(request, e.message)
+        else:
+            messages.error(request, "Пожалуйста, выберите оценку.")
+        return redirect("content:program_detail", pk=program_id)
