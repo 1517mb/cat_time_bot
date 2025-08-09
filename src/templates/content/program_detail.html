@@ -29,8 +29,16 @@
                         <span class="icon">
                             <i class="fas fa-star"></i>
                         </span>
-                        <span>Рейтинг: {{ program.rating }}</span>
+                        <span class="current-rating">Рейтинг: {{ program.rating }}</span>
                     </span>
+                    {% if program.ratings_count > 0 %}
+                        <span class="tag is-light">
+                            <span class="icon">
+                                <i class="fas fa-users"></i>
+                            </span>
+                            <span>Голосов: {{ program.ratings_count }}</span>
+                        </span>
+                    {% endif %}
                     <span class="tag is-success">
                         <span class="icon">
                             <i class="fas fa-calendar"></i>
@@ -40,7 +48,7 @@
                     {% if program.verified %}
                         <span class="tag is-primary">
                             <span class="icon">
-                                <i class="fas fa-check-circle"></i>
+                                <i class="fas fa-shield-alt"></i>
                             </span>
                             <span>Проверено</span>
                         </span>
@@ -49,6 +57,53 @@
                 
                 <div class="program-description content">
                     {{ program.description|safe }}
+                </div>
+                
+                <!-- Форма для оценки -->
+                <div class="rating-section">
+                    <h2 class="subtitle is-4">Оцените программу</h2>
+                    {% if has_voted %}
+                        <div class="notification is-info">
+                            {% if vote_method == 'cookie' %}
+                                Вы уже оценили эту программу (по куки). Спасибо!
+                            {% elif vote_method == 'ip' %}
+                                Вы уже оценили эту программу (по IP). Спасибо!
+                            {% else %}
+                                Вы уже оценили эту программу. Спасибо!
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="notification is-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        <form method="post" class="rating-form">
+                            {% csrf_token %}
+                            <div class="field">
+                                <label class="label">{{ rating_form.rating.label }}</label>
+                                <div class="control">
+                                    {% for radio in rating_form.rating %}
+                                        <label class="radio">
+                                            {{ radio.tag }}
+                                            {{ radio.choice_label }}
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                {% if rating_form.rating.errors %}
+                                    <p class="help is-danger">{{ rating_form.rating.errors }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <button type="submit" class="button is-primary">Отправить оценку</button>
+                                </div>
+                            </div>
+                        </form>
+                    {% endif %}
                 </div>
                 
                 <div class="download-buttons buttons">
