@@ -75,7 +75,7 @@ async def get_daily_statistics_message():
 
     season_info = ""
     best_user = None
-    total_exp_earned = 0
+    total_exp_earned_today = 0
 
     try:
         season = await sync_to_async(Season.objects.get)(is_active=True)
@@ -99,7 +99,6 @@ async def get_daily_statistics_message():
 
     user_info = []
     user_ranks = []
-    all_users_have_ranks = False
 
     total_trips = stats["total_trips"]
     total_seconds = stats["total_time"].total_seconds()
@@ -110,6 +109,7 @@ async def get_daily_statistics_message():
         avg_time_str = f"{avg_min} мин {avg_sec} сек"
     else:
         avg_time_str = "0 мин"
+    unique_users = {stat["user_id"] for stat in user_stats}
 
     for user in user_stats:
         rank = None
@@ -118,11 +118,9 @@ async def get_daily_statistics_message():
             rank = await sync_to_async(SeasonRank.objects.filter(
                 user_id=user["user_id"],
                 season=season
-            ).first)()
+            ).select_related("level_title").first)()
             if rank:
-                all_users_have_ranks = True
                 level_info = await get_level_info(rank)
-                total_exp_earned += rank.experience
                 user_ranks.append({
                     "username": user["username"],
                     "level": rank.level,
@@ -163,8 +161,18 @@ async def get_daily_statistics_message():
             f"▸ Достижения: {achievements_str}\n"
         )
         user_info.append(user_text)
+    if user_stats:
+        today_activities_exp = await sync_to_async(list)(
+            UserActivity.objects.filter(
+                user_id__in=list(unique_users),
+                leave_time__date=today
+            ).values_list('experience_gained', flat=True)
+        )
+        total_exp_earned_today = sum(today_activities_exp)
 
-    if user_ranks:
+    # Проверяем, было ли больше одного уникального
+    # пользователя для определения ЛИДЕРА
+    if len(unique_users) > 1 and user_ranks:
         user_ranks.sort(key=lambda x: (
             -x["level"],
             -x["exp"],
@@ -178,6 +186,7 @@ async def get_daily_statistics_message():
     time_format = f"{hours} ч" + (f" {minutes} мин" if minutes else "")
 
     leader_info = ""
+    # Отображаем лидера только если он определен (т.е. > 1 участник)
     if best_user:
         level_info = best_user["level_info"]
         leader_info = (
@@ -186,39 +195,38 @@ async def get_daily_statistics_message():
             f"▸ Опыт: *{best_user['exp']}*\n"
             f"▸ Выездов: *{best_user['visits']}*\n\n"
         )
-    elif all_users_have_ranks:
-        leader_info = "👑 *Лидер сезона:* Пока не определен\n\n"
-
     general_info = (
         f"{season_info}\n"
-        f"⭐ *Общий опыт за день:* {total_exp_earned}\n\n"
+        f"⭐ *Общий опыт за день:* {total_exp_earned_today}\n\n"
         f"{leader_info}"
     )
-
     stats_info = (
         "📈 *Общие показатели за день:*\n"
         f"  - Всего выездов: *{stats['total_trips']}* 🚗\n"
         f"  - Общее время: *{time_format}* ⏱\n"
         f"  - Среднее время: *{avg_time_str}* 📌\n\n"
     )
-
-    if user_ranks:
+    # Сортировка user_info по рангу пользователей
+    if user_ranks and len(unique_users) > 1:
         rank_map = {u["username"]: u for u in user_ranks}
-        user_info.sort(key=lambda text: (
-            -rank_map.get(
-                text.split('*@')[1].split('*')[0], {}).get("level", 0),
-            -rank_map.get(
-                text.split('*@')[1].split('*')[0], {}).get("exp", 0),
-            -rank_map.get(
-                text.split('*@')[1].split('*')[0], {}).get("visits", 0)
+        # Создаем временный список кортежей
+        # (user_info_text, user_data) для сортировки
+        user_info_with_data = list(zip(user_info, user_stats))
+        # Сортируем по рангам
+        user_info_with_data.sort(key=lambda item: (
+            -rank_map.get(item[1]["username"], {}).get("level", 0),
+            -rank_map.get(item[1]["username"], {}).get("exp", 0),
+            -rank_map.get(item[1]["username"], {}).get("visits", 0)
         ))
+        # Обновляем список user_info отсортированными элементами
+        user_info = [info for info, _ in user_info_with_data]
 
     message = (
         f"{header}\n\n"
         f"{general_info}"
         f"{stats_info}"
         f"🏅 *Прогресс и статистика участников:*\n\n"
-        f"{'\n\n'.join(user_info)}\n\n"
+        f"{'\n\n'.join(user_info) if user_info else 'Сегодня никто не выезжал 🙁'}\n\n" # noqa
         f"✨ *Мудрая мысль дня:*\n{quote}"
     )
     return message
