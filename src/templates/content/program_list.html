@@ -16,61 +16,47 @@
         <h1 class="title is-2 mb-6">Каталог программ</h1>
         
         <!-- Форма фильтрации -->
-        <div class="filter-card">
-            <form method="get" class="mb-4">
-                <div class="columns is-multiline filter-fields">
+        <div class="box mb-6">
+            <form method="get">
+                <div class="columns is-multiline is-vcentered">
                     <div class="column is-4">
                         <div class="field">
-                            <label class="label">Поиск</label>
-                            <div class="control">
+                            <div class="control has-icons-left">
                                 {{ form.search }}
+                                <span class="icon is-left">
+                                    <i class="fas fa-search"></i>
+                                </span>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="column is-2">
-                        <div class="field">
-                            <label class="label">Где искать</label>
-                            <div class="control">
-                                {{ form.search_in }}
-                            </div>
-                        </div>
+                        <div class="field">{{ form.search_in }}</div>
                     </div>
-                    
+
                     <div class="column is-2">
-                        <div class="field">
-                            <label class="label">Сортировать по</label>
-                            <div class="control">
-                                {{ form.sort_by }}
-                            </div>
-                        </div>
+                        <div class="field">{{ form.sort_by }}</div>
                     </div>
-                    
+
                     <div class="column is-2">
-                        <div class="field">
-                            <label class="label">Мин. рейтинг</label>
-                            <div class="control">
-                                {{ form.min_rating }}
-                            </div>
-                        </div>
+                        <div class="field">{{ form.min_rating }}</div>
                     </div>
-                    
+
                     <div class="column is-2">
-                        <div class="field">
-                            <label class="label">&nbsp;</label>
-                            <div class="control">
-                                <button type="submit" class="button is-primary is-fullwidth">
-                                    <span class="icon">
-                                        <i class="fas fa-filter"></i>
-                                    </span>
-                                    <span>Применить</span>
-                                </button>
-                            </div>
+                        <div class="buttons is-fullwidth">
+                            <button type="submit" class="button is-primary is-fullwidth">
+                                <span class="icon"><i class="fas fa-filter"></i></span>
+                                <span>Фильтровать</span>
+                            </button>
+                            <a href="{% url 'content:program_list' %}" class="button is-light is-fullwidth">
+                                Сбросить
+                            </a>
                         </div>
                     </div>
                 </div>
             </form>
         </div>
+
         
         <!-- Список программ -->
         <div class="columns is-multiline">
