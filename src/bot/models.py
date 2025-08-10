@@ -1,3 +1,4 @@
+import hashlib
 import itertools
 from datetime import timedelta
 
@@ -478,3 +479,43 @@ class CurrencyRate(models.Model):
 
     def __str__(self):
         return f"{self.get_currency_display()}: {self.rate} ({self.date})"
+
+
+class DailytTipView(models.Model):
+    tip = models.ForeignKey("DailytTips",
+                            on_delete=models.CASCADE,
+                            related_name="views_log")
+    ip_hash = models.CharField(max_length=64, db_index=True)
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["ip_hash", "tip", "viewed_at"]),
+        ]
+        verbose_name = "Просмотр совета"
+        verbose_name_plural = "Просмотры советов"
+
+    @staticmethod
+    def get_ip_hash(ip: str) -> str:
+        """Возвращает SHA-256 хэш IP"""
+        return hashlib.sha256(ip.encode("utf-8")).hexdigest()
+
+    @classmethod
+    def already_viewed(cls, tip_id: int,
+                       ip: str, ttl_minutes: int = 30) -> bool:
+        """Проверяет, был ли просмотр за последние ttl_minutes"""
+        cutoff = timezone.now() - timezone.timedelta(minutes=ttl_minutes)
+        ip_hash = cls.get_ip_hash(ip)
+        return cls.objects.filter(
+            tip_id=tip_id,
+            ip_hash=ip_hash,
+            viewed_at__gte=cutoff
+        ).exists()
+
+    @classmethod
+    def log_view(cls, tip, ip: str):
+        """Сохраняет просмотр"""
+        cls.objects.create(
+            tip=tip,
+            ip_hash=cls.get_ip_hash(ip)
+        )
