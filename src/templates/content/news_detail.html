@@ -3,39 +3,39 @@
 {% block title %}{{ news.title }}{% endblock %}
 
 {% block content %}
-<div class="news-detail-container">
-    <article class="news-detail">
-        {% if news.image %}
-            <div class="news-detail-image">
-                <img src="{{ news.image.url }}" alt="{{ news.title }}">
+<section class="section">
+    <div class="container">
+        <article class="content">
+            {% if news.image %}
+                <figure class="image is-3by1 mb-4">
+                    <img src="{{ news.image.url }}" alt="{{ news.title }}">
+                </figure>
+            {% endif %}
+
+            <h1 class="title">{{ news.title }}</h1>
+
+            <div class="tags">
+                <span class="tag is-light">📅 {{ news.created_at|date:"d.m.Y H:i" }}</span>
+                <span class="tag is-info">👤 {{ news.author.get_full_name|default:news.author.username }}</span>
+                {% if not news.is_published %}
+                    <span class="tag is-warning">🚧 Черновик</span>
+                {% endif %}
+                {% if user.is_staff or user == news.author %}
+                    <a class="tag is-link" href="{% url 'admin:content_news_change' news.id %}">✏️ Редактировать</a>
+                {% endif %}
             </div>
-        {% endif %}
-        
-        <h1>{{ news.title }}</h1>
-        
-        <div class="news-detail-meta">
-            <span>📅 {{ news.created_at|date:"d.m.Y H:i" }}</span>
-            <span>👤 {{ news.author.get_full_name|default:news.author.username }}</span>
-            {% if not news.is_published %}
-                <span>🚧 Черновик</span>
-            {% endif %}
-            {% if user.is_staff or user == news.author %}
-                <a href="{% url 'admin:your_app_news_change' news.id %}">
-                    ✏️ Редактировать
-                </a>
-            {% endif %}
-        </div>
-        
-        <div class="news-detail-content">
-            {{ news.content|safe }}
-        </div>
-        
-        <div class="news-detail-footer">
-            <button onclick="history.back()">← Назад</button>
-            <small>
-                Обновлено: {{ news.updated_at|date:"d.m.Y H:i" }}
-            </small>
-        </div>
-    </article>
-</div>
+
+            <div class="mt-4">
+                {{ news.content|safe }}
+            </div>
+
+            <div class="mt-5 is-flex is-justify-content-space-between is-align-items-center">
+                <a class="button is-link is-outlined mt-3" onclick="history.back()">← Назад</a>
+                <small class="has-text-grey">
+                    Обновлено: {{ news.updated_at|date:"d.m.Y H:i" }}
+                </small>
+            </div>
+        </article>
+    </div>
+</section>
 {% endblock %}
