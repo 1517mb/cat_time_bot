@@ -7,6 +7,7 @@ from markdownx.admin import MarkdownxModelAdmin
 from bot.models import (
     Achievement,
     Company,
+    CurrencyRate,
     DailyStatistics,
     DailytTips,
     LevelTitle,
@@ -15,7 +16,6 @@ from bot.models import (
     SeasonRank,
     Tag,
     UserActivity,
-    CurrencyRate,
 )
 from bot.resources import UserActivityResource
 from core.constants import SITE_HEADER, SITE_TITLE
