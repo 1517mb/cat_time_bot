@@ -42,7 +42,7 @@
 
                         <div class="content">
                             {{ news.content|truncatewords_html:30|safe }}
-                            <a href="{% url 'news:detail' news.slug %}" class="button is-link is-outlined mt-3">
+                            <a href="{% url 'content:detail' news.slug %}" class="button is-link is-outlined mt-3">
                                 Читать далее →
                             </a>
                         </div>
@@ -89,7 +89,6 @@
                     </div>
                 </div>
             </div>
-
         {% endif %}
     </div>
 </section>
