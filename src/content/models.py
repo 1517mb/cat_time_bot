@@ -240,3 +240,41 @@ class ProgramVote(models.Model):
         except Exception as e:
             logger.error(f"Error checking vote status: {str(e)}")
             return False
+
+
+class ProgramDownload(models.Model):
+    program = models.ForeignKey("Program",
+                                on_delete=models.CASCADE,
+                                related_name="downloads_log")
+    ip_hash = models.CharField(max_length=64, db_index=True)
+    downloaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["ip_hash", "program", "downloaded_at"]),
+        ]
+        verbose_name = "Скачивание программы"
+        verbose_name_plural = "Скачивания программ"
+
+    @staticmethod
+    def get_ip_hash(ip):
+        return hashlib.sha256(ip.encode("utf-8")).hexdigest()
+
+    @classmethod
+    def already_downloaded(cls, program_id, ip, ttl_hours=24):
+        """Проверяет, было ли скачивание за последние ttl_hours"""
+        cutoff = timezone.now() - timezone.timedelta(hours=ttl_hours)
+        ip_hash = cls.get_ip_hash(ip)
+        return cls.objects.filter(
+            program_id=program_id,
+            ip_hash=ip_hash,
+            downloaded_at__gte=cutoff
+        ).exists()
+
+    @classmethod
+    def log_download(cls, program, ip):
+        """Логирует скачивание"""
+        cls.objects.create(
+            program=program,
+            ip_hash=cls.get_ip_hash(ip)
+        )
