@@ -26,7 +26,7 @@ from django.views.generic.base import TemplateView
 from bot.models import DailytTips
 
 from .forms import ProgramFilterForm, RatingForm
-from .models import News, Program, ProgramVote
+from .models import News, Program, ProgramDownload, ProgramVote
 
 logger = logging.getLogger(__name__)
 
@@ -258,10 +258,8 @@ class ProgramDetailView(DetailView):
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
-            ip = x_forwarded_for.split(",")[0].strip()
-        else:
-            ip = request.META.get("REMOTE_ADDR")
-        return ip
+            return x_forwarded_for.split(",")[0].strip()
+        return request.META.get("REMOTE_ADDR")
 
     def has_user_voted(self, program_id, client_ip):
         """Проверяет, голосовал ли пользователь по IP за программу"""
@@ -271,12 +269,20 @@ class ProgramDetailView(DetailView):
             ip_hash=ip_hash
         ).exists()
 
+    def increment_download_with_limit(self, program):
+        client_ip = self.get_client_ip(self.request)
+        if not ProgramDownload.already_downloaded(program.pk,
+                                                  client_ip,
+                                                  ttl_hours=24):
+            program.increment_downloads()
+            ProgramDownload.log_download(program, client_ip)
+
     def get_queryset(self):
         return Program.objects.filter(verified=True)
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
-        obj.increment_downloads()
+        self.increment_download_with_limit(obj)
         return obj
 
     def get_context_data(self, **kwargs):
