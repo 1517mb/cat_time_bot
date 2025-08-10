@@ -35,6 +35,8 @@ class SiteCfg:
         "/start\\_stats <ЧЧ:ММ> - Установить время отправки статистики\n"
         "/start\\_reminder <ЧЧ:ММ> - Установить время напоминаний\n"
         "/start\\_dailytips <ЧЧ:ММ> - Запустить ежедневные советы\n"
+        "/start\\_currency <ЧЧ:ММ> - Запустить рассылку курса валют\n"
+        "/stop\\_currency <ЧЧ:ММ> - Остановить рассылку курса валют\n"
         "/stop\\_dailytips - Остановить рассылку советов\n"
         "/stop\\_scheduler - Остановить все задания\n"
         "\n"
@@ -155,4 +157,5 @@ class BotMessages:
         "help", "site", "get_chat_info", "leave", "mew", "start_weather",
         "start_stats", "start_reminder", "stop_scheduler",
         "edit", "edit_start", "edit_end", "start_dailytips",
-        "stop_dailytips", "join", "cancel", "profile", "status"]
+        "stop_dailytips", "join", "cancel", "profile", "status",
+        "start_currency", "stop_currency"]
