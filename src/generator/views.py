@@ -8,7 +8,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods, require_POST
 
-from bot.models import DailytTips, Tag
+from bot.models import DailytTips, Tag, DailytTipView
 from .forms import PasswordGeneratorForm
 
 logger = logging.getLogger(__name__)
@@ -144,11 +144,23 @@ def daily_tips_view(request):
     return render(request, "tips.html", context)
 
 
-def daily_tip_detail_view(request, pk):
-    """Детальный просмотр совета"""
-    tip = get_object_or_404(DailytTips, pk=pk)
-    DailytTips.objects.filter(
-        pk=tip.pk).update(views_count=F('views_count') + 1)
-    tip.refresh_from_db()
+def get_client_ip(request):
+    """Определение IP клиента"""
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
 
+
+def daily_tip_detail_view(request, pk):
+    """Детальный просмотр совета с уникальным учётом"""
+    tip = get_object_or_404(DailytTips, pk=pk)
+    client_ip = get_client_ip(request)
+
+    if not DailytTipView.already_viewed(tip.pk, client_ip, ttl_minutes=30):
+        DailytTips.objects.filter(pk=tip.pk).update(
+            views_count=F('views_count') + 1)
+        DailytTipView.log_view(tip, client_ip)
+
+    tip.refresh_from_db()
     return render(request, "tip_detail.html", {"tip": tip})
