@@ -3,12 +3,13 @@ import secrets
 import string
 
 from django.core.paginator import Paginator
-from django.db.models import Q, F
+from django.db.models import F, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods, require_POST
 
-from bot.models import DailytTips, Tag, DailytTipView
+from bot.models import DailytTips, DailytTipView, Tag
+
 from .forms import PasswordGeneratorForm
 
 logger = logging.getLogger(__name__)
@@ -77,9 +78,12 @@ def generate_password(request):
                 password = generate_password_with_min_separators(
                     length, characters, required_separators
                 )
+                # Рассчитываем время взлома
+                crack_info = estimate_cracking_time(form.cleaned_data)
                 return render(request,
                               "password_partial.html",
-                              {"password": password})
+                              {"password": password,
+                               "crack_info": crack_info})
             logger.warning("Неверные данные формы: %s", form.errors)
             return render(request, "form_errors_partial.html", {"form": form})
         return index(request)
@@ -102,6 +106,56 @@ def generate_password_with_min_separators(length, characters,
         password_chars.append(secrets.choice(characters))
     secrets.SystemRandom().shuffle(password_chars)
     return "".join(password_chars)
+
+
+def estimate_cracking_time(form_data):
+    """
+    Рассчитывает время взлома и возвращает СЛОВАРЬ
+    с текстом и CSS-классом цвета.
+    """
+    length = form_data.get("length")
+    if not length:
+        return {"text": "не удалось рассчитать",
+                "color_class": "has-text-grey"}
+    character_pool_size = len(string.ascii_letters)
+    if form_data.get("include_digits"):
+        character_pool_size += len(string.digits)
+    if form_data.get("include_special_chars"):
+        special_chars = string.punctuation.replace("-", "").replace("_", "")
+        character_pool_size += len(special_chars)
+    if form_data.get("include_hyphen"):
+        character_pool_size += 1
+    if form_data.get("include_underscore"):
+        character_pool_size += 1
+    total_combinations = character_pool_size ** length
+    guesses_per_second = 10**10
+    seconds_to_crack = (total_combinations / 2) / guesses_per_second
+    if seconds_to_crack < 60 * 60 * 24:
+        color_class = "has-text-danger"
+        if seconds_to_crack < 1:
+            text = "мгновенно"
+        elif seconds_to_crack < 60:
+            text = f"около {int(seconds_to_crack)} сек."
+        elif seconds_to_crack < 60 * 60:
+            text = f"около {int(seconds_to_crack / 60)} мин."
+        else:
+            text = f"около {int(seconds_to_crack / 3600)} ч."
+        return {"text": text, "color_class": color_class}
+    days = seconds_to_crack / (3600 * 24)
+    if days < 365 * 100:
+        color_class = "has-text-warning"
+        if days < 365:
+            text = f"около {int(days)} дн."
+        else:
+            text = f"около {int(days / 365)} лет"
+        return {"text": text, "color_class": color_class}
+    color_class = "has-text-success"
+    years = days / 365
+    if years < 1_000_000:
+        text = f"около {int(years / 1_000)} тыс. лет"
+    else:
+        text = f"около {int(years / 1_000_000)} млн. лет"
+    return {"text": text, "color_class": color_class}
 
 
 @require_POST
