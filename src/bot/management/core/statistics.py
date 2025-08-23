@@ -36,7 +36,7 @@ async def has_any_trips_on_date(target_date):
     """
     try:
         has_trips = await sync_to_async(
-            UserActivity.objects.filter(
+            lambda: UserActivity.objects.filter(
                 join_time__date=target_date
             ).exists()
         )()
