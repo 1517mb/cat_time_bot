@@ -10,6 +10,8 @@ urlpatterns = [
     path("author/<int:author_id>/", views.NewsByAuthorView.as_view(),
          name="by_author"),
     path("latest/", views.LatestNewsView.as_view(), name="latest"),
+    path("archive/<int:year>/<int:month>/", views.NewsByMonthView.as_view(),
+         name="news_by_month"),
     path("search/", views.global_search_view, name="global_search"),
     path("programs/", views.ProgramListView.as_view(), name="program_list"),
     path("programs/<int:pk>/", views.ProgramDetailView.as_view(),
