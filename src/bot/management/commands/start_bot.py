@@ -50,7 +50,10 @@ from bot.management.core.statistics import (
     has_any_trips_on_date,
     update_daily_statistics,
 )
-from bot.management.core.utils import create_progress_bar
+from bot.management.core.utils import (
+    create_progress_bar,
+    truncate_markdown_safe,
+)
 from bot.models import (
     Achievement,
     Company,
@@ -1447,10 +1450,8 @@ async def send_daily_tip(bot):
             logging.warning("Нет доступных советов для отправки")
             return
 
-        max_preview_length = 50
-        content_preview = tip.content[:max_preview_length].rstrip()
-        if len(tip.content) > max_preview_length:
-            content_preview += "..."
+        content_preview = truncate_markdown_safe(tip.content, max_length=50)
+
         site_base_url = os.getenv("SITE_URL")
         tip_detail_url = f"{site_base_url}/tips/{tip.id}/"
 
