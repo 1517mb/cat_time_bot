@@ -130,6 +130,39 @@ class NewsDetailView(DetailView):
     def get_queryset(self):
         return News.objects.filter(is_published=True)
 
+    def get_context_data(self, **kwargs):
+        """
+        Добавляем в контекст список последних новостей для виджета.
+        """
+        context = super().get_context_data(**kwargs)
+        context["latest_news"] = News.objects.filter(
+            is_published=True
+        ).exclude(
+            pk=self.object.pk
+        ).order_by("-created_at")[:5]
+        return context
+
+
+class NewsByMonthView(ListView):
+    """Новости за определенный месяц"""
+    model = News
+    template_name = "content/list.html"
+    context_object_name = "news_list"
+    paginate_by = 10
+    allow_empty = False
+
+    def get_queryset(self):
+        return News.objects.filter(
+            is_published=True,
+            created_at__year=self.kwargs["year"],
+            created_at__month=self.kwargs["month"]
+        ).order_by("-created_at")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = f"Новости за {self.kwargs['month']}.{self.kwargs['year']}" # noqa
+        return context
+
 
 class NewsArchiveView(ListView):
     """Архив новостей"""
@@ -159,7 +192,7 @@ class NewsArchiveView(ListView):
 class NewsByAuthorView(ListView):
     """Новости по автору"""
     model = News
-    template_name = "news/by_author.html"
+    template_name = "content/news_list.html"
     context_object_name = "news_list"
     paginate_by = 10
 
@@ -173,6 +206,8 @@ class NewsByAuthorView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["author"] = self.author
+        author_name = self.author.get_full_name() or self.author.username
+        context["page_title"] = f"Публикации автора: {author_name}"
         return context
 
 
