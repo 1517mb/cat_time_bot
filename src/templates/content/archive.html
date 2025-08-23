@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Архив новостей{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <h1 class="title is-1 has-text-centered mb-6">
+            🗂️ Архив новостей
+        </h1>
+
+        <div class="columns">
+            <div class="column is-three-quarters">
+                <h2 class="title is-4">Все публикации</h2>
+                {% for news in news_list %}
+                    {% include "content/_news_card.html" with news_item=news %}
+                {% endfor %}
+
+                {% if is_paginated %}
+                {% endif %}
+            </div>
+            
+            <div class="column is-one-quarter">
+                <div class="box">
+                    <h3 class="title is-5">По месяцам</h3>
+                    {% for item in archive_data %}
+                        <p>
+                            <a href="{% url 'content:news_by_month' year=item.year month=item.month %}">
+                                {{ item.month }}.{{ item.year }}
+                            </a>
+                            <span class="tag is-light ml-2">{{ item.count }}</span>
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
