@@ -1,0 +1,19 @@
+<div class="box">
+    <h3 class="title is-5 mb-4">⚡ Свежие новости</h3>
+    <ul>
+        {% for news in latest_news %}
+            <li class="mb-3">
+                <a href="{{ news.get_absolute_url }}">{{ news.title }}</a>
+                <div class="is-size-7 has-text-grey mt-1">
+                    📅 {{ news.created_at|date:"d.m.Y" }}
+                </div>
+            </li>
+        {% empty %}
+            <li>Новостей пока нет.</li>
+        {% endfor %}
+    </ul>
+    <hr class="my-4">
+    <a href="{% url 'content:list' %}" class="button is-small is-link is-outlined is-fullwidth">
+        Все новости
+    </a>
+</div>
