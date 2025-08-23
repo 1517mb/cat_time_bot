@@ -1,23 +1,187 @@
 {% extends "base.html" %}
-{% block title %}Чек-лист системного администратора{% endblock %}
+{% block title %}Чек-лист системного администратора на Bulma CSS{% endblock %}
 
 {% block content %}
 <section class="section">
     <div class="container">
         <h1 class="title">Чек-лист системного администратора</h1>
-        <div class="content">
-            <ol>
-                <li>Регулярные обновления ОС и ПО.</li>
-                <li>Резервное копирование данных с проверкой восстановления.</li>
-                <li>Мониторинг нагрузки серверов и сетей.</li>
-                <li>Проверка журналов безопасности.</li>
-                <li>Настройка MFA (многофакторной аутентификации).</li>
-                <li>Сканирование на уязвимости.</li>
-                <li>Ограничение прав доступа по принципу минимальной достаточности.</li>
-                <li>Документация инфраструктуры и изменений.</li>
-                <li>План действий при инцидентах.</li>
-            </ol>
-        </div>
+        <p class="subtitle">
+            Ключевые задачи для поддержания стабильной и безопасной IT-инфраструктуры.
+        </p>
+
+        <article class="message is-info mb-5">
+            <div class="message-header">
+                <p>🛡️ Безопасность и Защита (Security & Hardening)</p>
+            </div>
+            <div class="message-body">
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Аудит правил файрвола.</span>
+                    </label>
+                    <p class="is-italic ml-4">Регулярно пересматривайте правила доступа, чтобы убедиться, что открыты только необходимые порты.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Управление патчами и обновлениями (Patch Management).</span>
+                    </label>
+                    <p class="is-italic ml-4">Наличие политики для тестирования и развертывания критических патчей безопасности в установленные сроки.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Принудительное использование MFA.</span>
+                    </label>
+                    <p class="is-italic ml-4">Убедитесь, что MFA включена для всех административных учетных записей и удаленного доступа (VPN, SSH).</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Аудит учетных записей и привилегий.</span>
+                    </label>
+                    <p class="is-italic ml-4">Отключите неиспользуемые учётные записи и убедитесь, что права доступа соответствуют ролям сотрудников.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Проверка антивирусной защиты / EDR.</span>
+                    </label>
+                    <p class="is-italic ml-4">Убедитесь, что агенты активны, сигнатуры актуальны и нет незакрытых угроз.</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="message is-primary mb-5">
+            <div class="message-header">
+                <p>⚙️ Инфраструктура и Автоматизация (Infrastructure & Automation)</p>
+            </div>
+            <div class="message-body">
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Управление конфигурациями (Configuration Management).</span>
+                    </label>
+                    <p class="is-italic ml-4">Используйте инструменты вроде Ansible, Puppet или Chef для автоматического и последовательного конфигурирования серверов.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Автоматизация рутинных задач.</span>
+                    </label>
+                    <p class="is-italic ml-4">Пишите скрипты (PowerShell, Bash, Python) для автоматизации повторяющихся задач, таких как создание пользователей или очистка дисков.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Резервирование критичных сервисов.</span>
+                    </label>
+                    <p class="is-italic ml-4">Ключевые службы (контроллеры домена, файловые ресурсы) должны быть отказоустойчивыми.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Версионирование конфигураций и скриптов.</span>
+                    </label>
+                    <p class="is-italic ml-4">Храните все код и конфиги в системе контроля версий (Git).</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="message is-warning mb-5">
+            <div class="message-header">
+                <p>💾 Резервное копирование и Аварийное восстановление (Backup & DR)</p>
+            </div>
+            <div class="message-body">
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Следование правилу "3-2-1" для бэкапов.</span>
+                    </label>
+                    <p class="is-italic ml-4">Три копии данных, на двух разных носителях, одна из которых находится за пределами основной площадки (off-site).</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Тестирование процедур восстановления по расписанию.</span>
+                    </label>
+                    <p class="is-italic ml-4">Ежеквартально проводите учения по восстановлению случайного файла, целой ВМ или базы данных.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Проверка целостности бэкапов.</span>
+                    </label>
+                    <p class="is-italic ml-4">Регулярно проверяйте, что файлы внутри резервных копий не повреждены.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Защита бэкапов от ransomware.</span>
+                    </label>
+                    <p class="is-italic ml-4">Обеспечьте изоляцию резервных копий от основной сети и используйте immutable-хранилища.</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="message is-dark mb-5">
+            <div class="message-header">
+                <p>📊 Мониторинг и Контроль состояния (Monitoring & Health Checks)</p>
+            </div>
+            <div class="message-body">
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Мониторинг срока действия SSL/TLS сертификатов.</span>
+                    </label>
+                    <p class="is-italic ml-4">Настройте оповещения за 30, 14 и 7 дней до истечения срока действия, чтобы избежать внезапных сбоев.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Планирование емкости (Capacity Planning).</span>
+                    </label>
+                    <p class="is-italic ml-4">Анализируйте тренды использования диска, CPU и RAM, чтобы прогнозировать, когда потребуются дополнительные ресурсы.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Централизованный сбор логов (SIEM).</span>
+                    </label>
+                    <p class="is-italic ml-4">Настройте сбор и анализ логов с критических систем для оперативного выявления инцидентов.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Проверка физического здоровья систем.</span>
+                    </label>
+                    <p class="is-italic ml-4">Мониторинг состояния дисков (SMART), температуры компонентов, состояния ИБП.</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="message is-success mb-5">
+            <div class="message-header">
+                <p>📋 Управление инцидентами и изменениями (Incident & Change Management)</p>
+            </div>
+            <div class="message-body">
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Ведение журнала изменений.</span>
+                    </label>
+                    <p class="is-italic ml-4">Фиксируйте все проводимые работы на инфраструктуре для последующего аудита и анализа.</p>
+                </div>
+                <div class="content">
+                    <label class="checkbox">
+                        <input type="checkbox" class="mr-2">
+                        <span class="has-text-weight-bold">Наличие регламента реагирования на инциденты.</span>
+                    </label>
+                    <p class="is-italic ml-4">Определите порядок действий и ответственных при возникновении сбоев.</p>
+                </div>
+            </div>
+        </article>
+
     </div>
 </section>
 {% endblock %}
