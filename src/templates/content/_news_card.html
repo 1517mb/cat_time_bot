@@ -1,0 +1,43 @@
+<div class="card mb-5">
+    {% if news_item.image %}
+    <div class="card-image">
+        <figure class="image is-16by9">
+            <a href="{{ news_item.get_absolute_url }}">
+                <img src="{{ news_item.image.url }}" alt="{{ news_item.title }}" loading="lazy">
+            </a>
+        </figure>
+    </div>
+    {% endif %}
+    
+    <div class="card-content">
+        <div class="media">
+            <div class="media-content">
+                <h2 class="title is-4">
+                    <a href="{{ news_item.get_absolute_url }}" class="has-text-dark">
+                        {{ news_item.title }}
+                    </a>
+                </h2>
+                <div class="tags has-addons">
+                    <span class="tag is-info is-light">
+                        📅 {{ news_item.created_at|date:"d.m.Y H:i" }}
+                    </span>
+                    <span class="tag is-primary is-light">
+                        👤 {{ news_item.author.get_full_name|default:news_item.author.username }}
+                    </span>
+                    {% if not news_item.is_published and user.is_staff %}
+                    <span class="tag is-warning">
+                        🚧 Черновик
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            {{ news_item.content|truncatewords_html:30|safe }}
+            <a href="{{ news_item.get_absolute_url }}" class="button is-link is-outlined is-small mt-3">
+                Читать далее →
+            </a>
+        </div>
+    </div>
+</div>
