@@ -52,6 +52,10 @@ class News(models.Model):
         verbose_name=NewsCfg.UPDATED_V
     )
 
+    def get_absolute_url(self):
+        """Возвращает URL для конкретного экземпляра новости."""
+        return reverse("content:detail", kwargs={"slug": self.slug})
+
     def clean(self):
         """Проверка даты публикации"""
         if self.created_at and self.created_at > timezone.now():
