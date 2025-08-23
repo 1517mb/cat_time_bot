@@ -27,7 +27,7 @@
 
             <!-- Выпадающее меню для новостей -->
             <div class="navbar-item has-dropdown is-hoverable">
-                <a class="navbar-link {% if '/content/' in request.path and not '/programs/' in request.path %}is-active{% endif %}">
+                <a class="navbar-link {% if '/news/' in request.path %}is-active{% endif %}">
                     Новости
                 </a>
                 <div class="navbar-dropdown">
@@ -35,13 +35,9 @@
                         Все новости
                     </a>
                     <a class="navbar-item" href="{% url 'content:archive' %}">
-                        Архив
+                        Архив по датам
                     </a>
-                    <hr class="navbar-divider">
-                    <a class="navbar-item" href="{% url 'content:latest' %}">
-                        Последние
-                    </a>
-                </div>
+                    </div>
             </div>
 
             <a class="navbar-item {% if '/programs/' in request.path %}is-active{% endif %}" 
