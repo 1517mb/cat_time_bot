@@ -142,8 +142,8 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
+            "format": "%(asctime)s [%(levelname)s] [%(name)s:%(lineno)d] %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
         "simple": {
             "format": "{levelname} {message}",
@@ -165,7 +165,7 @@ LOGGING = {
             "formatter": "simple"
         },
         "file": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(BASE_DIR, "logs/django.log"),
             "maxBytes": 1024 * 1024 * 5,
@@ -178,7 +178,7 @@ LOGGING = {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(BASE_DIR, "logs/errors.log"),
             "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
+            "backupCount": 10,
             "formatter": "file",
             "encoding": "utf-8",
         },
@@ -188,21 +188,15 @@ LOGGING = {
             "filters": ["require_debug_false"],
         }
     },
+    "root": {
+        "handlers": ["console", "file_info", "file_error"],
+        "level": "INFO",
+    },
     "loggers": {
         "django": {
             "handlers": ["console", "file", "error_file"],
             "level": "INFO",
             "propagate": True,
-        },
-        "bot": {
-            "handlers": ["console", "file", "error_file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "generator": {
-            "handlers": ["console", "file", "error_file"],
-            "level": "INFO",
-            "propagate": False,
         },
         "django.request": {
             "handlers": ["mail_admins", "error_file"],
