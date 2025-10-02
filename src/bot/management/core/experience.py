@@ -9,7 +9,6 @@ COMPANY_BONUSES = {
     r'(?i)\b(прогресс|фирма прогресс)\b': 25,
     r'(?i)\b(инел|дисплей)\b': 30,
     r'(?i)\b(тсн|tsn)\b': 15,
-    r'(?i)\b(имбиан|imbian|имбиан лаб)\b': 15,
 }
 
 ACHIEVEMENT_BONUSES = {
