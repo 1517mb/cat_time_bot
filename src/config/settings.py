@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "markdownify",
     "markdownx",
     "django_ckeditor_5",
+    "analytical",
 ]
 
 MIDDLEWARE = [
@@ -259,6 +260,8 @@ CKEDITOR_5_CONFIGS = {
         }
     }
 }
+
+YANDEX_METRIKA_COUNTER_ID = os.getenv("YANDEX_METRIKA_COUNTER_ID")
 
 if DEBUG:
     STATICFILES_DIRS = [
