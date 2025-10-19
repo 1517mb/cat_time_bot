@@ -189,7 +189,7 @@ LOGGING = {
         }
     },
     "root": {
-        "handlers": ["console", "file_info", "file_error"],
+        "handlers": ["console", "file", "error_file"],
         "level": "INFO",
     },
     "loggers": {
