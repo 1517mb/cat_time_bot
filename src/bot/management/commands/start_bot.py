@@ -329,12 +329,16 @@ async def get_weather():
                 pressure_hpa = data["main"]["pressure"]
                 pressure_mmhg = pressure_hpa * 0.750062
 
-                if pressure_mmhg < 740:
+                if pressure_mmhg < 734:
                     pressure_status = "низкое"
-                elif pressure_mmhg > 780:
-                    pressure_status = "высокое"
-                else:
+                elif pressure_mmhg < 738:  # 734 - 737.9
+                    pressure_status = "пониженное"
+                elif pressure_mmhg <= 745:  # 738 - 745
                     pressure_status = "нормальное"
+                elif pressure_mmhg <= 755:  # 745.1 - 755
+                    pressure_status = "повышенное"
+                else:  # > 755
+                    pressure_status = "высокое"
 
                 humidity = data["main"]["humidity"]
                 description = data["weather"][0]["description"]
