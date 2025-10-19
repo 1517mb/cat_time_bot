@@ -734,8 +734,8 @@ async def edit_departure_time(update: Update,
                 message = (
                     f"⌛ *Обновленные данные о посещении* ⌛\n"
                     f"🏭 Организация: *{company_name}*\n"
-                    f"⏳ Новое затраченное время: {spent_time}.",
-                    f"🔰 Получено опыта: {exp_earned}",
+                    f"⏳ Новое затраченное время: {spent_time}.\n"
+                    f"🔰 Получено опыта: {exp_earned}"
                 )
                 if level_up:
                     level_info = await get_level_info(rank)
