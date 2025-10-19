@@ -2,7 +2,7 @@ import logging
 import secrets
 import string
 
-from django.core.paginator import Paginator
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import F, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -183,17 +183,36 @@ def daily_tips_view(request):
                 tags__id__in=selected_tag_ids).distinct()
         except (ValueError, TypeError):
             selected_tag_ids = []
-
     paginator = Paginator(tips_list, 6)
     page_number = request.GET.get("page")
-    tips = paginator.get_page(page_number)
+    try:
+        tips = paginator.page(page_number)
+    except PageNotAnInteger:
+        tips = paginator.page(1)
+    except EmptyPage:
+        tips = paginator.page(paginator.num_pages)
+    page_range = paginator.get_elided_page_range( # type: ignore
+        number=tips.number,
+        on_each_side=2,
+        on_ends=1
+    )
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        del query_params['page']
+    query_string = query_params.urlencode()
+    popular_tips = DailytTips.objects.filter(
+        is_published=True).order_by('-views_count')[:5]
     context = {
         "tips": tips,
         "search_query": search_query or '',
         "all_tags": all_tags,
         "selected_tag_ids": selected_tag_ids,
         "current_page": tips.number,
-        "total_pages": paginator.num_pages
+        "total_pages": paginator.num_pages,
+        "popular_tips": popular_tips,
+        "page_range": page_range,
+        "ellipsis": "...",
+        "query_string": query_string,
     }
     return render(request, "tips.html", context)
 
