@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load analytical %}
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -10,6 +11,7 @@
     <meta property="og:description" content="Генератор надежных и безопасных паролей. Создавайте сложные пароли для защиты ваших аккаунтов и данных.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://riopass.ddns.net/">
+    {% analytical_head_top %}
     <title>{% block title %}Генератор паролей{% endblock %}</title>
     <link rel="icon" type="image/png" sizes="32x32" href={% static 'images/icon/favicon-32x32.png' %}>
     <link rel="icon" type="image/x-icon" href="images/icon/favicon.ico">
@@ -22,8 +24,10 @@
     <script src="{% static 'js/navbar.js' %}"></script>
     <script src="{% static 'js/ctheme.js' %}"></script>
     {% block extra_head %}{% endblock %}
+    {% analytical_head_bottom %}
 </head>
 <body>
+    {% analytical_body_top %}
     {% include 'includes/navbar.html' %}
     
     <div id="notification-container" class="notification-container"></div>
@@ -35,5 +39,6 @@
     {% include 'includes/footer.html' %}
     {% block extra_scripts %}
     {% endblock %}
+    {% analytical_body_bottom %}
 </body>
 </html>
