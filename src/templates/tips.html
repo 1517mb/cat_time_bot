@@ -1,17 +1,22 @@
 {% extends "base.html" %}
 {% load markdownify %}
+
 {% block title %}Полезные Советы{% endblock %}
+
 {% block content %}
 <section class="section">
     <div class="container">
         <h1 class="title">Полезные Советы</h1>
+
         <div class="box mb-6">
             <form method="GET" action="{% url 'tips' %}" id="tips-filter-form">
-                <div class="field is-horizontal">
-                    <div class="field-body">
+                
+                <div class="columns is-vcentered">
+                    
+                    <div class="column is-7">
                         <div class="field">
                             <label class="label" for="search-input">Поиск:</label>
-                            <div class="control">
+                            <div class="control has-icons-left">
                                 <input 
                                     class="input" 
                                     type="text" 
@@ -19,9 +24,13 @@
                                     name="q" 
                                     placeholder="Введите ключевые слова..." 
                                     value="{{ search_query }}">
+                                <span class="icon is-small is-left"><i class="fas fa-search"></i></span>
                             </div>
                         </div>
-                        <div class="field">
+                    </div>
+
+                    <div class="column is-5">
+                         <div class="field">
                             <label class="label">Теги:</label>
                             <div class="control">
                                 <div class="tags">
@@ -40,6 +49,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="field is-grouped is-grouped-right">
                     <div class="control">
                         <button type="submit" class="button is-primary">
@@ -55,106 +65,122 @@
             </form>
         </div>
 
-        <!-- Список советов -->
-        {% if tips %}
-        <div class="columns is-multiline">
-            {% for tip in tips %}
-            <div class="column is-one-third">
-                <div class="card">
-                    <div class="card-content">
-                        <p class="title is-4">{{ tip.title }}</p>
-                        <div class="subtitle is-6 has-text-grey mb-4">
-                            <div class="icon-text mb-2">
-                                <span class="icon">
-                                    <i class="fas fa-user"></i>
-                                </span>
-                                <span>{{ tip.author.username }}</span>
+        <div class="columns">
+
+            <div class="column is-9">
+                {% if tips %}
+                <div class="columns is-multiline">
+                    {% for tip in tips %}
+                    <div class="column is-one-third">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title is-4">{{ tip.title }}</p>
+                                <div class="subtitle is-6 has-text-grey mb-4">
+                                    <div class="icon-text mb-2">
+                                        <span class="icon"><i class="fas fa-user"></i></span>
+                                        <span>{{ tip.author.username }}</span>
+                                    </div>
+                                    <div class="icon-text">
+                                        <span class="icon"><i class="far fa-calendar-alt"></i></span>
+                                        <span>{{ tip.pub_date|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    <div class="icon-text">
+                                        <span class="icon"><i class="fas fa-eye"></i></span>
+                                        <span>{{ tip.views_count }}</span>
+                                    </div>
+                                    {% if tip.tags.all %}
+                                    <div class="tags are-small mt-2">
+                                        {% for tag in tip.tags.all %}
+                                        <span class="tag is-light">{{ tag.name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="content">
+                                    <div class="markdown-content">
+                                        {{ tip.content|markdownify|truncatechars_html:150 }}
+                                    </div>
+                                </div>
+                                <div class="mt-4 buttons are-small">
+                                    <a href="{% url 'tip_detail' tip.pk %}" class="button is-primary">
+                                        <span class="icon"><i class="fas fa-book-open"></i></span>
+                                        <span>Читать</span>
+                                    </a>
+                                    {% if tip.external_link %}
+                                    <a href="{{ tip.external_link }}" class="button is-primary is-outlined" target="_blank" rel="noopener noreferrer">
+                                        <span class="icon"><i class="fas fa-external-link-alt"></i></span>
+                                        <span>Подробнее</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div class="icon-text">
-                                <span class="icon">
-                                    <i class="far fa-calendar-alt"></i>
-                                </span>
-                                <span>{{ tip.pub_date|date:"d.m.Y H:i" }}</span>
-                            </div>
-                            <div class="icon-text">
-                                <span class="icon">
-                                    <i class="fas fa-eye"></i>
-                                </span>
-                                <span>{{ tip.views_count }}</span>
-                            </div>
-                            <!-- Отображение тегов совета -->
-                            {% if tip.tags.all %}
-                            <div class="tags are-small mt-2">
-                                {% for tag in tip.tags.all %}
-                                    <span class="tag is-light">{{ tag.name }}</span>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                        <div class="content">
-                            <div class="markdown-content">
-                                {{ tip.content|markdownify|truncatechars_html:150 }}
-                            </div>
-                        </div>
-                        <div class="mt-4 buttons are-small">
-                            <a href="{% url 'tip_detail' tip.pk %}" class="button is-primary">
-                                <span class="icon">
-                                    <i class="fas fa-book-open"></i>
-                                </span>
-                                <span>Читать</span>
-                            </a>
-                            {% if tip.external_link %}
-                            <a href="{{ tip.external_link }}" class="button is-primary is-outlined" target="_blank" rel="noopener noreferrer">
-                                <span class="icon">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </span>
-                                <span>Подробнее</span>
-                            </a>
-                            {% endif %}
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-            </div>
-            {% endfor %}
-        </div>
 
-        <!-- Пагинация -->
-        <nav class="pagination is-centered my-6" role="navigation" aria-label="pagination">
-            {% if tips.has_previous %}
-                <a href="?q={{ search_query|urlencode }}{% for tag_id in selected_tag_ids %}&tags={{ tag_id }}{% endfor %}&page=1" class="pagination-previous">Первая</a>
-                <a href="?q={{ search_query|urlencode }}{% for tag_id in selected_tag_ids %}&tags={{ tag_id }}{% endfor %}&page={{ tips.previous_page_number }}" class="pagination-previous">Предыдущая</a>
-            {% else %}
-                <a class="pagination-previous" disabled>Первая</a>
-                <a class="pagination-previous" disabled>Предыдущая</a>
-            {% endif %}
-            {% if tips.has_next %}
-                <a href="?q={{ search_query|urlencode }}{% for tag_id in selected_tag_ids %}&tags={{ tag_id }}{% endfor %}&page={{ tips.next_page_number }}" class="pagination-next">Следующая</a>
-                <a href="?q={{ search_query|urlencode }}{% for tag_id in selected_tag_ids %}&tags={{ tag_id }}{% endfor %}&page={{ tips.paginator.num_pages }}" class="pagination-next">Последняя</a>
-            {% else %}
-                <a class="pagination-next" disabled>Следующая</a>
-                <a class="pagination-next" disabled>Последняя</a>
-            {% endif %}
-            <ul class="pagination-list">
-                {% for num in tips.paginator.page_range %}
-                    {% if tips.number == num %}
-                        <li>
-                            <a href="?q={{ search_query|urlencode }}{% for tag_id in selected_tag_ids %}&tags={{ tag_id }}{% endfor %}&page={{ num }}" class="pagination-link has-background-primary" aria-label="Страница {{ num }}" aria-current="page">{{ num }}</a>
-                        </li>
+                <nav class="pagination is-centered my-6" role="navigation" aria-label="pagination">
+                    
+                    {% if tips.has_previous %}
+                        <a href="?{{ query_string }}&page=1" class="pagination-previous">Первая</a>
+                        <a href="?{{ query_string }}&page={{ tips.previous_page_number }}" class="pagination-previous">Предыдущая</a>
                     {% else %}
-                        <li>
-                            <a href="?q={{ search_query|urlencode }}{% for tag_id in selected_tag_ids %}&tags={{ tag_id }}{% endfor %}&page={{ num }}" class="pagination-link" aria-label="Перейти на страницу {{ num }}">{{ num }}</a>
-                        </li>
+                        <a class="pagination-previous" disabled>Первая</a>
+                        <a class="pagination-previous" disabled>Предыдущая</a>
                     {% endif %}
-                {% endfor %}
-            </ul>
-        </nav>
-        {% else %}
-        <div class="box has-text-centered">
-            <p class="subtitle">📭 Советы не найдены</p>
-            <p>Попробуйте изменить критерии поиска или фильтрации.</p>
-             <a href="{% url 'tips' %}" class="button is-primary mt-4">Сбросить фильтры</a>
-        </div>
-        {% endif %}
-    </div>
+
+                    {% if tips.has_next %}
+                        <a href="?{{ query_string }}&page={{ tips.next_page_number }}" class="pagination-next">Следующая</a>
+                        <a href="?{{ query_string }}&page={{ tips.paginator.num_pages }}" class="pagination-next">Последняя</a>
+                    {% else %}
+                        <a class="pagination-next" disabled>Следующая</a>
+                        <a class="pagination-next" disabled>Последняя</a>
+                    {% endif %}
+
+                    <ul class="pagination-list">
+                        {% for num in page_range %}
+                            {% if num == ellipsis %}
+                                <li><span class="pagination-ellipsis">&hellip;</span></li>
+                            
+                            {% elif tips.number == num %}
+                                <li>
+                                    <a href="?{{ query_string }}&page={{ num }}" class="pagination-link has-background-primary" aria-label="Страница {{ num }}" aria-current="page">{{ num }}</a>
+                                </li>
+                            {% else %}
+                                <li>
+                                    <a href="?{{ query_string }}&page={{ num }}" class="pagination-link" aria-label="Перейти на страницу {{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </nav>
+                
+                {% else %}
+                <div class="box has-text-centered">
+                    <p class="subtitle">📭 Советы не найдены</p>
+                    <p>Попробуйте изменить критерии поиска или фильтрации.</p>
+                    <a href="{% url 'tips' %}" class="button is-primary mt-4">Сбросить фильтры</a>
+                </div>
+                {% endif %}
+            </div> <div class="column is-3">
+                <div class="box" style="position: sticky; top: 20px;"> <h2 class="title is-5">🔥 Популярные советы</h2>
+                    <aside class="menu">
+                        <ul class="menu-list">
+                            {% for pop_tip in popular_tips %}
+                            <li>
+                                <a href="{% url 'tip_detail' pop_tip.pk %}">
+                                    {{ pop_tip.title }}
+                                    <span classs="has-text-grey is-size-7">
+                                        (👁 {{ pop_tip.views_count }})
+                                    </span>
+                                </a>
+                            </li>
+                            {% empty %}
+                            <li><p class="is-size-7">Популярных советов пока нет.</p></li>
+                            {% endfor %}
+                        </ul>
+                    </aside>
+                </div>
+            </div> </div> </div>
 </section>
 {% endblock %}
