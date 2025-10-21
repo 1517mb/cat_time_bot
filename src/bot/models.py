@@ -456,10 +456,20 @@ class CurrencyRate(models.Model):
         ("CNY", "Китайский юань"),
         ("BTC_RUB", "Биткоин (RUB)"),
         ("BTC_USD", "Биткоин (USD)"),
+        ("ETH_RUB", "Эфириум (RUB)"),
+        ("ETH_USD", "Эфириум (USD)"),
+        ("SOL_RUB", "Solana (RUB)"),
+        ("SOL_USD", "Solana (USD)"),
+        ("XRP_RUB", "Ripple (RUB)"),
+        ("XRP_USD", "Ripple (USD)"),
+        ("LTC_RUB", "Litecoin (RUB)"),
+        ("LTC_USD", "Litecoin (USD)"),
+        ("TON_RUB", "TON (RUB)"),
+        ("TON_USD", "TON (USD)"),
     ]
 
     currency = models.CharField(
-        max_length=10,
+        max_length=15,
         choices=CURRENCY_CHOICES
     )
     rate = models.FloatField()
