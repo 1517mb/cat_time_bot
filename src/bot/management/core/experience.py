@@ -1,15 +1,6 @@
-import re
-
 from asgiref.sync import sync_to_async
 
 from bot.models import SeasonRank
-
-COMPANY_BONUSES = {
-    r'(?i)\b(ум|ума|ум аркитекс)\b': 50,
-    r'(?i)\b(прогресс|фирма прогресс)\b': 25,
-    r'(?i)\b(инел|дисплей)\b': 30,
-    r'(?i)\b(тсн|tsn)\b': 15,
-}
 
 ACHIEVEMENT_BONUSES = {
     "Первая кровь": 10,
@@ -37,9 +28,10 @@ async def get_level_info(rank: SeasonRank) -> dict:
             "next_level_exp": rank.level * 100
         }
 
-    title = await sync_to_async(lambda: rank.level_title.title)()
+    title = await sync_to_async(
+        lambda: rank.level_title.title)()  # type: ignore
     category = await sync_to_async(
-        lambda: rank.level_title.get_category_display())()
+        lambda: rank.level_title.get_category_display())()  # type: ignore
     next_level_exp = rank.level * 100
     progress = (rank.experience / next_level_exp) * 100
 
@@ -87,18 +79,11 @@ def calculate_experience(activity,
         extra_time = total_minutes - 120
         time_exp = 20.0 + (extra_time ** 0.7) * 0.05
 
-    company_bonus = 0
-    company_name = activity.company.name
-    for pattern, bonus in COMPANY_BONUSES.items():
-        if re.search(pattern, company_name):
-            company_bonus = bonus
-            break
-
     achievements_exp = 0
     if not achievements:
         achievements = []
     for achievement in achievements:
         if achievement in ACHIEVEMENT_BONUSES:
             achievements_exp += ACHIEVEMENT_BONUSES[achievement]
-    total_exp = base_exp + time_exp + company_bonus + achievements_exp
+    total_exp = base_exp + time_exp + achievements_exp
     return max(0, int(round(total_exp)))
