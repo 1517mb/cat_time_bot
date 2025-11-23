@@ -85,6 +85,12 @@ class Program(models.Model):
         verbose_name=ProgramCfg.DESCRIPTION_V,
         config_name="default"
     )
+    image = models.ImageField(
+        upload_to="programs/covers/",
+        verbose_name="Обложка программы",
+        blank=True,
+        null=True
+    )
     external_download_link = models.URLField(
         verbose_name=ProgramCfg.EXT_DOWNLOAD_V,
         blank=ProgramCfg.EXT_DOWNLOAD_BLANK,
