@@ -166,7 +166,7 @@ class Season(models.Model):
         ordering = ["-start_date"]
 
     def __str__(self):
-        return f"{self.get_theme_display()} - {self.name}"
+        return f"{self.get_theme_display()} - {self.name}"  # type: ignore
 
     def save(self, *args, **kwargs):
         if not self.end_date and self.start_date:
@@ -212,7 +212,7 @@ class SeasonRank(models.Model):
         return f"{self.user_id} - {self.season} (Уровень {self.level})"
 
     def save(self, *args, **kwargs):
-        if not self.level_title_id:
+        if not self.level_title_id:  # type: ignore
             try:
                 title = LevelTitle.objects.filter(
                     level__lte=self.level
@@ -472,23 +472,26 @@ class CurrencyRate(models.Model):
         max_length=15,
         choices=CURRENCY_CHOICES
     )
-    rate = models.FloatField()
-    date = models.DateTimeField(auto_now_add=True)
+    rate = models.DecimalField(max_digits=20,
+                               decimal_places=10,
+                               verbose_name="Курс")
+    date = models.DateTimeField(auto_now_add=True,
+                                verbose_name="Дата и время")
 
     class Meta:
         verbose_name = "Курс валюты"
         verbose_name_plural = "Курсы валют"
         ordering = ("-date",)
         get_latest_by = "date"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["currency", "date"],
-                name="unique_currency_rate_per_date"
-            )
+        indexes = [
+            models.Index(fields=["currency", "date"]),
         ]
 
     def __str__(self):
-        return f"{self.get_currency_display()}: {self.rate} ({self.date})"
+        return (
+            f"{self.get_currency_display()}: "  # type: ignore
+            f"{self.rate} ({self.date})"
+        )
 
 
 class DailytTipView(models.Model):
