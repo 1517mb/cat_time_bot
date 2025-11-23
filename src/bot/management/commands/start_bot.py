@@ -13,6 +13,7 @@ import pytz
 import telegram
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 from asgiref.sync import sync_to_async
 from django.core.management.base import BaseCommand
 from django.db.models import Avg, F
@@ -40,8 +41,8 @@ from bot.management.core.bot_constants import (
 from bot.management.core.bot_instance import get_bot_application
 from bot.management.core.currency_utils import (
     fetch_currency_rates,
-    get_currency_changes,
     save_currency_rates,
+    send_currency_report,
 )
 from bot.management.core.experience import calculate_experience, get_level_info
 from bot.management.core.statistics import (
@@ -1496,73 +1497,16 @@ async def active_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def send_currency_rates_to_group(bot):
+    """
+    Асинхронная функция для обновления и отправки курсов.
+    Использует логику из currency_utils.py.
+    """
     try:
         rates = await fetch_currency_rates()
         await save_currency_rates(rates)
-        changes = await get_currency_changes()
-        message_lines = ["*💱 Актуальные курсы валют:*", ""]
-        fiat_currencies = {
-            "USD": "🇺🇸 *USD/RUB*",
-            "EUR": "🇪🇺 *EUR/RUB*",
-            "CNY": "🇨🇳 *CNY/RUB*"
-        }
-        crypto_currencies = {
-            "BTC_USD": "₿ *BTC/USD*",
-            "BTC_RUB": "₿ *BTC/RUB*"
-        }
-        message_lines.append("*📌 Фиатные валюты:*")
-        for code, name in fiat_currencies.items():
-            if code in changes:
-                data = changes[code]
-                trend = "📈" if data["change"] > 0 else ("📉" if data["change"] < 0 else "📊") # noqa
-                change_sign = "+" if data["change"] > 0 else ""
-                message_lines.append(
-                    f"{name}: *{data['current']:.2f}* {trend} "
-                    f"(`{change_sign}{data['change']:.2f}` / "
-                    f"`{change_sign}{data['percent']:.2f}%`)"
-                )
-            else:
-                last_rate = await sync_to_async(
-                    CurrencyRate.objects.filter(
-                        currency=code
-                    ).order_by("-date").first
-                )()
-                if last_rate:
-                    message_lines.append(
-                        f"{name}: *{last_rate.rate:.2f}* `(данные из кэша)`"
-                    )
-        message_lines.append("")
-        message_lines.append("*⚡ Криптовалюты:*")
-        for code, name in crypto_currencies.items():
-            if code in changes:
-                data = changes[code]
-                trend = "📈" if data["change"] > 0 else ("📉" if data["change"] < 0 else "📊") # noqa
-                change_sign = "+" if data["change"] > 0 else ""
-                message_lines.append(
-                    f"{name}: *{data['current']:.2f}* {trend} "
-                    f"(`{change_sign}{data['change']:.2f}` / "
-                    f"`{change_sign}{data['percent']:.2f}%`)"
-                )
-            else:
-                last_rate = await sync_to_async(
-                    CurrencyRate.objects.filter(
-                        currency=code
-                    ).order_by("-date").first
-                )()
-                if last_rate:
-                    message_lines.append(
-                        f"{name}: *{last_rate.rate:.2f}* `(данные из кэша)`"
-                    )
-        timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
-        message_lines.append(f"\n*🕒 Обновлено:* `{timestamp}`")
-        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
-        await bot.send_message(
-            chat_id=group_chat_id,
-            text="\n".join(message_lines),
-            parse_mode="Markdown"
-        )
+        await send_currency_report(bot)
     except Exception as e:
-        logger.error(f"Ошибка при отправке курсов: {e}")
+        logger.error(f"Ошибка в цикле обновления курсов: {e}", exc_info=True)
 
 
 async def start_currency(update: Update, context: ContextTypes.DEFAULT_TYPE):
