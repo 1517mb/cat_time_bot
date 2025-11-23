@@ -127,7 +127,8 @@ MARKDOWNIFY = {
         ],
         "MARKDOWN_EXTENSIONS": [
             "markdown.extensions.extra",
-            "markdown.extensions.sane_lists"
+            "markdown.extensions.sane_lists",
+            "markdown.extensions.toc"
         ]
     }
 }
