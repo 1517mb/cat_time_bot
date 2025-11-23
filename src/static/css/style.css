@@ -266,3 +266,58 @@ body {
     animation-play-state: paused !important;
     mask-image: none !important;
 }
+
+/* Выравнивание текста в карточке */
+.program-card .card-content {
+    text-align: left; /* Принудительно влево */
+}
+
+/* Увеличиваем кнопки в футере карточки, чтобы не сжимались */
+.card-footer-item {
+    padding: 1rem 0.5rem; /* Больше воздуха сверху/снизу */
+    font-size: 0.95rem;
+    min-height: 50px; /* Минимальная высота */
+}
+
+/* Темная тема */
+html[data-theme="dark"] .program-card {
+    background-color: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="dark"] .program-card .program-title {
+    color: #f3f4f6 !important;
+}
+html[data-theme="dark"] .program-card .program-title:hover {
+    color: #3e8ed0 !important;
+}
+
+html[data-theme="dark"] .program-card .footer-details-link {
+    color: #f3f4f6 !important;
+    transition: background-color 0.2s;
+}
+html[data-theme="dark"] .program-card .footer-details-link:hover {
+    background-color: #374151;
+}
+
+html[data-theme="dark"] .program-card .footer-download-link {
+    color: #10b981 !important;
+    transition: background-color 0.2s;
+}
+html[data-theme="dark"] .program-card .footer-download-link:hover {
+    background-color: #374151;
+}
+
+html[data-theme="dark"] .program-card .program-desc { color: #d1d5db; }
+html[data-theme="dark"] .card-footer { border-top-color: #374151; }
+html[data-theme="dark"] .card-footer-item:not(:last-child) { border-right-color: #374151; }
+html[data-theme="dark"] .filter-box { background-color: #1f2937; }
+html[data-theme="dark"] .filter-box .label { color: #e5e7eb; }
+
+html[data-theme="dark"] .select select {
+    background-color: #374151;
+    color: #f3f4f6;
+    border-color: #4b5563;
+}
+html[data-theme="dark"] .select::after { border-color: #f3f4f6; }
