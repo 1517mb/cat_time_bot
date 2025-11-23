@@ -227,7 +227,7 @@ class ProgramListView(ListView):
     model = Program
     template_name = "content/program_list.html"
     context_object_name = "programs"
-    paginate_by = 9
+    paginate_by = 12
 
     def get_queryset(self):
         queryset = Program.objects.filter(verified=True)
