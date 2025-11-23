@@ -4,161 +4,172 @@
 {% block title %}Каталог программ{% endblock %}
 
 {% block content %}
-<div class="section">
+<section class="section">
     <div class="container">
-        <nav class="breadcrumb" aria-label="breadcrumbs">
+        <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
             <ul>
                 <li><a href="/">Главная</a></li>
-                <li class="is-active"><a href="#" aria-current="page">Каталог программ</a></li>
+                <li class="is-active"><a href="#" aria-current="page">Каталог</a></li>
             </ul>
         </nav>
         
-        <h1 class="title is-2 mb-6">Каталог программ</h1>
+        <h1 class="title is-2 mb-6 theme-aware-title has-text-dark">Каталог программ</h1>
         
-        <!-- Форма фильтрации -->
-        <div class="box mb-6">
+        <div class="box mb-6 filter-box">
             <form method="get">
                 <div class="columns is-multiline is-vcentered">
-                    <div class="column is-4">
+                    <div class="column is-12-mobile is-4-tablet">
                         <div class="field">
+                            <label class="label is-small theme-text">Поиск</label>
                             <div class="control has-icons-left">
                                 {{ form.search }}
-                                <span class="icon is-left">
-                                    <i class="fas fa-search"></i>
-                                </span>
+                                <span class="icon is-left is-small"><i class="fas fa-search"></i></span>
                             </div>
                         </div>
                     </div>
-
-                    <div class="column is-2">
-                        <div class="field">{{ form.search_in }}</div>
+                    <div class="column is-6-mobile is-2-tablet">
+                        <div class="field">
+                            <label class="label is-small theme-text">Где искать</label>
+                            <div class="control is-expanded"><div class="select is-fullwidth">{{ form.search_in }}</div></div>
+                        </div>
                     </div>
-
-                    <div class="column is-2">
-                        <div class="field">{{ form.sort_by }}</div>
+                    <div class="column is-6-mobile is-2-tablet">
+                        <div class="field">
+                            <label class="label is-small theme-text">Сортировка</label>
+                            <div class="control is-expanded"><div class="select is-fullwidth">{{ form.sort_by }}</div></div>
+                        </div>
                     </div>
-
-                    <div class="column is-2">
-                        <div class="field">{{ form.min_rating }}</div>
+                    <div class="column is-6-mobile is-2-tablet">
+                        <div class="field">
+                            <label class="label is-small theme-text">Мин. рейтинг</label>
+                            <div class="control is-expanded"><div class="select is-fullwidth">{{ form.min_rating }}</div></div>
+                        </div>
                     </div>
-
-                    <div class="column is-2">
-                        <div class="buttons is-fullwidth">
-                            <button type="submit" class="button is-primary is-fullwidth">
-                                <span class="icon"><i class="fas fa-filter"></i></span>
-                                <span>Фильтровать</span>
-                            </button>
-                            <a href="{% url 'content:program_list' %}" class="button is-light is-fullwidth">
-                                Сбросить
-                            </a>
+                    <div class="column is-6-mobile is-2-tablet">
+                        <label class="label is-small">&nbsp;</label>
+                        <div class="field is-grouped">
+                            <p class="control is-expanded">
+                                <button type="submit" class="button is-primary is-fullwidth"><span class="icon"><i class="fas fa-filter"></i></span></button>
+                            </p>
+                            <p class="control">
+                                <a href="{% url 'content:program_list' %}" class="button is-white" title="Сбросить"><span class="icon"><i class="fas fa-times"></i></span></a>
+                            </p>
                         </div>
                     </div>
                 </div>
             </form>
         </div>
 
-        
-        <!-- Список программ -->
         <div class="columns is-multiline">
             {% for program in programs %}
-                <div class="column is-one-third">
-                    <div class="card program-card">
-                        {% if program.image %}
-                            <div class="card-image">
-                                <figure class="image is-4by3">
-                                    <img src="{{ program.image.url }}" alt="{{ program.name }}" class="program-card-image">
-                                </figure>
-                            </div>
-                        {% endif %}
-                        <div class="card-content">
-                            <p class="title is-4">{{ program.name }}</p>
-                            <div class="program-meta">
-                                <span class="tag is-warning">
-                                    <span class="icon">
-                                        <i class="fas fa-star"></i>
-                                    </span>
-                                    <span>{{ program.rating }}</span>
-                                </span>
-                                <span class="tag is-info">
-                                    <span class="icon">
-                                        <i class="fas fa-download"></i>
-                                    </span>
-                                    <span>{{ program.downloads }}</span>
-                                </span>
-                                {% if program.ratings_count > 0 %}
-                                    <span class="tag is-light">
-                                        <span class="icon">
-                                            <i class="fas fa-users"></i>
-                                        </span>
-                                        <span>{{ program.ratings_count }}</span>
-                                    </span>
+                <div class="column is-12-mobile is-6-tablet is-4-desktop is-3-widescreen is-flex">
+                    
+                    <div class="card program-card is-flex-grow-1 is-flex is-flex-direction-column">
+                        
+                        <div class="card-image">
+                            <figure class="image is-4by3">
+                                {% if program.image %}
+                                    <img src="{{ program.image.url }}" alt="{{ program.name }}" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="has-background-grey-lighter is-flex is-align-items-center is-justify-content-center" style="height: 100%; width: 100%; color: #b5b5b5;">
+                                        <span class="is-size-4 has-text-weight-bold">No Image</span>
+                                    </div>
                                 {% endif %}
-                                {% if program.verified %}
-                                    <span class="tag is-success">
-                                        <span class="icon">
-                                            <i class="fas fa-shield-alt"></i>
-                                        </span>
-                                        <span>Проверено</span>
-                                    </span>
-                                {% endif %}
-                            </div>
-                            <div class="content">
-                                {{ program.description|truncatewords:20|safe }}
-                            </div>
-                            <footer class="card-footer">
-                                <a href="{{ program.get_absolute_url }}" class="card-footer-item">Подробнее</a>
-                                {% if program.file %}
-                                    <a href="{{ program.file.url }}" class="card-footer-item">Скачать</a>
-                                {% endif %}
-                                {% if program.external_download_link %}
-                                    <a href="{{ program.external_download_link }}" class="card-footer-item" target="_blank">Ссылка</a>
-                                {% endif %}
-                            </footer>
+                            </figure>
                         </div>
+                        
+                        <div class="card-content is-flex-grow-1 has-text-left">
+                            <div class="media mb-2">
+                                <div class="media-content">
+                                    <p class="title is-5">
+                                        <a href="{{ program.get_absolute_url }}" class="has-text-dark program-title">
+                                            {{ program.name }}
+                                        </a>
+                                    </p>
+                                    {% if program.verified %}
+                                        <p class="subtitle is-7 has-text-success mt-1">
+                                            <span class="icon is-small"><i class="fas fa-check-circle"></i></span>
+                                            Проверено
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="tags are-small mb-3">
+                                <span class="tag is-warning is-light"><span class="icon"><i class="fas fa-star"></i></span>&nbsp;{{ program.rating }}</span>
+                                <span class="tag is-light" title="Голосов"><span class="icon"><i class="fas fa-users"></i></span>&nbsp;{{ program.ratings_count }}</span>
+                                <span class="tag is-info is-light" title="Скачиваний"><span class="icon"><i class="fas fa-download"></i></span>&nbsp;{{ program.downloads }}</span>
+                            </div>
+
+                            <div class="content is-small program-desc">
+                                {{ program.description|striptags|truncatechars:100 }}
+                            </div>
+                            
+                            <div class="content is-small mt-2">
+                                <p class="is-size-7 has-text-grey-light">
+                                    <span class="icon is-small"><i class="far fa-calendar-alt"></i></span>
+                                    {{ program.created_at|date:"d.m.Y" }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <footer class="card-footer mt-auto">
+                            <a href="{{ program.get_absolute_url }}" class="card-footer-item has-text-grey-dark footer-details-link">
+                                Подробнее
+                            </a>
+                            {% if program.file or program.external_download_link %}
+                                <a href="{% if program.file %}{{ program.file.url }}{% else %}{{ program.external_download_link }}{% endif %}" 
+                                   class="card-footer-item has-text-primary has-text-weight-bold footer-download-link"
+                                   {% if not program.file %}target="_blank"{% endif %}>
+                                    Скачать
+                                </a>
+                            {% endif %}
+                        </footer>
                     </div>
                 </div>
             {% empty %}
-                <div class="column is-full">
-                    <div class="notification is-warning">
-                        <div class="content has-text-centered">
-                            <p class="title is-4">Программы не найдены</p>
-                            <p>Попробуйте изменить параметры поиска или фильтрации.</p>
-                        </div>
+                <div class="column is-12">
+                    <div class="notification is-warning is-light has-text-centered">
+                        <p class="title is-5">Ничего не найдено</p>
+                        <p>Попробуйте изменить параметры поиска.</p>
                     </div>
                 </div>
             {% endfor %}
         </div>
         
-        <!-- Пагинация -->
-        {% if programs.has_other_pages %}
-            <nav class="pagination is-centered" role="navigation" aria-label="pagination">
-                {% if programs.has_previous %}
-                    <a href="?page={{ programs.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-previous">Назад</a>
+        {% if is_paginated %}
+            <nav class="pagination is-centered is-rounded mt-6" role="navigation" aria-label="pagination">
+                
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-previous">
+                        <span class="icon"><i class="fas fa-chevron-left"></i></span> Назад
+                    </a>
                 {% else %}
                     <a class="pagination-previous" disabled>Назад</a>
                 {% endif %}
                 
-                {% if programs.has_next %}
-                    <a href="?page={{ programs.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-next">Вперед</a>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-next">
+                        Вперед <span class="icon"><i class="fas fa-chevron-right"></i></span>
+                    </a>
                 {% else %}
                     <a class="pagination-next" disabled>Вперед</a>
                 {% endif %}
                 
                 <ul class="pagination-list">
-                    {% for num in programs.paginator.page_range %}
-                        {% if programs.number == num %}
-                            <li><a class="pagination-link is-current" aria-label="Страница {{ num }}" aria-current="page">{{ num }}</a></li>
-                        {% else %}
-                            <li><a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link" aria-label="Перейти к странице {{ num }}">{{ num }}</a></li>
+                    {% for num in paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li><a class="pagination-link is-current" aria-label="Page {{ num }}">{{ num }}</a></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li><a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-link">{{ num }}</a></li>
                         {% endif %}
                     {% endfor %}
                 </ul>
             </nav>
         {% endif %}
     </div>
-</div>
+</section>
 {% endblock %}
-
 {% block extra_scripts %}
 <script>
     // Автоматическое применение фильтров при изменении селектов
