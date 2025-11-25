@@ -30,7 +30,7 @@ body {
    ========================================= */
 .navbar-burger {
     align-self: center;
-    color: var(--bulma-navbar-burger-color);
+    color: #000000 !important;
     margin-inline-end: .375rem;
     margin-inline-start: auto;
     align-items: center;
@@ -47,7 +47,8 @@ body {
 }
 
 .navbar-burger:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #000000 !important;
 }
 
 .navbar-custom-text {
@@ -80,7 +81,7 @@ body {
     transition: background-color 0.3s ease;
 }
 
-.tips-link:hover { transform: scale(1.05); }
+.tips-link:hover { transform: scale(1.10); }
 .tips-link:active { transform: scale(1.02); }
 .tips-link.is-active .text { background-color: var(--primary-dark); }
 
@@ -113,7 +114,7 @@ body {
 }
 
 /* =========================================
-   4. ПАГИНАЦИЯ (Исправлено для Светлой темы)
+   4. ПАГИНАЦИЯ
    ========================================= */
 .pagination-link.is-current {
     background-color: var(--primary-color);
