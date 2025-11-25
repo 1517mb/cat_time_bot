@@ -138,7 +138,7 @@
         </div>
         
         {% if is_paginated %}
-            <nav class="pagination is-centered is-rounded mt-6" role="navigation" aria-label="pagination">
+            <nav class="pagination is-centered is-rounded mt-6 custom-pagination" role="navigation" aria-label="pagination">
                 
                 {% if page_obj.has_previous %}
                     <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-previous">

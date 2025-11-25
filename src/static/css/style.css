@@ -321,3 +321,49 @@ html[data-theme="dark"] .select select {
     border-color: #4b5563;
 }
 html[data-theme="dark"] .select::after { border-color: #f3f4f6; }
+
+:root {
+    --pagination-color: #00d1b2; 
+}
+
+.custom-pagination .pagination-link:hover,
+.custom-pagination .pagination-previous:hover,
+.custom-pagination .pagination-next:hover {
+    border-color: var(--pagination-color);
+    color: var(--pagination-color);
+}
+.custom-pagination .pagination-link.is-current {
+    background-color: var(--pagination-color);
+    border-color: var(--pagination-color);
+    color: #fff;
+}
+html[data-theme="dark"] .custom-pagination .pagination-link,
+html[data-theme="dark"] .custom-pagination .pagination-previous,
+html[data-theme="dark"] .custom-pagination .pagination-next {
+    color: #b5b5b5;
+    border-color: #4a4a4a;
+}
+
+html[data-theme="dark"] .custom-pagination .pagination-link[disabled],
+html[data-theme="dark"] .custom-pagination .pagination-previous[disabled],
+html[data-theme="dark"] .custom-pagination .pagination-next[disabled] {
+    background-color: transparent;
+    border-color: #2f2f2f;
+    color: #555;
+    opacity: 0.5;
+}
+
+
+html[data-theme="dark"] .custom-pagination .pagination-link:hover,
+html[data-theme="dark"] .custom-pagination .pagination-previous:hover,
+html[data-theme="dark"] .custom-pagination .pagination-next:hover {
+    border-color: var(--pagination-color);
+    color: var(--pagination-color);
+    background-color: rgba(0, 209, 178, 0.1);
+}
+
+html[data-theme="dark"] .custom-pagination .pagination-link.is-current {
+    background-color: var(--pagination-color);
+    border-color: var(--pagination-color);
+    color: #fff;
+}
