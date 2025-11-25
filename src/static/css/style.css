@@ -1,3 +1,12 @@
+/* =========================================
+   1. БАЗОВЫЕ НАСТРОЙКИ И ПЕРЕМЕННЫЕ
+   ========================================= */
+:root {
+    --primary-color: #00d1b2; 
+    --primary-dark: #009e86;
+    --shimmer-hue: 171deg;
+}
+
 html, body {
     height: 100%;
 }
@@ -5,9 +14,10 @@ html, body {
 body {
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
-.content {
+.content-wrapper {
     flex: 1 0 auto;
 }
 
@@ -15,46 +25,29 @@ body {
     flex-shrink: 0;
 }
 
-.navbar-burger:hover {
-    background-color: hsla(var(--bulma-burger-h), var(--bulma-burger-s), var(--bulma-burger-l), .1);
-}
-
+/* =========================================
+   2. НАВИГАЦИЯ И ЭЛЕМЕНТЫ UI
+   ========================================= */
 .navbar-burger {
     align-self: center;
     color: var(--bulma-navbar-burger-color);
     margin-inline-end: .375rem;
     margin-inline-start: auto;
-}
-
-.navbar-burger {
     align-items: center;
     appearance: none;
     background: none;
     border: none;
     border-radius: var(--bulma-burger-border-radius);
-    color: hsl(var(--bulma-burger-h), var(--bulma-burger-s), var(--bulma-burger-l));
     cursor: pointer;
     height: 2.5rem;
     justify-content: center;
     vertical-align: top;
     width: 2.5rem;
+    transition: background-color 0.3s;
 }
 
-.navbar-burger span {
-    background-color: currentColor;
-    display: block;
-    height: var(--bulma-burger-item-height);
-    left: calc(50% -(var(--bulma-burger-item-width)) / 2);
-    position: absolute;
-    transform-origin: center;
-    transition-duration: var(--bulma-duration);
-    transition-property: background-color, color, opacity, transform;
-    transition-timing-function: var(--bulma-easing);
-    width: var(--bulma-burger-item-width);
-}
-
-.navbar-burger span:first-child, .navbar-burger span:nth-child(2) {
-    top: calc(50% -(var(--bulma-burger-item-height)) / 2);
+.navbar-burger:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .navbar-custom-text {
@@ -64,119 +57,6 @@ body {
     letter-spacing: -0.5px;
     text-transform: uppercase;
 }
-
-.notification-container {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.is-clickable {
-    cursor: pointer;
-    color: #3273dc;
-    text-decoration: underline;
-}
-
-#instruction-column {
-    transition: all 0.3s ease;
-}
-
-#toggle-instruction {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 10;
-}
-
-.markdown-content {
-    line-height: 1.625;
-}
-
-/* Заголовки */
-.markdown-content h1 { font-size: 2em; }
-.markdown-content h2 { font-size: 1.75em; }
-.markdown-content h3 { font-size: 1.5em; }
-
-/* Списки */
-.markdown-content ul,
-.markdown-content ol {
-    margin-left: 1.5em;
-}
-
-/* Код */
-.markdown-content code {
-    background-color: var(--bulma-code-background);
-    color: var(--bulma-code-color);
-    padding: 0.25em 0.5em;
-    border-radius: var(--bulma-radius);
-}
-
-.markdown-content pre {
-    background-color: var(--bulma-pre-background);
-    padding: 1.25rem 1.5rem;
-    margin: 1rem 0;
-    overflow-x: auto;
-    border-radius: var(--bulma-radius);
-}
-
-/* Цитаты */
-.markdown-content blockquote {
-    border-left: 3px solid var(--bulma-border);
-    padding: 0.75rem 1.5rem;
-    margin: 1rem 0;
-    background-color: var(--bulma-background);
-}
-
-/* Таблицы */
-.markdown-content table {
-    width: 100%;
-    margin: 1rem 0;
-}
-
-.markdown-content th,
-.markdown-content td {
-    border: 1px solid var(--bulma-border);
-    padding: 0.5em 0.75em;
-}
-
-.icon-text .icon {
-    min-width: 1.5em;
-    justify-content: flex-start;
-}
-.markdown-content img {
-    max-width: 100%;
-    height: auto;
-    margin: 1rem 0;
-}
-
-/* Переменные, соответствующие Bulma primary color (#00d1b2) */
-:root {
-    --shimmer-hue-1: 171deg;  /* Основной цвет Bulma primary */
-    --shimmer-sat-1: 100%;
-    --shimmer-lit-1: 91%;
-    --shimmer-hue-2: 171deg;  /* Тот же оттенок для градиента */
-    --shimmer-sat-2: 80%;
-    --shimmer-lit-2: 86%;
-    --shimmer-hue-3: 171deg;  /* Более насыщенный оттенок */
-    --shimmer-sat-3: 70%;
-    --shimmer-lit-3: 89%;
-    --glow-hue: 171deg;
-}
-
-@keyframes wipe {
-    0% {
-        mask-position: 200% center;
-    }
-    100% {
-        mask-position: 0% center;
-    }
-}
-
-/* Стили для кнопки с эффектом в navbar */
 .tips-link {
     color: white !important;
     font-weight: 600;
@@ -185,8 +65,7 @@ body {
     border: none;
     outline: none;
     border-radius: 4px;
-    scale: 1;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease;
     background: transparent;
     padding: 0 !important;
     margin: 0.25rem 0;
@@ -196,20 +75,88 @@ body {
     display: block;
     padding: 0.5rem 1rem;
     color: white;
-    background-color: #00d1b2; /* Bulma primary color */
+    background-color: var(--primary-color);
     border-radius: 4px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease;
 }
 
-.tips-link:hover:not(:active):not([disabled]) {
-    scale: 1.05;
+.tips-link:hover { transform: scale(1.05); }
+.tips-link:active { transform: scale(1.02); }
+.tips-link.is-active .text { background-color: var(--primary-dark); }
+
+/* =========================================
+   3. КАРТОЧКИ (Программы и Советы)
+   ========================================= */
+.resource-card, .program-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.tips-link:active:not([disabled]) {
-    scale: 1.02;
+.resource-card:hover, .program-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
-/* Shimmer элемент */
+.resource-card .card-content, .program-card .card-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.card-footer-item {
+    padding: 1rem 0.5rem;
+    min-height: 50px;
+    transition: background-color 0.2s;
+}
+
+/* =========================================
+   4. ПАГИНАЦИЯ (Исправлено для Светлой темы)
+   ========================================= */
+.pagination-link.is-current {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+.pagination-link:hover,
+.pagination-previous:hover,
+.pagination-next:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* =========================================
+   5. MARKDOWN СТИЛИ
+   ========================================= */
+.markdown-content { line-height: 1.6; }
+.markdown-content h1 { font-size: 1.8em; font-weight: bold; margin-bottom: 0.5em; }
+.markdown-content h2 { font-size: 1.5em; font-weight: bold; margin-bottom: 0.5em; }
+.markdown-content h3 { font-size: 1.25em; font-weight: bold; margin-bottom: 0.5em; }
+.markdown-content ul, .markdown-content ol { margin-left: 1.5em; margin-bottom: 1em; }
+.markdown-content p { margin-bottom: 1em; }
+.markdown-content img { max-width: 100%; height: auto; border-radius: 4px; margin: 1rem 0; }
+.markdown-content pre {
+    background-color: #f5f5f5;
+    padding: 1.25rem;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+.markdown-content blockquote {
+    border-left: 4px solid var(--primary-color);
+    background-color: #f9f9f9;
+    padding: 1em;
+    margin: 1em 0;
+}
+
+/* =========================================
+   6. АНИМАЦИИ
+   ========================================= */
+@keyframes wipe {
+    0% { mask-position: 200% center; }
+    100% { mask-position: 0% center; }
+}
 .shimmer {
     position: absolute;
     inset: -8px;
@@ -218,206 +165,102 @@ body {
     pointer-events: none;
     z-index: 10;
 }
-
-.shimmer::before,
-.shimmer::after {
-    opacity: 1; /* Всегда видимый */
+.shimmer::before, .shimmer::after {
+    opacity: 1;
     content: "";
     border-radius: inherit;
     position: absolute;
     inset: 8px;
 }
-
 .shimmer::before {
-    box-shadow: 
-        0 0 3px 2px hsl(var(--shimmer-hue-1) var(--shimmer-sat-1) 95%),
-        0 0 7px 4px hsl(var(--shimmer-hue-1) var(--shimmer-sat-1) 85%),
-        0 0 13px 8px hsl(var(--shimmer-hue-2) var(--shimmer-sat-2) 70%),
-        0 0 22px 6px hsl(var(--shimmer-hue-2) var(--shimmer-sat-2) 50%);
+    box-shadow: 0 0 3px 2px hsl(var(--shimmer-hue) 100% 95%), 0 0 7px 4px hsl(var(--shimmer-hue) 100% 85%);
     z-index: -1;
 }
-
-.shimmer::after {
-    box-shadow: 
-        inset 0 0 0 1px hsl(var(--shimmer-hue-2) 90% 95%),
-        inset 0 0 3px 1px hsl(var(--shimmer-hue-2) 100% 85%),
-        inset 0 0 9px 1px hsl(var(--shimmer-hue-2) 100% 75%);
-    z-index: 2;
-}
-
-/* Активное состояние */
-.tips-link.is-active .text {
-    background-color: #009e86; /* Более темный оттенок Bulma primary */
-}
-
-/* Эффект WIPE - всегда активен */
 .tips-link:not([disabled]) .shimmer {
-    mask-image: linear-gradient(
-        90deg, transparent 20%, white 88%, transparent 90%
-    );
+    mask-image: linear-gradient(90deg, transparent 20%, white 88%, transparent 90%);
     mask-size: 200% 200%;
     mask-position: center;
-    animation: wipe 1.5s linear infinite both;
+    animation: wipe 2.5s linear infinite both;
 }
 
-/* Отключаем анимацию при фокусе/активации */
-.tips-link:focus .shimmer,
-.tips-link:active .shimmer {
-    animation-play-state: paused !important;
-    mask-image: none !important;
-}
-
-/* Выравнивание текста в карточке */
-.program-card .card-content {
-    text-align: left; /* Принудительно влево */
-}
-
-/* Увеличиваем кнопки в футере карточки, чтобы не сжимались */
-.card-footer-item {
-    padding: 1rem 0.5rem; /* Больше воздуха сверху/снизу */
-    font-size: 0.95rem;
-    min-height: 50px; /* Минимальная высота */
-}
-
-/* Темная тема */
-html[data-theme="dark"] .program-card {
-    background-color: #1f2937;
-    border-color: #374151;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-}
-
-html[data-theme="dark"] .program-card .program-title {
-    color: #f3f4f6 !important;
-}
-html[data-theme="dark"] .program-card .program-title:hover {
-    color: #3e8ed0 !important;
-}
-
-html[data-theme="dark"] .program-card .footer-details-link {
-    color: #f3f4f6 !important;
-    transition: background-color 0.2s;
-}
-html[data-theme="dark"] .program-card .footer-details-link:hover {
-    background-color: #374151;
-}
-
-html[data-theme="dark"] .program-card .footer-download-link {
-    color: #10b981 !important;
-    transition: background-color 0.2s;
-}
-html[data-theme="dark"] .program-card .footer-download-link:hover {
-    background-color: #374151;
-}
-
-html[data-theme="dark"] .program-card .program-desc { color: #d1d5db; }
-html[data-theme="dark"] .card-footer { border-top-color: #374151; }
-html[data-theme="dark"] .card-footer-item:not(:last-child) { border-right-color: #374151; }
-html[data-theme="dark"] .filter-box { background-color: #1f2937; }
-html[data-theme="dark"] .filter-box .label { color: #e5e7eb; }
-
-html[data-theme="dark"] .select select {
-    background-color: #374151;
+/* =========================================
+   7. ТЕМНАЯ ТЕМА
+   ========================================= */
+html[data-theme="dark"] body {
+    background-color: #111827;
     color: #f3f4f6;
-    border-color: #4b5563;
-}
-html[data-theme="dark"] .select::after { border-color: #f3f4f6; }
-
-:root {
-    --pagination-color: #00d1b2; 
 }
 
-.custom-pagination .pagination-link:hover,
-.custom-pagination .pagination-previous:hover,
-.custom-pagination .pagination-next:hover {
-    border-color: var(--pagination-color);
-    color: var(--pagination-color);
-}
-.custom-pagination .pagination-link.is-current {
-    background-color: var(--pagination-color);
-    border-color: var(--pagination-color);
-    color: #fff;
-}
-html[data-theme="dark"] .custom-pagination .pagination-link,
-html[data-theme="dark"] .custom-pagination .pagination-previous,
-html[data-theme="dark"] .custom-pagination .pagination-next {
-    color: #b5b5b5;
-    border-color: #4a4a4a;
-}
-
-html[data-theme="dark"] .custom-pagination .pagination-link[disabled],
-html[data-theme="dark"] .custom-pagination .pagination-previous[disabled],
-html[data-theme="dark"] .custom-pagination .pagination-next[disabled] {
-    background-color: transparent;
-    border-color: #2f2f2f;
-    color: #555;
-    opacity: 0.5;
-}
-
-
-html[data-theme="dark"] .custom-pagination .pagination-link:hover,
-html[data-theme="dark"] .custom-pagination .pagination-previous:hover,
-html[data-theme="dark"] .custom-pagination .pagination-next:hover {
-    border-color: var(--pagination-color);
-    color: var(--pagination-color);
-    background-color: rgba(0, 209, 178, 0.1);
-}
-
-html[data-theme="dark"] .custom-pagination .pagination-link.is-current {
-    background-color: var(--pagination-color);
-    border-color: var(--pagination-color);
-    color: #fff;
-}
-.program-detail-card {
-    box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0px 0 1px rgba(10, 10, 10, 0.02);
-}
-
-html[data-theme="dark"] .program-detail-card {
+html[data-theme="dark"] .resource-card,
+html[data-theme="dark"] .program-card,
+html[data-theme="dark"] .box,
+html[data-theme="dark"] .card {
     background-color: #1f2937;
     border: 1px solid #374151;
+    box-shadow: none;
+    color: #d1d5db;
 }
-
-html[data-theme="dark"] .program-title {
+html[data-theme="dark"] .title,
+html[data-theme="dark"] .label,
+html[data-theme="dark"] .resource-card .title a,
+html[data-theme="dark"] .program-card .title a {
     color: #f3f4f6 !important;
 }
 
-html[data-theme="dark"] .program-description {
-    color: #d1d5db;
+html[data-theme="dark"] .subtitle {
+    color: #9ca3af !important;
 }
-html[data-theme="dark"] .program-description strong {
-    color: #fff;
+html[data-theme="dark"] a:hover {
+    color: var(--primary-color) !important;
 }
-
-html[data-theme="dark"] .theme-divider {
+html[data-theme="dark"] .card-footer {
+    border-top-color: #374151;
+}
+html[data-theme="dark"] .card-footer-item {
+    color: #f3f4f6;
+    border-right-color: #374151;
+}
+html[data-theme="dark"] .card-footer-item:hover {
     background-color: #374151;
 }
-
-html[data-theme="dark"] .info-panel .panel-heading {
+html[data-theme="dark"] .input,
+html[data-theme="dark"] .select select,
+html[data-theme="dark"] .textarea {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+html[data-theme="dark"] .input::placeholder { color: #9ca3af; }
+html[data-theme="dark"] .tag.is-light {
     background-color: #374151;
     color: #f3f4f6;
-    border-color: #4b5563;
 }
-html[data-theme="dark"] .info-panel .panel-block {
-    color: #d1d5db;
-    border-color: #4b5563;
-}
-html[data-theme="dark"] .info-panel .panel-block strong {
-    color: #f3f4f6;
-}
-html[data-theme="dark"] .rating-box {
-    background-color: #111827;
-}
-html[data-theme="dark"] .theme-text {
-    color: #f3f4f6;
-}
-
-html[data-theme="dark"] .theme-link {
-    color: #9ca3af;
-}
-html[data-theme="dark"] .theme-link:hover {
-    color: #f3f4f6;
-}
-
 html[data-theme="dark"] .breadcrumb li a { color: #9ca3af; }
 html[data-theme="dark"] .breadcrumb li.is-active a { color: #f3f4f6; }
-html[data-theme="dark"] .breadcrumb li a:hover { color: #3e8ed0; }
-html[data-theme="dark"] .breadcrumb li + li::before { color: #6b7280; }
+html[data-theme="dark"] .breadcrumb li + li::before { color: #4b5563; }
+html[data-theme="dark"] .markdown-content pre,
+html[data-theme="dark"] .markdown-content blockquote {
+    background-color: #111827;
+    border-color: #374151;
+    color: #d1d5db;
+}
+html[data-theme="dark"] .menu-list a { color: #d1d5db; }
+html[data-theme="dark"] .menu-list a:hover { background-color: #374151; color: #fff; }
+html[data-theme="dark"] .pagination-link,
+html[data-theme="dark"] .pagination-previous,
+html[data-theme="dark"] .pagination-next {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #f3f4f6;
+}
+html[data-theme="dark"] .pagination-link:hover,
+html[data-theme="dark"] .pagination-previous:hover,
+html[data-theme="dark"] .pagination-next:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+html[data-theme="dark"] .pagination-link.is-current {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
