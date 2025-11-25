@@ -1,125 +1,148 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ program.name }}{% endblock %}
+{% block title %}{{ program.name }} - Скачать{% endblock %}
 
 {% block content %}
-<div class="section">
+<section class="section">
     <div class="container">
-        <nav class="breadcrumb" aria-label="breadcrumbs">
+        <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
             <ul>
-                <li><a href="/">Главная</a></li>
-                <li><a href="{% url 'content:program_list' %}">Каталог программ</a></li>
-                <li class="is-active"><a href="#" aria-current="page">{{ program.name }}</a></li>
+                <li>
+                    <a href="/">
+                        <span class="icon is-small"><i class="fas fa-home"></i></span>
+                        <span>Главная</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'content:program_list' %}">
+                        <span class="icon is-small"><i class="fas fa-folder-open"></i></span>
+                        <span>Каталог</span>
+                    </a>
+                </li>
+                <li class="is-active">
+                    <a href="#" aria-current="page">{{ program.name }}</a>
+                </li>
             </ul>
         </nav>
         
-        <div class="program-detail-card">
+        <div class="card program-detail-card">
             <div class="card-content">
-                <h1 class="title is-2">{{ program.name }}</h1>
-                
-                <div class="program-meta-tags tags are-medium">
-                    <span class="tag is-info">
-                        <span class="icon">
-                            <i class="fas fa-download"></i>
-                        </span>
-                        <span>Скачиваний: {{ program.downloads }}</span>
-                    </span>
-                    <span class="tag is-warning">
-                        <span class="icon">
-                            <i class="fas fa-star"></i>
-                        </span>
-                        <span class="current-rating">Рейтинг: {{ program.rating|floatformat:1 }}</span>
-                    </span>
-                    {% if program.ratings_count > 0 %}
-                        <span class="tag is-light">
-                            <span class="icon">
-                                <i class="fas fa-users"></i>
-                            </span>
-                            <span>Голосов: {{ program.ratings_count }}</span>
-                        </span>
-                    {% endif %}
-                    <span class="tag is-success">
-                        <span class="icon">
-                            <i class="fas fa-calendar"></i>
-                        </span>
-                        <span>Дата: {{ program.created_at|date:"d.m.Y" }}</span>
-                    </span>
-                    {% if program.verified %}
-                        <span class="tag is-primary">
-                            <span class="icon">
-                                <i class="fas fa-shield-alt"></i>
-                            </span>
-                            <span>Проверено</span>
-                        </span>
-                    {% endif %}
-                </div>
-                
-                <div class="program-description content">
-                    {{ program.description|safe }}
-                </div>
-                
-                <!-- Форма для оценки -->
-                <div class="rating-section mt-5">
-                    <h3 class="title is-5 has-text-weight-semibold mb-3">Оцените программу</h3>
+                <div class="columns">
+                    <div class="column is-4">
+                        <figure class="image is-4by3 mb-4">
+                            {% if program.image %}
+                                <img src="{{ program.image.url }}" alt="{{ program.name }}" style="object-fit: cover; border-radius: 6px;">
+                            {% else %}
+                                <div class="has-background-grey-lighter is-flex is-align-items-center is-justify-content-center" style="height: 100%; width: 100%; border-radius: 6px; color: #b5b5b5;">
+                                    <span class="is-size-4 has-text-weight-bold">No Image</span>
+                                </div>
+                            {% endif %}
+                        </figure>
 
-                    {% if has_voted %}
-                        <div class="notification is-info is-light">
-                            Спасибо, ваш голос учтён!
+                        <div class="buttons is-centered is-hidden-mobile">
+                            {% if program.file %}
+                                <a href="{{ program.file.url }}" class="button is-primary is-fullwidth is-medium download-btn" download>
+                                    <span class="icon"><i class="fas fa-download"></i></span>
+                                    <span>Скачать файл</span>
+                                </a>
+                            {% endif %}
+                            
+                            {% if program.external_download_link %}
+                                <a href="{{ program.external_download_link }}" class="button is-link is-outlined is-fullwidth" target="_blank">
+                                    <span class="icon"><i class="fas fa-external-link-alt"></i></span>
+                                    <span>Зеркало / Источник</span>
+                                </a>
+                            {% endif %}
                         </div>
-                    {% else %}
-                        <form method="post" class="rating-form">
-                            {% csrf_token %}
-                            <div class="field">
-                                <div class="control">
-                                    <div class="rating-stars is-flex is-align-items-center" data-selected="0" style="gap: 0.5rem;">
+
+                        <article class="panel is-info mt-5 info-panel">
+                            <p class="panel-heading">Информация</p>
+                            <div class="panel-block">
+                                <span class="panel-icon"><i class="fas fa-calendar-alt"></i></span>
+                                Добавлено: &nbsp;<strong>{{ program.created_at|date:"d.m.Y" }}</strong>
+                            </div>
+                            <div class="panel-block">
+                                <span class="panel-icon"><i class="fas fa-download"></i></span>
+                                Скачиваний: &nbsp;<strong>{{ program.downloads }}</strong>
+                            </div>
+                            <div class="panel-block">
+                                <span class="panel-icon"><i class="fas fa-star"></i></span>
+                                Рейтинг: &nbsp;<strong>{{ program.rating|floatformat:1 }}</strong>
+                                <span class="is-size-7 has-text-grey ml-2">({{ program.ratings_count }} голосов)</span>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="column is-8">
+                        <div class="is-flex is-align-items-center mb-4" style="flex-wrap: wrap; gap: 10px;">
+                            <h1 class="title is-2 mb-0 program-title has-text-dark">{{ program.name }}</h1>
+                            {% if program.verified %}
+                                <span class="tag is-success is-medium is-rounded">
+                                    <span class="icon"><i class="fas fa-shield-alt"></i></span>
+                                    <span>Проверено</span>
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <hr class="theme-divider">
+
+                        <div class="content is-medium program-description">
+                            {{ program.description|safe }}
+                        </div>
+
+                        <div class="buttons is-hidden-tablet mt-5">
+                            {% if program.file %}
+                                <a href="{{ program.file.url }}" class="button is-primary is-fullwidth is-medium download-btn">
+                                    Скачать
+                                </a>
+                            {% endif %}
+                        </div>
+
+                        <hr class="theme-divider">
+
+                        <div class="box rating-box">
+                            <h3 class="title is-5 mb-3 theme-text">Оцените программу</h3>
+                            {% if has_voted %}
+                                <div class="notification is-success is-light">
+                                    <button class="delete"></button>
+                                    <span class="icon mr-2"><i class="fas fa-check-circle"></i></span>
+                                    Спасибо! Ваш голос уже учтён.
+                                </div>
+                            {% else %}
+                                <form method="post" class="rating-form">
+                                    {% csrf_token %}
+                                    <div class="is-flex is-align-items-center mb-3 rating-stars" data-selected="0">
                                         {% for i in "12345" %}
-                                            <label style="cursor:pointer;">
+                                            <label class="mr-2" style="cursor:pointer;">
                                                 <input type="radio" name="rating" value="{{ forloop.counter }}" style="display:none;">
-                                                <i class="far fa-star fa-2x" data-value="{{ forloop.counter }}"></i>
+                                                <i class="far fa-star fa-2x has-text-warning star-icon" data-value="{{ forloop.counter }}"></i>
                                             </label>
                                         {% endfor %}
                                     </div>
-                                </div>
-                            </div>
-                            <div class="field mt-4">
-                                <div class="control">
-                                    <button type="submit" class="button is-primary">Отправить оценку</button>
-                                </div>
-                            </div>
-                        </form>
-                    {% endif %}
+                                    <button type="submit" class="button is-primary is-small">Отправить</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mt-6">
+                            <a href="{% url 'content:program_list' %}" class="button is-ghost pl-0 theme-link">
+                                <span class="icon"><i class="fas fa-arrow-left"></i></span>
+                                <span>Вернуться в каталог</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Кнопки -->
-                <div class="buttons mt-5">
-                    {% if program.file %}
-                        <a href="{{ program.file.url }}" class="button is-primary is-medium" download>
-                            <span class="icon"><i class="fas fa-download"></i></span>
-                            <span>Скачать файл</span>
-                        </a>
-                    {% endif %}
-
-                    {% if program.external_download_link %}
-                        <a href="{{ program.external_download_link }}" class="button is-link is-medium" target="_blank" rel="noopener noreferrer">
-                            <span class="icon"><i class="fas fa-external-link-alt"></i></span>
-                            <span>Скачать по внешней ссылке</span>
-                        </a>
-                    {% endif %}
-
-                    <a href="{% url 'content:program_list' %}" class="button is-light is-medium">
-                        <span class="icon"><i class="fas fa-arrow-left"></i></span>
-                        <span>Назад к списку</span>
-                    </a>
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Логика звезд рейтинга
     const ratingStars = document.querySelector('.rating-stars');
     if (ratingStars) {
         const stars = ratingStars.querySelectorAll('i');
@@ -134,7 +157,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             star.addEventListener('click', function() {
                 selected = parseInt(this.dataset.value);
-                ratingStars.querySelector(`input[value="${selected}"]`).checked = true;
+                const input = ratingStars.querySelector(`input[value="${selected}"]`);
+                if(input) input.checked = true;
                 highlightStars(selected);
             });
         });
@@ -142,8 +166,8 @@ document.addEventListener('DOMContentLoaded', function() {
         function highlightStars(count) {
             stars.forEach(star => {
                 if (parseInt(star.dataset.value) <= count) {
-                    star.classList.add('fas');
-                    star.classList.remove('far');
+                    star.classList.add('fas'); // Закрашенная
+                    star.classList.remove('far'); // Контур
                 } else {
                     star.classList.add('far');
                     star.classList.remove('fas');
@@ -151,6 +175,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+    
+    // Закрытие уведомления
+    (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+        const $notification = $delete.parentNode;
+        $delete.addEventListener('click', () => {
+            $notification.parentNode.removeChild($notification);
+        });
+    });
 });
 </script>
 {% endblock %}
