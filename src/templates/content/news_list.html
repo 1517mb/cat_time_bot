@@ -7,51 +7,72 @@
 {% block content %}
 <section class="section">
     <div class="container">
-        <h1 class="title is-1 has-text-centered mb-6">
-            📰 {% if page_title %}{{ page_title }}{% else %}Все новости{% endif %}
-        </h1>
-        
-        {% if news_list %}
-            {% for news in news_list %}
-                {% include "content/_news_card.html" with news_item=news %}
-            {% endfor %}
-            
-            {% if is_paginated %}
-            <nav class="pagination is-centered" role="navigation" aria-label="pagination">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="pagination-previous">Назад</a>
-                {% endif %}
-                
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="pagination-next">Вперед</a>
-                {% endif %}
-                
-                <ul class="pagination-list">
-                    {% for num in paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li><a class="pagination-link is-current" aria-current="page">{{ num }}</a></li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <li><a href="?page={{ num }}" class="pagination-link">{{ num }}</a></li>
-                        {% elif num == paginator.page_range|first or num == paginator.page_range|last %}
-                            <li><span class="pagination-ellipsis">&hellip;</span></li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-            </nav>
-            {% endif %}
-        {% else %}
-            <div class="message is-primary">
-                <div class="message-body has-text-centered">
-                    <div class="block">
-                        <span class="icon is-large"><i class="fas fa-newspaper fa-3x"></i></span>
+        <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li class="is-active"><a href="#" aria-current="page">Новости</a></li>
+            </ul>
+        </nav>
+
+        <div class="columns">
+            <div class="column is-8 is-offset-1-widescreen">
+                <h1 class="title is-2 mb-6 theme-title">
+                    {% if page_title %}{{ page_title }}{% else %}📰 Новости проекта{% endif %}
+                </h1>
+
+                {% if news_list %}
+                    <div class="news-feed">
+                        {% for news in news_list %}
+                            {% include "content/_news_card.html" with news_item=news %}
+                        {% endfor %}
                     </div>
-                    <h2 class="title is-4">
-                        {% if page_title %}Публикаций не найдено{% else %}Новостей пока нет{% endif %}
-                    </h2>
-                    <p class="subtitle is-5">Следите за обновлениями!</p>
+                    
+                    {% if is_paginated %}
+                    <nav class="pagination is-centered is-rounded my-6 custom-pagination" role="navigation" aria-label="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="pagination-previous">
+                                <span class="icon"><i class="fas fa-chevron-left"></i></span> Назад
+                            </a>
+                        {% else %}
+                            <a class="pagination-previous" disabled>Назад</a>
+                        {% endif %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="pagination-next">
+                                Вперед <span class="icon"><i class="fas fa-chevron-right"></i></span>
+                            </a>
+                        {% else %}
+                            <a class="pagination-next" disabled>Вперед</a>
+                        {% endif %}
+                        
+                        <ul class="pagination-list">
+                            {% for num in paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li><a class="pagination-link is-current">{{ num }}</a></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li><a href="?page={{ num }}" class="pagination-link">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                
+                {% else %}
+                    <div class="notification is-light has-text-centered py-6">
+                        <span class="icon is-large has-text-grey-light mb-3"><i class="far fa-newspaper fa-3x"></i></span>
+                        <p class="title is-4 theme-title">Публикаций пока нет</p>
+                        <p class="subtitle is-6 has-text-grey">Заходите позже!</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="column is-3 is-hidden-touch">
+                <div class="box sticky-widget">
+                    <h3 class="title is-5 mb-4 theme-title">⚡ Свежее</h3>
+                    {% include "content/_latest_news_widget.html" %}
                 </div>
             </div>
-        {% endif %}
+        </div>
     </div>
 </section>
 {% endblock %}

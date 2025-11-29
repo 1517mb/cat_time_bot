@@ -5,46 +5,71 @@
 {% block content %}
 <section class="section">
     <div class="container">
+        <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li><a href="{% url 'content:list' %}">Новости</a></li>
+                <li class="is-active"><a href="#" aria-current="page">Просмотр</a></li>
+            </ul>
+        </nav>
+
         <div class="columns">
-            
-            <div class="column is-three-quarters">
-                <article class="content">
+            <div class="column is-8">
+                <article class="box news-article-box">
                     {% if news.image %}
-                        <figure class="image is-3by1 mb-4">
-                            <img src="{{ news.image.url }}" alt="{{ news.title }}">
+                        <figure class="image mb-5">
+                            <img src="{{ news.image.url }}" alt="{{ news.title }}" style="border-radius: 6px; max-height: 450px; object-fit: cover; width: 100%;">
                         </figure>
                     {% endif %}
     
-                    <h1 class="title">{{ news.title }}</h1>
+                    <h1 class="title is-2 theme-title mb-4">{{ news.title }}</h1>
     
-                    <div class="tags">
-                        <span class="tag is-light">📅 {{ news.created_at|date:"d.m.Y H:i" }}</span>
-                        <span class="tag is-info">👤 {{ news.author.get_full_name|default:news.author.username }}</span>
-                        {% if not news.is_published and user.is_staff %}
-                            <span class="tag is-warning">🚧 Черновик</span>
-                        {% endif %}
+                    <div class="level is-mobile mb-5 pb-3" style="border-bottom: 1px solid var(--bulma-border);">
+                        <div class="level-left">
+                            <div class="level-item has-text-grey is-size-7-mobile">
+                                <span class="icon is-small mr-1"><i class="far fa-calendar-alt"></i></span>
+                                {{ news.created_at|date:"d E Y, H:i" }}
+                            </div>
+                            <div class="level-item">
+                                <a href="{% url 'content:by_author' news.author.id %}" class="is-flex is-align-items-center has-text-primary">
+                                    <span class="icon is-small mr-1"><i class="far fa-user-circle"></i></span>
+                                    <strong>{{ news.author.get_full_name|default:news.author.username }}</strong>
+                                </a>
+                            </div>
+                        </div>
+                        
                         {% if user.is_staff or user == news.author %}
-                            <a class="tag is-link" href="{% url 'admin:content_news_change' news.id %}">✏️ Редактировать</a>
+                        <div class="level-right">
+                            <a class="button is-small is-warning is-light" href="{% url 'admin:content_news_change' news.id %}">
+                                <span class="icon"><i class="fas fa-edit"></i></span>
+                                <span>Ред.</span>
+                            </a>
+                        </div>
                         {% endif %}
                     </div>
     
-                    <div class="mt-4">
+                    <div class="content is-medium theme-text text-justify">
                         {{ news.content|safe }}
                     </div>
     
-                    <div class="mt-5 is-flex is-justify-content-space-between is-align-items-center">
-                        <a class="button is-link is-outlined mt-3" href="{% url 'content:list' %}">← Все новости</a>
-                        <small class="has-text-grey">
-                            Обновлено: {{ news.updated_at|date:"d.m.Y H:i" }}
-                        </small>
+                    <div class="mt-6 pt-4 is-flex is-justify-content-space-between is-align-items-center" style="border-top: 1px solid var(--bulma-border);">
+                        <a href="{% url 'content:list' %}" class="button is-ghost pl-0 theme-link-grey">
+                            <span class="icon"><i class="fas fa-arrow-left"></i></span>
+                            <span>К списку новостей</span>
+                        </a>
+                        <span class="is-size-7 has-text-grey">
+                            Обновлено: {{ news.updated_at|date:"d.m.Y" }}
+                        </span>
                     </div>
                 </article>
             </div>
 
-            <div class="column is-one-quarter">
-                {% include "content/_latest_news_widget.html" %}
+            <div class="column is-4 is-hidden-touch">
+                <div class="box sticky-widget">
+                    <h3 class="title is-5 mb-4 theme-title">⚡ Читайте также</h3>
+                    {% include "content/_latest_news_widget.html" %}
+                </div>
             </div>
-
         </div>
     </div>
 </section>
