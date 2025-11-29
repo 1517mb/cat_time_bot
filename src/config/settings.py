@@ -35,8 +35,6 @@ INSTALLED_APPS = [
     "content.apps.ContentConfig",
     "pages.apps.PagesConfig",
     "import_export",
-    "markdownify",
-    "markdownx",
     "django_ckeditor_5",
     "analytical",
 ]
@@ -112,29 +110,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-MARKDOWNX_MARKDOWN_EXTENSIONS = [
-    "markdown.extensions.extra",
-    "markdown.extensions.codehilite",
-]
-
-MARKDOWNIFY = {
-    "default": {
-        "WHITELIST_TAGS": [
-            "h1", "h2", "h3", "h4", "h5", "h6",
-            "a", "p", "ul", "ol", "li", "strong", "em",
-            "code", "pre", "blockquote", "img", "table",
-            "thead", "tbody", "tr", "th", "td", "br", "hr"
-        ],
-        "MARKDOWN_EXTENSIONS": [
-            "markdown.extensions.extra",
-            "markdown.extensions.sane_lists",
-            "markdown.extensions.toc"
-        ]
-    }
-}
-
-MARKDOWNX_EDITOR_RESIZABLE = True
-MARKDOWNX_UPLOAD_MAX_SIZE = 50 * 1024 * 1024
 
 LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True, parents=True)
@@ -219,11 +194,12 @@ CKEDITOR_5_CONFIGS = {
     "default": {
         "toolbar": [
             "heading", "|",
-            "bold", "italic", "link", "bulletedList", "numberedList", "blockQuote",
-            "imageUpload", "undo", "redo"
+            "bold", "italic", "link", "|",
+            "bulletedList", "numberedList", "|",
+            "blockQuote", "imageUpload", "|",
+            "undo", "redo"
         ],
         "language": "ru",
-        "mediaEmbed": {"previewsInData": "true"},
     },
     "extends": {
         "blockToolbar": [
@@ -232,18 +208,19 @@ CKEDITOR_5_CONFIGS = {
             "|", "blockQuote", "imageUpload"
         ],
         "language": "ru",
+        "shouldNotGroupWhenFull": True,
         "mediaEmbed": {"previewsInData": "true"},
         "toolbar": [
             "heading", "|",
-            "outdent", "indent", "|",
-            "bold", "italic", "link", "underline", "strikethrough", "code",
-            "subscript", "superscript", "highlight", "|",
-            "codeBlock", "sourceEditing", "insertImage", "|",
-            "bulletedList", "numberedList", "todoList", "|",
-            "blockQuote", "imageUpload", "|",
+            "bold", "italic", "underline", "strikethrough", "link", "|",
             "fontSize", "fontFamily", "fontColor", "fontBackgroundColor", "|",
-            "alignment", "|",
-            "undo", "redo"
+            "subscript", "superscript", "highlight", "|",
+            "undo", "redo",
+            "-",
+            "bulletedList", "numberedList", "todoList", "|",
+            "outdent", "indent", "alignment", "|",
+            "blockQuote", "code", "codeBlock", "|",
+            "insertImage", "imageUpload", "sourceEditing"
         ],
         "image": {
             "toolbar": ["imageTextAlternative", "|", "imageStyle:alignLeft", "imageStyle:alignRight", "imageStyle:alignCenter", "imageStyle:side", "|"],
