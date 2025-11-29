@@ -1,52 +1,56 @@
-<div class="card mb-5">
+<div class="card news-card mb-6">
     {% if news_item.image %}
     <div class="card-image">
-        <figure class="image is-16by9">
-            <a href="{{ news_item.get_absolute_url }}">
-                <img src="{{ news_item.image.url }}" alt="{{ news_item.title }}" loading="lazy">
+        <figure class="image is-2by1"> <a href="{{ news_item.get_absolute_url }}">
+                <img src="{{ news_item.image.url }}" alt="{{ news_item.title }}" loading="lazy" style="object-fit: cover;">
             </a>
         </figure>
     </div>
     {% endif %}
     
     <div class="card-content">
-        <div class="media">
+        <div class="media mb-3">
             <div class="media-content">
                 <h2 class="title is-4">
-                    <a href="{{ news_item.get_absolute_url }}" class="theme-aware-title has-text-dark">
+                    <a href="{{ news_item.get_absolute_url }}" class="has-text-dark theme-title">
                         {{ news_item.title }}
                     </a>
                 </h2>
-                <div class="tags has-addons">
-                    <span class="tag is-info is-light">
-                        📅 {{ news_item.created_at|date:"d.m.Y H:i" }}
-                    </span>
-                    <a href="{% url 'content:by_author' news_item.author.id %}" class="tag is-primary is-light">
-                        👤 {{ news_item.author.get_full_name|default:news_item.author.username }}
-                    </a>
-                    {% if not news_item.is_published and user.is_staff %}
-                    <span class="tag is-warning">
-                        🚧 Черновик
-                    </span>
-                    {% endif %}
+                
+                <div class="level is-mobile is-size-7 has-text-grey mb-0">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <span class="icon is-small mr-1"><i class="far fa-calendar-alt"></i></span>
+                            {{ news_item.created_at|date:"d.m.Y H:i" }}
+                        </div>
+                        <div class="level-item">
+                            <a href="{% url 'content:by_author' news_item.author.id %}" class="has-text-grey theme-link-grey">
+                                <span class="icon is-small mr-1"><i class="far fa-user"></i></span>
+                                {{ news_item.author.get_full_name|default:news_item.author.username }}
+                            </a>
+                        </div>
+                        {% if not news_item.is_published and user.is_staff %}
+                            <div class="level-item">
+                                <span class="tag is-warning is-light is-rounded">🚧 Черновик</span>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="content">
-            {{ news_item.content|truncatewords_html:30|safe }}
-            
-            <div class="mt-4 is-flex is-justify-content-space-between is-align-items-center">
-                
-                <a href="{% url 'content:by_author' news_item.author.id %}" class="button is-primary is-outlined is-small">
-                    Все новости автора
-                </a>
-
-                <a href="{{ news_item.get_absolute_url }}" class="button is-link is-outlined is-small">
-                    Читать далее →
-                </a>
-
-            </div>
-            </div>
+        <div class="content is-normal mb-4 theme-text">
+            {{ news_item.content|striptags|truncatewords:40 }}
+        </div>
     </div>
+
+    <footer class="card-footer">
+        <a href="{{ news_item.get_absolute_url }}" class="card-footer-item has-text-primary has-text-weight-medium footer-action-link">
+            <span>Читать далее</span>
+            <span class="icon is-small ml-1"><i class="fas fa-arrow-right"></i></span>
+        </a>
+        <a href="{% url 'content:by_author' news_item.author.id %}" class="card-footer-item has-text-grey footer-action-link">
+            <span>Все новости автора</span>
+        </a>
+    </footer>
 </div>
