@@ -12,7 +12,6 @@ handler500 = "content.views.custom_500" # noqa
 
 urlpatterns = [
     path("catbot/", admin.site.urls),
-    path("markdownx/", include("markdownx.urls")),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
     path("", include("generator.urls")),
     path("content/", include("content.urls")),
