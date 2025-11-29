@@ -1,19 +1,23 @@
-<div class="box">
-    <h3 class="title is-5 mb-4">⚡ Свежие новости</h3>
-    <ul>
+<aside class="menu">
+    <ul class="menu-list">
         {% for news in latest_news %}
-            <li class="mb-3">
-                <a href="{{ news.get_absolute_url }}">{{ news.title }}</a>
-                <div class="is-size-7 has-text-grey mt-1">
-                    📅 {{ news.created_at|date:"d.m.Y" }}
-                </div>
+            <li>
+                <a href="{{ news.get_absolute_url }}" class="py-2 theme-link-grey">
+                    <span class="has-text-weight-medium">{{ news.title }}</span>
+                    <br>
+                    <span class="is-size-7 has-text-grey">
+                        📅 {{ news.created_at|date:"d.m.Y" }}
+                    </span>
+                </a>
             </li>
         {% empty %}
-            <li>Новостей пока нет.</li>
+            <li><span class="has-text-grey is-size-7">Новостей нет.</span></li>
         {% endfor %}
     </ul>
-    <hr class="my-4">
-    <a href="{% url 'content:list' %}" class="button is-small is-link is-outlined is-fullwidth">
+</aside>
+
+<div class="mt-4 pt-3 border-top has-text-centered" style="border-top: 1px solid var(--bulma-border);">
+    <a href="{% url 'content:list' %}" class="button is-small is-primary is-outlined is-fullwidth">
         Все новости
     </a>
 </div>
