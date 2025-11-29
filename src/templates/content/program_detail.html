@@ -142,7 +142,6 @@
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Логика звезд рейтинга
     const ratingStars = document.querySelector('.rating-stars');
     if (ratingStars) {
         const stars = ratingStars.querySelectorAll('i');
@@ -166,8 +165,8 @@ document.addEventListener('DOMContentLoaded', function() {
         function highlightStars(count) {
             stars.forEach(star => {
                 if (parseInt(star.dataset.value) <= count) {
-                    star.classList.add('fas'); // Закрашенная
-                    star.classList.remove('far'); // Контур
+                    star.classList.add('fas');
+                    star.classList.remove('far');
                 } else {
                     star.classList.add('far');
                     star.classList.remove('fas');
@@ -175,8 +174,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
-    
-    // Закрытие уведомления
     (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
         const $notification = $delete.parentNode;
         $delete.addEventListener('click', () => {
