@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils import timezone
-from markdownx.models import MarkdownxField
+from django_ckeditor_5.fields import CKEditor5Field
 
 from core.constants import (
     MAX_LEN,
@@ -312,8 +312,9 @@ class DailytTips(models.Model):
         max_length=MAX_LEN,
         verbose_name=DailytTipsCfg.VERBOSE_NAME
     )
-    content = MarkdownxField(
+    content = CKEditor5Field(
         verbose_name=DailytTipsCfg.CONTENT_V,
+        config_name="extends"
     )
     pub_date = models.DateTimeField(
         verbose_name=DailytTipsCfg.PUB_DATE_V,
