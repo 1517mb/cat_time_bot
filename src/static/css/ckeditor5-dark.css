@@ -1,3 +1,116 @@
-.ck.ck-editor {  
-    color: black !important;  
-    }
+/* =========================================================
+   CKEDITOR 5 DARK/LIGHT THEME ADAPTER
+   ========================================================= */
+
+/* 1. Настройки для СВЕТЛОЙ темы */
+:root {
+    --ck-bg-color: #ffffff;
+    --ck-text-color: #333333;
+    --ck-border-color: #ccced1;
+    --ck-toolbar-bg: #fdfdfd;
+    --ck-icon-color: #333333;
+    --ck-hover-bg: #e4e6f5;
+    --ck-link-color: #007bff;
+    --ck-dropdown-bg: #ffffff;
+}
+
+/* 2. Настройки для ТЕМНОЙ темы */
+html[data-theme="dark"] {
+    --ck-bg-color: #1f1f1f;
+    --ck-text-color: #eeeeee;
+    --ck-border-color: #444444;
+    --ck-toolbar-bg: #2b2b2b;
+    --ck-icon-color: #e0e0e0;
+    --ck-hover-bg: #444444;
+    --ck-link-color: #3e8ed0;
+    --ck-dropdown-bg: #2b2b2b;
+}
+
+/* =========================================================
+   3. ПРИМЕНЕНИЕ СТИЛЕЙ
+   ========================================================= */
+
+.ck.ck-toolbar {
+    background-color: var(--ck-toolbar-bg) !important;
+    border-color: var(--ck-border-color) !important;
+}
+
+.ck.ck-icon, 
+.ck.ck-button__label {
+    color: var(--ck-icon-color) !important;
+}
+
+.ck.ck-button:hover, 
+.ck.ck-button.ck-on {
+    background-color: var(--ck-hover-bg) !important;
+}
+
+.ck.ck-button.ck-on, 
+.ck.ck-button.ck-on:hover, 
+.ck.ck-button.ck-on:active {
+    background-color: var(--ck-hover-bg) !important; 
+    color: var(--ck-link-color) !important;
+}
+
+.ck.ck-editor__main > .ck-editor__editable {
+    background-color: var(--ck-bg-color) !important;
+    color: var(--ck-text-color) !important;
+    border-color: var(--ck-border-color) !important;
+}
+
+.ck-content h1, .ck-content h2, .ck-content h3 {
+    color: var(--ck-text-color) !important;
+}
+
+.ck-content a {
+    color: var(--ck-link-color) !important;
+}
+
+.ck.ck-balloon-panel,
+.ck.ck-dropdown__panel,
+.ck.ck-list {
+    background-color: var(--ck-dropdown-bg) !important;
+    border-color: var(--ck-border-color) !important;
+    color: var(--ck-text-color) !important;
+}
+
+.ck.ck-list__item .ck-button {
+    color: var(--ck-text-color) !important;
+    background-color: transparent !important;
+}
+
+.ck.ck-list__item .ck-button:hover {
+    background-color: var(--ck-hover-bg) !important;
+    color: var(--ck-text-color) !important;
+}
+
+.ck.ck-list__item .ck-button.ck-on {
+    background-color: var(--ck-link-color) !important;
+    color: #fff !important; /* Белый текст на синем фоне */
+}
+
+.ck.ck-balloon-panel[class*="arrow_n"]:after {
+    border-bottom-color: var(--ck-dropdown-bg) !important;
+}
+.ck.ck-balloon-panel[class*="arrow_s"]:after {
+    border-top-color: var(--ck-dropdown-bg) !important;
+}
+
+.ck.ck-input-text {
+    background-color: var(--ck-bg-color) !important;
+    color: var(--ck-text-color) !important;
+    border-color: var(--ck-border-color) !important;
+}
+
+.ck.ck-labeled-field-view > .ck.ck-label {
+    background-color: var(--ck-dropdown-bg) !important;
+    color: var(--ck-text-color) !important;
+}
+
+.ck.ck-toolbar > .ck-toolbar__items {
+    flex-wrap: wrap !important;
+}
+
+.ck.ck-toolbar .ck-toolbar__grouped-dropdown {
+    display: none !important;
+}
