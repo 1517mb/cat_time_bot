@@ -5,32 +5,104 @@
 {% block content %}
 <section class="section">
     <div class="container">
-        <h1 class="title is-1 has-text-centered mb-6">
-            🗂️ Архив новостей
-        </h1>
+        <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li><a href="{% url 'content:list' %}">Новости</a></li>
+                <li class="is-active"><a href="#" aria-current="page">Архив</a></li>
+            </ul>
+        </nav>
 
         <div class="columns">
-            <div class="column is-three-quarters">
-                <h2 class="title is-4">Все публикации</h2>
-                {% for news in news_list %}
-                    {% include "content/_news_card.html" with news_item=news %}
-                {% endfor %}
+            <div class="column is-8 is-offset-1-widescreen">
+                <h1 class="title is-2 mb-6 theme-title">
+                    🗂️ Архив новостей
+                </h1>
 
-                {% if is_paginated %}
+                {% if news_list %}
+                    <div class="news-feed">
+                        {% for news in news_list %}
+                            {% include "content/_news_card.html" with news_item=news %}
+                        {% endfor %}
+                    </div>
+
+                    {% if is_paginated %}
+                    <nav class="pagination is-centered is-rounded my-6 custom-pagination" role="navigation" aria-label="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="pagination-previous">
+                                <span class="icon"><i class="fas fa-chevron-left"></i></span> Назад
+                            </a>
+                        {% else %}
+                            <a class="pagination-previous" disabled>Назад</a>
+                        {% endif %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="pagination-next">
+                                Вперед <span class="icon"><i class="fas fa-chevron-right"></i></span>
+                            </a>
+                        {% else %}
+                            <a class="pagination-next" disabled>Вперед</a>
+                        {% endif %}
+                        
+                        <ul class="pagination-list">
+                            {% for num in paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li><a class="pagination-link is-current">{{ num }}</a></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li><a href="?page={{ num }}" class="pagination-link">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="notification is-light has-text-centered py-6">
+                        <p class="title is-4 theme-title">В этом месяце новостей не было</p>
+                        <a href="{% url 'content:list' %}" class="button is-primary is-outlined">
+                            Вернуться ко всем новостям
+                        </a>
+                    </div>
                 {% endif %}
             </div>
             
-            <div class="column is-one-quarter">
-                <div class="box">
-                    <h3 class="title is-5">По месяцам</h3>
-                    {% for item in archive_data %}
-                        <p>
-                            <a href="{% url 'content:news_by_month' year=item.year month=item.month %}">
-                                {{ item.month }}.{{ item.year }}
-                            </a>
-                            <span class="tag is-light ml-2">{{ item.count }}</span>
-                        </p>
-                    {% endfor %}
+            <div class="column is-3">
+                <div class="box sticky-widget">
+                    <h3 class="title is-5 mb-4 theme-title">📅 По датам</h3>
+                    <aside class="menu">
+                        {% for year, months in grouped_archive.items %}
+                            <p class="menu-label theme-text has-text-weight-bold mt-4 mb-2">
+                                {{ year }} год
+                            </p>
+                            
+                            <ul class="menu-list">
+                                {% for item in months %}
+                                    <li>
+                                        <a href="{% url 'content:news_by_month' year=item.year month=item.month %}" 
+                                           class="is-flex is-justify-content-space-between is-align-items-center theme-link-grey py-2">
+                                            <span>
+                                                {% if item.month == 1 %}Январь
+                                                {% elif item.month == 2 %}Февраль
+                                                {% elif item.month == 3 %}Март
+                                                {% elif item.month == 4 %}Апрель
+                                                {% elif item.month == 5 %}Май
+                                                {% elif item.month == 6 %}Июнь
+                                                {% elif item.month == 7 %}Июль
+                                                {% elif item.month == 8 %}Август
+                                                {% elif item.month == 9 %}Сентябрь
+                                                {% elif item.month == 10 %}Октябрь
+                                                {% elif item.month == 11 %}Ноябрь
+                                                {% elif item.month == 12 %}Декабрь
+                                                {% endif %}
+                                            </span>
+                                            <span class="tag is-light is-rounded is-small" style="height: 1.5em;">{{ item.count }}</span>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% empty %}
+                            <p class="has-text-grey is-size-7">Архив пуст</p>
+                        {% endfor %}
+                    </aside>
                 </div>
             </div>
         </div>
