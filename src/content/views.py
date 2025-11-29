@@ -113,6 +113,9 @@ class NewsListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["latest_news"] = News.objects.filter(
+            is_published=True
+        ).order_by("-created_at")[:5]
         context["search_query"] = self.request.GET.get("q", "")
         context["total_news"] = News.objects.count()
         context["published_news"] = News.objects.filter(
@@ -178,7 +181,7 @@ class NewsArchiveView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["archive_data"] = News.objects.filter(
+        raw_data = News.objects.filter(
             is_published=True
         ).annotate(
             year=ExtractYear("created_at"),
@@ -186,6 +189,13 @@ class NewsArchiveView(ListView):
         ).values("year", "month").annotate(
             count=Count("id")
         ).order_by("-year", "-month")
+        grouped_archive = {}
+        for item in raw_data:
+            year = item["year"]
+            if year not in grouped_archive:
+                grouped_archive[year] = []
+            grouped_archive[year].append(item)
+        context["grouped_archive"] = grouped_archive
         return context
 
 
