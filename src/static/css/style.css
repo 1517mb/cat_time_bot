@@ -265,3 +265,71 @@ html[data-theme="dark"] .pagination-link.is-current {
     border-color: var(--primary-color);
     color: #fff;
 }
+
+/* =========================================
+   8. Стили для Новостей
+   ========================================= */
+
+.news-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1);
+}
+
+.news-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+
+html[data-theme="dark"] .news-card,
+html[data-theme="dark"] .news-article-box,
+html[data-theme="dark"] .sticky-widget {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    box-shadow: none;
+}
+
+html[data-theme="dark"] .theme-title,
+html[data-theme="dark"] .news-card .title a {
+    color: #f3f4f6 !important;
+}
+
+html[data-theme="dark"] .news-card .title a:hover {
+    color: var(--primary-color) !important;
+}
+
+html[data-theme="dark"] .theme-text {
+    color: #d1d5db;
+}
+
+html[data-theme="dark"] .theme-link-grey {
+    color: #9ca3af;
+}
+html[data-theme="dark"] .theme-link-grey:hover {
+    color: #f3f4f6;
+}
+
+html[data-theme="dark"] .card-footer {
+    border-top-color: #374151;
+}
+html[data-theme="dark"] .card-footer-item {
+    border-right-color: #374151;
+    color: #f3f4f6;
+}
+html[data-theme="dark"] .card-footer-item:hover {
+    background-color: #374151;
+}
+
+html[data-theme="dark"] .footer-action-link.has-text-primary {
+    color: var(--primary-color) !important;
+}
+
+.sticky-widget {
+    position: sticky;
+    top: 20px;
+}
+
+html[data-theme="dark"] .menu-label {
+    color: #9ca3af;
+}
