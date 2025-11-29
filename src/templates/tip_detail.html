@@ -1,7 +1,18 @@
 {% extends "base.html" %}
-
+{% load static %}
+{% block meta %}
+    <meta name="description" content="{{ tip.content|striptags|truncatewords:25 }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="{{ tip.title }}">
+    <meta property="og:description" content="{{ tip.content|striptags|truncatewords:40 }}">
+    {% if tip.image %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ tip.image.url }}">
+    {% else %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/share/logo_share.png' %}">
+    {% endif %}
+{%endblock %}
 {% block title %}{{ tip.title }}{% endblock %}
-
 {% block content %}
 <section class="section">
     <div class="container">
