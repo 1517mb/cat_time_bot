@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load markdownify %}
 
 {% block title %}{{ tip.title }}{% endblock %}
 
@@ -44,7 +43,7 @@
 
 
                 <div class="content markdown-content">
-                    {{ tip.content|markdownify }}
+                    {{ tip.content }}
                 </div>
 
                 <div class="mt-4 buttons">

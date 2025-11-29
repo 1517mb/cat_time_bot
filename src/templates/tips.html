@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load markdownify %}
 
 {% block title %}Полезные Советы{% endblock %}
 
@@ -120,7 +119,7 @@
                                 {% endif %}
 
                                 <div class="content is-small mb-0" style="overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                                    {{ tip.content|markdownify|striptags }}
+                                    {{ tip.content}}
                                 </div>
                             </div>
                             
