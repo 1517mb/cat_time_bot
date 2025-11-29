@@ -110,11 +110,13 @@
                                 </div>
 
                                 {% if tip.tags.all %}
-                                <div class="tags are-small mb-3">
-                                    {% for tag in tip.tags.all|slice:":3" %}
-                                    <span class="tag is-light">{{ tag.name }}</span>
-                                    {% endfor %}
-                                </div>
+                                    <div class="tags are-small mb-3">
+                                        {% for tag in tip.tags.all|slice:":3" %}
+                                            <a href="{% url 'tips' %}?tags={{ tag.id }}" class="tag is-light" style="text-decoration: none;">
+                                                {{ tag.name }}
+                                            </a>
+                                        {% endfor %}
+                                    </div>
                                 {% endif %}
 
                                 <div class="content is-small mb-0" style="overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">

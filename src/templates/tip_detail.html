@@ -9,8 +9,16 @@
         <div class="card">
             <div class="card-content">
                 <h1 class="title">{{ tip.title }}</h1>
-                
-
+                {% if tip.tags.all %}
+                    <div class="tags are-medium mb-4">
+                        {% for tag in tip.tags.all %}
+                            <a href="{% url 'tips' %}?tags={{ tag.id }}" class="tag is-link is-light is-rounded">
+                                <span class="icon is-small mr-1"><i class="fas fa-tag"></i></span>
+                                {{ tag.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 <div class="subtitle is-6 has-text-grey mb-5">
                     <div class="icon-text mb-2">
                         <span class="icon">
