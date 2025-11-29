@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.utils import timezone
 from import_export.admin import ExportActionModelAdmin
 from import_export.formats import base_formats
-from markdownx.admin import MarkdownxModelAdmin
 
 from bot.models import (
     Achievement,
@@ -71,7 +70,7 @@ class TagAdmin(admin.ModelAdmin):
 
 
 @admin.register(DailytTips)
-class DailytTipsAdmin(MarkdownxModelAdmin):
+class DailytTipsAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "author",
                     "pub_date", "is_published", "rating", "views_count")
     filter_horizontal = ("tags",)
