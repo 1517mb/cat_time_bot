@@ -28,36 +28,33 @@ body {
 /* =========================================
    2. НАВИГАЦИЯ И ЭЛЕМЕНТЫ UI
    ========================================= */
-.navbar-burger {
-    align-self: center;
-    color: #000000 !important;
-    margin-inline-end: .375rem;
-    margin-inline-start: auto;
-    align-items: center;
-    appearance: none;
-    background: none;
-    border: none;
-    border-radius: var(--bulma-burger-border-radius);
-    cursor: pointer;
-    height: 2.5rem;
-    justify-content: center;
-    vertical-align: top;
-    width: 2.5rem;
-    transition: background-color 0.3s;
+
+a.navbar-item {
+    color: #ffffff !important;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 4px;
+    margin: 0 2px;
 }
 
-.navbar-burger:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #000000 !important;
+.navbar-link {
+    color: #ffffff !important;
+    font-weight: 600;
+    border-radius: 4px;
+}
+.navbar-link:not(.is-arrowless)::after {
+    border-color: #ffffff !important;
 }
 
-.navbar-custom-text {
-    font-family: 'Kanit', sans-serif;
-    font-weight: 700;
-    font-size: 1.5rem;
-    letter-spacing: -0.5px;
-    text-transform: uppercase;
+a.navbar-item:hover,
+a.navbar-item.is-active,
+.navbar-link:hover,
+.navbar-item.has-dropdown:hover .navbar-link {
+    color: #ffffff !important; 
+    background-color: rgba(0, 0, 0, 0.10) !important; 
+    color: #ffffff !important; 
 }
+
 .tips-link {
     color: white !important;
     font-weight: 600;
@@ -76,7 +73,6 @@ body {
     display: block;
     padding: 0.5rem 1rem;
     color: white;
-    background-color: var(--primary-color);
     border-radius: 4px;
     transition: background-color 0.3s ease;
 }
@@ -84,6 +80,43 @@ body {
 .tips-link:hover { transform: scale(1.10); }
 .tips-link:active { transform: scale(1.02); }
 .tips-link.is-active .text { background-color: var(--primary-dark); }
+
+.navbar-dropdown .navbar-item {
+    color: #4a4a4a !important;
+}
+.navbar-dropdown .navbar-item:hover {
+    background-color: #f5f5f5 !important;
+    color: #00d1b2 !important;
+}
+
+html[data-theme="dark"] .navbar-dropdown .navbar-item {
+    color: #f3f4f6 !important;
+}
+html[data-theme="dark"] .navbar-dropdown .navbar-item:hover {
+    background-color: #374151 !important;
+    color: #ffffff !important;
+}
+
+.navbar-item .icon,
+.navbar-item i {
+    color: #ffffff !important;
+}
+
+.navbar-burger {
+    color: #ffffff !important;
+}
+.navbar-burger:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-custom-text {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+    color: #ffffff !important;
+}
 
 /* =========================================
    3. КАРТОЧКИ (Программы и Советы)
@@ -210,9 +243,6 @@ html[data-theme="dark"] .program-card .title a {
 
 html[data-theme="dark"] .subtitle {
     color: #9ca3af !important;
-}
-html[data-theme="dark"] a:hover {
-    color: var(--primary-color) !important;
 }
 html[data-theme="dark"] .card-footer {
     border-top-color: #374151;
