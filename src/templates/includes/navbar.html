@@ -44,8 +44,7 @@
                href="{% url 'content:program_list' %}">
                 Программы
             </a>
-
-            <a class="navbar-item {% if request.path == '/about/' %}is-active{% endif %}" 
+            <a class="navbar-item {% if '/about/' in request.path %}is-active{% endif %}" 
                href="{% url 'pages:about' %}">
                 О проекте
             </a>
