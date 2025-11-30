@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 {% load static %}
-{% load analytical %}
 <html lang="ru">
 <head>
-    {% analytical_head_top %}
     {% block meta %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,11 +27,28 @@
     <script src="{% static 'js/clip.js' %}"></script>
     <script src="{% static 'js/navbar.js' %}"></script>
     <script src="{% static 'js/ctheme.js' %}"></script>
-    {% block extra_head %}{% endblock %}
-    {% analytical_head_bottom %}
+    {% if YANDEX_METRIKA_ID %}
+    <script type="text/javascript">
+    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+    m[i].l=1*new Date();
+    for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+    (window, document, "script", "https://mc.webvisor.org/metrika/tag_ww.js", "ym");
+
+    ym({{ YANDEX_METRIKA_ID }}, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true,
+            webvisor:true,
+            ecommerce:"dataLayer",
+            trackHash:true,
+            ssr:true
+    });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/{{ YANDEX_METRIKA_ID }}" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    {% endif %}
 </head>
 <body>
-    {% analytical_body_top %}
     {% include 'includes/navbar.html' %}
     
     <div id="notification-container" class="notification-container"></div>
@@ -45,6 +60,5 @@
     {% include 'includes/footer.html' %}
     {% block extra_scripts %}
     {% endblock %}
-    {% analytical_body_bottom %}
 </body>
 </html>
