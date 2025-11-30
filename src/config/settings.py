@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     "pages.apps.PagesConfig",
     "import_export",
     "django_ckeditor_5",
-    "analytical",
 ]
 
 MIDDLEWARE = [
@@ -63,6 +62,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.analytics",
             ],
         },
     },
@@ -241,6 +241,10 @@ CKEDITOR_5_CONFIGS = {
 }
 
 YANDEX_METRIKA_COUNTER_ID = os.getenv("YANDEX_METRIKA_COUNTER_ID")
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 if DEBUG:
     STATICFILES_DIRS = [
