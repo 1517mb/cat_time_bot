@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load markdownify %}
 
 {% block title %}Поиск по сайту{% endblock %}
 
@@ -37,7 +36,7 @@
                             <div class="card-content">
                                 <p class="title is-5">{{ tip.title }}</p>
                                 <div class="content">
-                                    {{ tip.content|markdownify|truncatechars_html:100 }}
+                                    {{ tip.content|safe|truncatechars_html:100 }}
                                 </div>
                                 <a href="{% url 'tip_detail' tip.pk %}" class="button is-primary is-outlined is-small">Читать</a>
                             </div>
