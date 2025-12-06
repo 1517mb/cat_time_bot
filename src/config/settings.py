@@ -223,6 +223,16 @@ CKEDITOR_5_CONFIGS = {
             "blockQuote", "code", "codeBlock", "|",
             "insertImage", "imageUpload", "sourceEditing"
         ],
+        "htmlSupport": {
+            "allow": [
+                {
+                    "name": "/^.*$/",
+                    "attributes": True,
+                    "classes": True,
+                    "styles": True
+                }
+            ]
+        },
         "image": {
             "toolbar": ["imageTextAlternative", "|", "imageStyle:alignLeft", "imageStyle:alignRight", "imageStyle:alignCenter", "imageStyle:side", "|"],
             "styles": ["full", "side", "alignLeft", "alignRight", "alignCenter"],
