@@ -179,16 +179,16 @@ class Program(models.Model):
         ordering = ProgramCfg.ORDERING
         constraints = [
             models.CheckConstraint(
-                check=(models.Q(file__isnull=False) | models.Q(
+                condition=(models.Q(file__isnull=False) | models.Q(
                     external_download_link__isnull=False)),
                 name="file_or_link_required"
             ),
             models.CheckConstraint(
-                check=models.Q(rating_sum__gte=0),
+                condition=models.Q(rating_sum__gte=0),
                 name="rating_sum_non_negative"
             ),
             models.CheckConstraint(
-                check=models.Q(ratings_count__gte=0),
+                condition=models.Q(ratings_count__gte=0),
                 name="ratings_count_non_negative"
             )
         ]
