@@ -3,7 +3,7 @@
         <a class="navbar-item py-2" href="/">
             <span class="navbar-custom-text">riopass</span>
         </a>
-        <a class="navbar-burger" role="button" aria-label="menu" data-target="navbarBasicExample"  
+        <a class="navbar-burger" role="button" aria-label="menu" data-target="navbarBasicExample"
         aria-expanded="false">
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
@@ -11,13 +11,13 @@
             <span aria-hidden="true"></span>
         </a>
     </div>
+
     <div id="navbarBasicExample" class="navbar-menu">
         <div class="navbar-start">
             <a class="navbar-item {% if request.path == '/' %}is-active{% endif %}" href="/">
                 Главная
             </a>
             
-            <!-- Кнопка с анимацией WIPE -->
             <a class="navbar-item tips-link {% if request.path == '/tips/' %}is-active{% endif %}" 
             href="{% url 'tips' %}"
             data-effect="wipe">
@@ -25,20 +25,9 @@
                 <span class="shimmer"></span>
             </a>
 
-            <!-- Выпадающее меню для новостей -->
-            <div class="navbar-item has-dropdown is-hoverable">
-                <a class="navbar-link {% if '/news/' in request.path %}is-active{% endif %}">
-                    Новости
-                </a>
-                <div class="navbar-dropdown">
-                    <a class="navbar-item" href="{% url 'content:list' %}">
-                        Все новости
-                    </a>
-                    <a class="navbar-item" href="{% url 'content:archive' %}">
-                        Архив по датам
-                    </a>
-                    </div>
-            </div>
+            <a class="navbar-item" href="#">
+                Программирование
+            </a>
 
             <a class="navbar-item {% if '/programs/' in request.path %}is-active{% endif %}" 
                href="{% url 'content:program_list' %}">
@@ -52,12 +41,21 @@
         
         <div class="navbar-end">
             <div class="navbar-item">
+                <a href="{% url 'content:list' %}" class="button is-primary" aria-label="Новости">
+                    <span class="icon">
+                        <i class="fas fa-bell fa-lg"></i>
+                    </span>
+                </a>
+            </div>
+
+            <div class="navbar-item">
                 <button id="theme-toggle" class="button is-primary" aria-label="Переключить тему">
                     <span class="icon">
                         <i id="theme-icon" class="fas fa-lg fa-moon"></i>
                     </span>
                 </button>
             </div>
+
             <div class="navbar-item">
                 <a href="{% url 'content:global_search' %}" class="button is-primary" aria-label="Поиск по сайту">
                     <span class="icon">
