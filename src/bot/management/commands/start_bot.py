@@ -53,13 +53,13 @@ from bot.management.core.statistics import (
 from bot.management.core.utils import (
     create_progress_bar,
     get_time_declension,
+    normalize_duration_to_seconds,
     truncate_markdown_safe,
 )
 from bot.management.core.weather import get_weather
 from bot.models import (
     Achievement,
     Company,
-    CurrencyRate,
     DailytTips,
     LevelTitle,
     Season,
@@ -89,13 +89,19 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     Команда для отображения списка доступных команд.
     """
     help_text = SiteCfg.HELP_TEXT
-    await update.message.reply_text(help_text, parse_mode="Markdown")
+    if update.effective_message:
+        await update.effective_message.reply_text(
+            help_text, parse_mode="Markdown"
+        )
 
 
 async def site(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет информацию о сайте"""
     site_info = SiteCfg.MSG_SITE
-    await update.message.reply_text(site_info, parse_mode="Markdown")
+    if update.effective_message:
+        await update.effective_message.reply_text(
+            site_info, parse_mode="Markdown"
+        )
 
 
 async def check_achievements(
@@ -103,9 +109,8 @@ async def check_achievements(
     username: str,
     activity: UserActivity,
     context: ContextTypes.DEFAULT_TYPE
-) -> None:
-    """Проверка и выдача достижений с
-    оптимизированными запросами и логированием"""
+) -> list:
+    """Проверка и выдача достижений с оптимизированными запросами."""
     try:
         today = timezone.now().date()
         join_time = timezone.localtime(activity.join_time)
@@ -132,24 +137,21 @@ async def check_achievements(
                     join_time__date=today
                 ).count(),
 
-
                 "today_trips": UserActivity.objects.filter(
                     user_id=user_id,
                     join_time__date=today
                 ).count(),
-
 
                 "weekly_trips": UserActivity.objects.filter(
                     user_id=user_id,
                     join_time__gte=today - timedelta(days=today.weekday())
                 ).count(),
 
-
                 "avg_duration": UserActivity.objects.filter(
-                    user_id=user_id).annotate(
-                        duration=F(
-                            "leave_time") - F("join_time")).aggregate(
-                                avg=Avg("duration"))["avg"]
+                    user_id=user_id
+                ).annotate(
+                    duration=F("leave_time") - F("join_time")
+                ).aggregate(avg=Avg("duration"))["avg"]
             }
         )()
 
@@ -161,7 +163,8 @@ async def check_achievements(
                 "🎯 Дебют в компании состоялся!",
                 "🆕 Новенький в этих краях",
                 "🚩 Первая вылазка в данную локацию",
-                "📌 Точка отсчета моего пути здесь"]
+                "📌 Точка отсчета моего пути здесь"
+            ]
             new_achievements.append(random.choice(first_visit_achievements))
 
         if user_stats["same_company_today"] > 1:
@@ -187,7 +190,8 @@ async def check_achievements(
         if weekday in [5, 6]:
             day_name = "субботу" if weekday == 5 else "воскресенье"
             new_achievements.append(
-                f"📅 Я люблю свою работу, я приду сюда в {day_name}")
+                f"📅 Я люблю свою работу, я приду сюда в {day_name}"
+            )
         if 18 <= join_time.hour < 24:
             night_achievements = [
                 "🌚 Ночная смена? Или просто забыл уйти?",
@@ -220,8 +224,8 @@ async def check_achievements(
                 new_achievements.append(random.choice(achievements))
                 break
 
-        if (user_stats["avg_duration"] and user_stats[
-                "avg_duration"].total_seconds() > 9000):
+        avg_seconds = normalize_duration_to_seconds(user_stats["avg_duration"])
+        if avg_seconds > 9000:
             new_achievements.append("🐢 Поспешишь - людей насмешишь")
 
         edit_achievements = {
@@ -263,16 +267,20 @@ async def check_achievements(
 
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
         formatted_achievements_text = "\n".join(formatted_achievements)
-        await context.bot.send_message(
-            chat_id=group_chat_id,
-            text=(
-                "🏆 *Новое достижение!*\n"
-                f"Сотрудник: @{username}\n"
-                f"Заслуги:\n{formatted_achievements_text}\n"
-                "Поздравляем! 🎉"
-            ),
-            parse_mode="Markdown"
-        )
+        if group_chat_id:
+            await context.bot.send_message(
+                chat_id=group_chat_id,
+                text=(
+                    "🏆 *Новое достижение!*\n"
+                    f"Сотрудник: @{username}\n"
+                    f"Заслуги:\n{formatted_achievements_text}\n"
+                    "Поздравляем! 🎉"
+                ),
+                parse_mode="Markdown"
+            )
+        else:
+            logging.warning("TELEGRAM_GROUP_CHAT_ID не установлен, "
+                            "уведомление о достижениях не отправлено.")
         achievement_names = []
         for ach in new_achievements:
             if " " in ach:
@@ -287,10 +295,13 @@ async def check_achievements(
             f"Детали: {traceback.format_exc()}",
             exc_info=True
         )
+        return []
 
 
 async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat_id
+    if not update.effective_chat or not update.effective_message:
+        return
+    chat_id = update.effective_chat.id
     try:
         chat = await context.bot.get_chat(chat_id)
         try:
@@ -307,15 +318,15 @@ async def get_chat_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 - Описание: {chat.description if chat.description else "Нет описания"}
 - Ссылка: {chat.invite_link if chat.invite_link else "Недоступна"}
         """
-        await update.message.reply_text(chat_info)
+        await update.effective_message.reply_text(chat_info)
     except Exception as e:
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             f"🚨 *Ошибка при получении информации о чате:* {e}",
             parse_mode="Markdown")
 
 
 async def send_weather_to_group(bot):
-    """Асинхронная функция для отправки погоды в группу с HTML-разметкой."""
+    """Асинхронная функция для отправки погоды в группу."""
     try:
         weather_message = await get_weather()
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
@@ -327,55 +338,64 @@ async def send_weather_to_group(bot):
         )
     except Exception as e:
         logging.error(f"Ошибка при отправке погоды: {e}")
-        await bot.send_message(
-            chat_id=group_chat_id,
-            text="🚨 Не удалось отправить погоду. 🚨",
-            parse_mode="HTML"
-        )
+        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        if group_chat_id:
+            await bot.send_message(
+                chat_id=group_chat_id,
+                text="🚨 Не удалось отправить погоду. 🚨",
+                parse_mode="HTML"
+            )
 
 
 async def stop_scheduler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Остановка планировщика."""
+    if not update.effective_chat or not update.effective_message:
+        return
     if scheduler.running:
         scheduler.shutdown(wait=False)
-        await update.message.reply_text("🛑 Планировщик погоды остановлен. 🌧️")
+        await update.effective_message.reply_text(
+            "🛑 Планировщик погоды остановлен. 🌧️"
+        )
     else:
-        await update.message.reply_text("🚦 Планировщик уже остановлен. 🚦")
+        await update.effective_message.reply_text(
+            "🚦 Планировщик уже остановлен. 🚦"
+        )
 
 
 async def get_similar_companies(company_name):
     """
-    Searches for companies with names similar to the given company_name
-    and returns a list of the closest matches (up to 2 matches with a
-    similarity cutoff of 0.6).
-
-    :param company_name: The company name to search for.
-    :return: A list of strings of the closest company name matches.
+    Searches for companies with names similar to the given company_name.
     """
     similar_companies = await sync_to_async(list)(
-        Company.objects.filter(name__icontains=company_name).values_list(
-            "name", flat=True)
+        Company.objects.filter(
+            name__icontains=company_name
+        ).values_list("name", flat=True)
     )
-    return get_close_matches(company_name, similar_companies, n=2, cutoff=0.6)
+    return get_close_matches(
+        company_name, similar_companies, n=2, cutoff=0.6
+    )
 
 
 async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
-    company_name = " ".join(context.args)
-
-    if not company_name:
-        await update.message.reply_text(
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message:
+        return ConversationHandler.END
+    user_id = user.id
+    username = user.username
+    if not context.args:
+        await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Пожалуйста, укажите название организации после команды /join.",
             parse_mode="Markdown")
         return ConversationHandler.END
+    company_name = " ".join(context.args)
 
     if not VALID_COMPANY_NAME_PATTERN.match(company_name):
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Название организации должно содержать только"
-            + " буквы русского или английского алфавита, цифры и тире.",
+            " буквы русского или английского алфавита, цифры и тире.",
             parse_mode="Markdown")
         return ConversationHandler.END
 
@@ -383,7 +403,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         user_id=user_id, leave_time__isnull=True).exists)()
 
     if active_activity:
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Вы ещё не покинули предыдущую организацию.",
             parse_mode="Markdown")
@@ -394,7 +414,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             Company.objects.filter(name=company_name).first)()
         if company:
             local_time = timezone.localtime(timezone.now())
-            await update.message.reply_text(
+            await message.reply_text(
                 f"🐱‍💻 *Вы прибыли в организацию `{company_name}`* 🐱‍💻\n"
                 f"⏳ Время прибытия: {local_time.strftime('%H:%M')}.",
                 parse_mode="Markdown"
@@ -417,17 +437,17 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 )
                 await sync_to_async(achievement.save)()
                 group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
-                await context.bot.send_message(
-                    chat_id=group_chat_id,
-                    text=(
-                        "🏆 *Новое достижение!*\n"
-                        f"Сотрудник: @{username}\n"
-                        f"Заслуги: 🩸 Первая кровь!\n"
-                        "Поздравляем! 🎉"
-                    ),
-                    parse_mode="Markdown"
-                )
-
+                if group_chat_id:
+                    await context.bot.send_message(
+                        chat_id=group_chat_id,
+                        text=(
+                            "🏆 *Новое достижение!*\n"
+                            f"Сотрудник: @{username}\n"
+                            f"Заслуги: 🩸 Первая кровь!\n"
+                            "Поздравляем! 🎉"
+                        ),
+                        parse_mode="Markdown"
+                    )
             return ConversationHandler.END
         else:
             similar_companies = await get_similar_companies(company_name)
@@ -438,9 +458,9 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 reply_keyboard = [
                     [KeyboardButton(company)] for company in similar_companies
                 ] + [[KeyboardButton("Добавить новую организацию")]]
-                await update.message.reply_text(
+                await message.reply_text(
                     f"🚨 *Организации с названием \"{company_name}\" "
-                    + "не найдено.* 🚨\n"
+                    "не найдено.* 🚨\n"
                     f"Возможно, вы имели в виду:\n{similar_companies_text}\n"
                     "Выберите из списка или добавьте новую организацию.",
                     parse_mode="Markdown",
@@ -452,7 +472,7 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 company, created = await sync_to_async(
                     Company.objects.get_or_create)(name=company_name)
                 local_time = timezone.localtime(timezone.now())
-                await update.message.reply_text(
+                await message.reply_text(
                     f"🐱‍💻 *Вы прибыли в организацию {company_name}* 🐱‍💻\n"
                     f"Время прибытия: {local_time.strftime('%H:%M')}.",
                     parse_mode="Markdown"
@@ -465,7 +485,8 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
                 today = timezone.now().date()
                 total_today = await sync_to_async(
-                    UserActivity.objects.filter(join_time__date=today).count
+                    UserActivity.objects.filter(
+                        join_time__date=today).count
                 )()
                 if total_today == 1:
                     achievement = Achievement(
@@ -475,20 +496,21 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                     )
                     await sync_to_async(achievement.save)()
                     group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
-                    await context.bot.send_message(
-                        chat_id=group_chat_id,
-                        text=(
-                            "🏆 *Новое достижение!*\n"
-                            f"Сотрудник: @{username}\n"
-                            f"Заслуги: 🩸 Первая кровь!\n"
-                            "Поздравляем! 🎉"
-                        ),
-                        parse_mode="Markdown"
-                    )
+                    if group_chat_id:
+                        await context.bot.send_message(
+                            chat_id=group_chat_id,
+                            text=(
+                                "🏆 *Новое достижение!*\n"
+                                f"Сотрудник: @{username}\n"
+                                f"Заслуги: 🩸 Первая кровь!\n"
+                                "Поздравляем! 🎉"
+                            ),
+                            parse_mode="Markdown"
+                        )
 
                 return ConversationHandler.END
     except Exception:
-        await update.message.reply_text(
+        await message.reply_text(
             "🚨 *Произошла ошибка при поиске или создании организации.* 🚨",
             parse_mode="Markdown"
         )
@@ -497,32 +519,26 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def select_company(
         update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """
-    Callback для выбора существующей организации.
+    """Callback для выбора существующей организации."""
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message or not message.text:
+        return ConversationHandler.END
 
-    Пользователь может выбрать организацию из списка предложенных
-    или добавить новую. Если пользователь выбрал существующую
-    организацию, то он будет зарегистрирован в ней, иначе
-    он будет предложен ввести название новой организации.
-
-    :param update: update от Telegram
-    :param context: context от Telegram
-    :return: следующий шаг в ConversationHandler
-    """
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
-    selected_company = update.message.text
+    user_id = user.id
+    username = user.username
+    selected_company = message.text
 
     if not VALID_COMPANY_NAME_PATTERN.match(selected_company):
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Название организации должно содержать только"
-            + " буквы русского алфавита и цифры.",
+            " буквы русского алфавита и цифры.",
             parse_mode="Markdown")
         return ConversationHandler.END
 
     if selected_company == "Добавить новую организацию":
-        await update.message.reply_text(
+        await message.reply_text(
             "🐾 *Пожалуйста, введите название новой организации.* 🐾"
         )
         return JOIN_CO
@@ -531,7 +547,7 @@ async def select_company(
         user_id=user_id, leave_time__isnull=True).exists)()
 
     if active_activity:
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Вы ещё не покинули предыдущую организацию.",
             parse_mode="Markdown")
@@ -540,7 +556,7 @@ async def select_company(
     company, created = await sync_to_async(
         Company.objects.get_or_create)(name=selected_company)
     local_time = timezone.localtime(timezone.now())
-    await update.message.reply_text(
+    await message.reply_text(
         f"🐱‍💻 *Вы прибыли в организацию {selected_company}* 🐱‍💻\n"
         f"Время прибытия: {local_time.strftime('%H:%M')}.",
         parse_mode="Markdown",
@@ -560,11 +576,13 @@ async def _validate_and_update_time(
     time_field: str,
     error_message_prefix: str,
     success_message: str,
-) -> None:
-    """
-    Вспомогательная функция для валидации и обновления времени.
-    """
-    user_id = update.message.from_user.id
+) -> tuple[bool, object]:
+    """Вспомогательная функция для валидации и обновления времени."""
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message:
+        return False, None
+    user_id = user.id
 
     active_activity = await sync_to_async(
         UserActivity.objects.filter(
@@ -574,7 +592,7 @@ async def _validate_and_update_time(
     )()
 
     if not active_activity:
-        msg = await update.message.reply_text(
+        msg = await message.reply_text(
             f"🚨 *Ошибка!* 🚨\n"
             f"У вас нет активной организации, для "
             f"которой можно изменить {error_message_prefix}.",
@@ -584,7 +602,7 @@ async def _validate_and_update_time(
 
     args = context.args
     if not args or len(args) != 1:
-        msg = await update.message.reply_text(
+        msg = await message.reply_text(
             f"🚨 *Ошибка!* 🚨\n"
             f"⭕️ *Внимание! Неверный формат ввода*\n\n"
             f"🕒 Пожалуйста, укажите {error_message_prefix} "
@@ -599,7 +617,7 @@ async def _validate_and_update_time(
     try:
         new_time = datetime.strptime(args[0], '%H:%M').time()
     except ValueError:
-        msg = await update.message.reply_text(
+        msg = await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Неверный формат времени. Пожалуйста, "
             "укажите время в формате *ЧЧ:ММ* (например, 09:15).",
@@ -609,7 +627,7 @@ async def _validate_and_update_time(
 
     current_time = timezone.localtime(timezone.now()).time()
     if new_time > current_time:
-        msg = await update.message.reply_text(
+        msg = await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Вы не можете выбрать время, которое больше текущего. "
             "Пожалуйста, укажите время, которое меньше или равно текущему.",
@@ -625,7 +643,7 @@ async def _validate_and_update_time(
                                     ).astimezone(dt_timezone.utc)
 
     if time_field == "leave_time" and new_datetime < active_activity.join_time:
-        msg = await update.message.reply_text(
+        msg = await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Время убытия не может быть раньше времени прибытия. "
             "Ваше время прибытия: "
@@ -637,7 +655,7 @@ async def _validate_and_update_time(
     if (time_field == "join_time"
         and active_activity.leave_time
             and new_datetime > active_activity.leave_time):
-        msg = await update.message.reply_text(
+        msg = await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Время прибытия не может быть позже времени убытия. "
             "Ваше время убытия: "
@@ -654,7 +672,7 @@ async def _validate_and_update_time(
     company_name = active_activity.company.name
     local_time = timezone.localtime(new_datetime).strftime('%H:%M')
 
-    msg = await update.message.reply_text(
+    msg = await message.reply_text(
         f"😻 *Успешно!* 😻\n"
         f"{success_message.format(
             company_name=company_name, time=local_time)}.",
@@ -664,19 +682,20 @@ async def _validate_and_update_time(
 
 
 async def edit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Устаревшая команда для редактирования времени.
-    Информирует пользователя о новых командах.
-    """
+    """Устаревшая команда."""
     message = BotMessages.EDIT_MSG
-    await update.message.reply_text(message, parse_mode="Markdown")
+    if update.effective_message:
+        await update.effective_message.reply_text(
+            message, parse_mode="Markdown"
+        )
 
 
 async def edit_arrival_time(update: Update,
                             context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Команда для изменения времени прибытия в организацию.
-    """
+    """Команда для изменения времени прибытия в организацию."""
+    user = update.effective_user
+    if not user:
+        return
     await _validate_and_update_time(
         update,
         context,
@@ -685,16 +704,19 @@ async def edit_arrival_time(update: Update,
         success_message=("Время прибытия в организацию {company_name} "
                          "успешно изменено на {time}"),
     )
-
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
+    user_id = user.id
+    username = user.username
     await update_daily_statistics(user_id, username)
 
 
 async def edit_departure_time(update: Update,
                               context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message:
+        return
+    user_id = user.id
+    username = user.username or f"User_{user_id}"
 
     success, _ = await _validate_and_update_time(
         update,
@@ -713,17 +735,20 @@ async def edit_departure_time(update: Update,
                     leave_time__isnull=False).latest)("leave_time")
 
             if activity:
-                achievements_list = await check_achievements(user_id, username,
-                                                             activity, context)
+                achievements_list = await check_achievements(
+                    user_id, username, activity, context)
                 today = timezone.now().date()
                 daily_visits_count = await sync_to_async(
                     UserActivity.objects.filter(
                         user_id=user_id,
                         join_time__date=today
                     ).count)()
-                exp_earned = calculate_experience(activity, achievements_list,
-                                                  daily_visits_count)
+                exp_earned = calculate_experience(
+                    activity, achievements_list, daily_visits_count)
                 activity.experience_gained = exp_earned
+                if not activity.leave_time:
+                    logging.error(f"Activity {activity.pk} has no leave_time")
+                    return
                 time_spent = activity.leave_time - activity.join_time
                 rank, level_up, new_level = await update_season_rank(
                     user_id, exp_earned, time_spent, username)
@@ -732,26 +757,28 @@ async def edit_departure_time(update: Update,
                 company_name = activity.company.name
                 spent_time = activity.get_spent_time
 
-                message = (
+                msg_text = (
                     f"⌛ *Обновленные данные о посещении* ⌛\n"
                     f"🏭 Организация: *{company_name}*\n"
                     f"⏳ Новое затраченное время: {spent_time}.\n"
                     f"🔰 Получено опыта: {exp_earned}"
                 )
-                if level_up:
+                if level_up and rank:
                     level_info = await get_level_info(rank)
-                    message += (
+                    msg_text += (
                         "\n\n🎉 *Поздравляем с повышением уровня!* 🎉\n"
                         f"🏆 Новый уровень: *{new_level} lvl - "
                         f"{level_info['title']}*\n"
                         f"📚 Категория: *{level_info['category']}*"
                     )
 
-                await update.message.reply_text(message, parse_mode="Markdown")
+                await message.reply_text(
+                    msg_text, parse_mode="Markdown"
+                )
             else:
                 logging.warning(
                     f"Активность не найдена для пользователя {user_id}")
-                await update.message.reply_text(
+                await message.reply_text(
                     "⚠️ *Предупреждение:* "
                     + "Не удалось найти данные о посещении.",
                     parse_mode="Markdown"
@@ -759,7 +786,7 @@ async def edit_departure_time(update: Update,
 
         except Exception as e:
             logging.error(f"Ошибка при выполнении команды /edit_end: {e}")
-            await update.message.reply_text(
+            await message.reply_text(
                 "🚨 *Произошла ошибка при обработке команды.* 🚨",
                 parse_mode="Markdown"
             )
@@ -767,43 +794,36 @@ async def edit_departure_time(update: Update,
 
 async def add_new_company(
         update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """
-    Callback для добавления новой организации.
-
-    Пользователь может ввести название новой организации,
-    и если оно не существует, то она будет создана,
-    иначе - будет предложено выбрать существующую
-    организацию.
-
-    :param update: update от Telegram
-    :param context: context от Telegram
-    :return: следующий шаг в ConversationHandler
-    """
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
-    company_name = update.message.text
+    """Callback для добавления новой организации."""
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message or not message.text:
+        return ConversationHandler.END
+    user_id = user.id
+    username = user.username
+    company_name = message.text
 
     active_activity = await sync_to_async(UserActivity.objects.filter(
         user_id=user_id, leave_time__isnull=True).exists)()
 
     if active_activity:
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Вы ещё не покинули предыдущую организацию.",
             parse_mode="Markdown")
         return ConversationHandler.END
 
     if not VALID_COMPANY_NAME_PATTERN.match(company_name):
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Название организации должно содержать только"
-            + " буквы русского или английского алфавита и цифры",
+            " буквы русского или английского алфавита и цифры",
             parse_mode="Markdown")
         return ConversationHandler.END
     local_time = timezone.localtime(timezone.now())
     company, created = await sync_to_async(
         Company.objects.get_or_create)(name=company_name)
-    await update.message.reply_text(
+    await message.reply_text(
         f"🐱‍💻 *Вы прибыли к новой организации {company_name}* 🐱‍💻\n"
         f"Время прибытия: {local_time.strftime('%H:%M')}.\n ",
         parse_mode="Markdown",
@@ -818,37 +838,35 @@ async def add_new_company(
 
 
 async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Callback для ухода из организации.
-
-    Если пользователь отправит команду /leave,
-    то он покинет организацию, к которой он
-    прибыл, и будет отображено затраченное время.
-
-    :param update: update от Telegram
-    :param context: context от Telegram
-    :return: None
-    """
-
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
+    """Callback для ухода из организации."""
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message:
+        return
+    user_id = user.id
+    username = user.username or f"User_{user_id}"
     try:
         activity = await sync_to_async(UserActivity.objects.select_related(
             "company").filter(
                 user_id=user_id,
                 leave_time__isnull=True).latest)("join_time")
-        achievements_list = await check_achievements(user_id, username,
-                                                     activity, context)
+        achievements_list = await check_achievements(
+            user_id, username, activity, context)
         today = timezone.now().date()
         daily_visits_count = await sync_to_async(UserActivity.objects.filter(
             user_id=user_id,
             join_time__date=today,
         ).count)()
-        activity.leave_time = timezone.now()
+        current_time = timezone.now()
+        activity.leave_time = current_time
         exp_earned = calculate_experience(activity, achievements_list,
                                           daily_visits_count)
         activity.experience_gained = exp_earned
-        time_spent = activity.leave_time - activity.join_time
+        join_time_val = activity.join_time
+        if join_time_val is None:
+            logging.error(f"Activity {activity.pk} has no join_time")
+            return
+        time_spent = current_time - join_time_val
         rank, level_up, new_level = await update_season_rank(
             user_id, exp_earned, time_spent, username)
         await sync_to_async(activity.save)()
@@ -859,36 +877,36 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         spent_time = activity.get_spent_time
         local_time = timezone.localtime(timezone.now())
 
-        message = (
+        msg_text = (
             f"🐾👋 *Вы покинули организацию {company_name}* 🐾👋\n"
             f"⌛️ Время ухода: {local_time.strftime('%H:%M')}.\n"
             f"⏳ Затраченное время: {spent_time}.\n"
             f"🔰 Получено опыта: {exp_earned}"
         )
 
-        if level_up:
+        if level_up and rank:
             level_info = await get_level_info(rank)
-            message += (
+            msg_text += (
                 "\n\n🎉 *Поздравляем с повышением уровня!* 🎉\n"
-                f"🏆 Новый уровень: *{new_level} lvl - {level_info['title']}*\n"
+                f"🏆 Новый уровень: *{new_level} lvl - "
+                f"{level_info['title']}*\n"
                 f"📚 Категория: *{level_info['category']}*"
             )
-        await update.message.reply_text(message, parse_mode="Markdown")
+        await message.reply_text(msg_text, parse_mode="Markdown")
 
     except UserActivity.DoesNotExist:
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ *Ошибка!* ❌\n"
             "Вы не прибыли ни к одной организации.", parse_mode="Markdown")
     except Exception as e:
         logging.error(f"Ошибка при выполнении команды /leave: {e}")
-        await update.message.reply_text(
+        await message.reply_text(
             "🚨 *Произошла ошибка при обработке вашего запроса.* 🚨",
             parse_mode="Markdown")
 
 
 async def remind_to_leave(bot):
-    """Функция для напоминания пользователям о необходимости
-    ввести команду /leave."""
+    """Функция для напоминания пользователям о необходимости /leave."""
     try:
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
         if not group_chat_id:
@@ -907,7 +925,8 @@ async def remind_to_leave(bot):
                 f"@{activity.username}"
                 if activity.username
                 else f"ID: {activity.user_id}")
-            company_name = await sync_to_async(lambda: activity.company.name)()
+            company_name = await sync_to_async(
+                lambda: activity.company.name)()
             users.append(f"{username} ({company_name})")
         message = (
             "⚠️ *Внимание!* ⚠️\n\n"
@@ -955,28 +974,34 @@ async def remind_to_leave(bot):
 
 
 async def check_and_send_transport_reminder(bot):
-    """Проверяет и отправляет напоминание о транспортных расходах за месяц."""
+    """
+    Проверяет и отправляет напоминание о транспортных
+    расходах за месяц.
+    """
     try:
         today = timezone.now().date()
         if today.month == 12:
             last_day = today.replace(
-                year=today.year + 1, month=1, day=1) - timedelta(days=1)
+                year=today.year + 1, month=1, day=1
+            ) - timedelta(days=1)
         else:
             last_day = today.replace(
-                month=today.month + 1, day=1) - timedelta(days=1)
+                month=today.month + 1, day=1
+            ) - timedelta(days=1)
 
         days_left = (last_day - today).days
-
         if days_left in [7, 4, 2, 1]:
             group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
             if not group_chat_id:
-                logging.error("TELEGRAM_GROUP_CHAT_ID не установлен в .env")
+                logging.error(
+                    "TELEGRAM_GROUP_CHAT_ID не установлен в .env"
+                )
                 return
             verb, day_word = get_time_declension(days_left)
             messages = [
                 (
                     f"😱 *ПАНИКА!* (ну почти)\n{verb} всего {days_left} "
-                    f"{day_word}! Если не записать транспортные расходы "
+                    f"{day_word}! Если не заполнить транспортные расходы "
                     "сейчас, catbot начнет являться вам в ночных "
                     "кошмарах."
                 ),
@@ -988,42 +1013,42 @@ async def check_and_send_transport_reminder(bot):
                 ),
                 (
                     f"🕵️‍♂️ *Внимание, розыск!*\nИщем человека, который "
-                    f"забыл заполнить транспортные расходы. {verb} {days_left} {day_word} "
+                    f"забыл заполнить транспортные расходы. {verb} {days_left} {day_word} " # noqa E501
                     "до закрытия. Не заставляйте нас применять паяльник... "
-                    "шутка! Просто заполните затраты."
+                    "шутка! Просто заполните расходы."
                 ),
                 (
                     f"📉 *Аттракцион невиданной щедрости закрывается!*\n"
-                    f"{verb} {days_left} {day_word}. Кто не успеет заполнить "
+                    f"{verb} {days_left} {day_word}. Кто не успел заполнить "
                     "расходы - тот работает в этом месяце за 'спасибо' "
-                    "и печеньки."
+                    "и печеньки. Шутка."
                 ),
                 (
-                    f"💀 *Memento Mori.*\nПомни о завершении месяца. {verb} "
-                    f"{days_left} {day_word}. Транспортные расходы сами "
-                    "себя не внесут (проверяли, магия не работает)."
+                    f"💀 *Memento Mori.*\nПомни месяц скоро закончиться. {verb} " # noqa E501
+                    f"{days_left} {day_word}.А транспортные расходы сами "
+                    "себя не внесут (мы проверяли, магия не работает)."
                 ),
                 (
                     f"🦖 *Астероид приближается!*\n{verb} {days_left} "
                     f"{day_word} до конца месяца. Не будьте как динозавры, "
-                    "заполните отчет, чтобы выжить (финансово)."
+                    "заполните расходы, чтобы выжить (финансово)."
                 ),
                 (
-                    f"🔮 *Битва экстрасенсов.*\nМы пытались угадать ваши "
+                    f"🔮 *Битва экстрасенсов.*\nЯ пытался угадать ваши "
                     f"расходы силой мысли, но не вышло. {verb} {days_left} "
-                    f"{day_word}. Придется вам заполнять самим!"
+                    f"{day_word}. Придется вам заполнять их самим!"
                 ),
                 (
                     f"🆘 *Хьюстон, у нас проблемы!*\n{verb} {days_left} "
                     f"{day_word}, а полет нормальный только у тех, кто "
-                    "заполнил расходы. Остальные рискуют остаться в "
+                    "звполнил расходы на транспорт. Остальные рискуют остаться в " # noqa E501
                     "открытом космосе без выплат."
                 ),
                 (
                     f"🕸 *Вжух! И месяца как не бывало.*\n{verb} "
                     f"{days_left} {day_word}. Ваш кошелек скажет вам "
                     "громкое 'СПАСИБО', если вы прямо сейчас откроете "
-                    "и заполните расходы."
+                    " сайт и заполните расходы."
                 ),
             ]
             message_text = random.choice(messages)
@@ -1057,27 +1082,23 @@ async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 if response.status == 200:
                     data = await response.json()
                     cat_photo_url = data[0]["url"]
-                    await update.message.reply_photo(photo=cat_photo_url)
+                    if update.effective_message:
+                        await update.effective_message.reply_photo(
+                            photo=cat_photo_url
+                        )
                 else:
-                    await update.message.reply_text(
-                        "😿 Не удалось получить фото котика. 😿")
+                    if update.effective_message:
+                        await update.effective_message.reply_text(
+                            "😿 Не удалось получить фото котика. 😿")
         except Exception as e:
             logging.error(f"Ошибка при запросе к API котиков: {e}")
-            await update.message.reply_text(
-                "😿 Произошла ошибка при получении фото котика. 😿")
+            if update.effective_message:
+                await update.effective_message.reply_text(
+                    "😿 Произошла ошибка при получении фото котика. 😿")
 
 
 async def send_daily_statistics_to_group(bot):
-    """
-    Асинхронно отправляет ежедневное статистическое сообщение
-    заранее определенной группе.
-
-    Функция извлекает ежедневное статистическое сообщение и отправляет его в
-    групповой чат, указанный в переменной среды TELEGRAM_GROUP_CHAT_ID.
-    Сообщение отправляется в формате Markdown.
-
-    :param bot: Экземпляр Telegram-бота, использованный для отправки сообщения.
-    """
+    """Асинхронно отправляет ежедневное статистическое сообщение."""
     try:
         tz = pytz.timezone("Europe/Moscow")
         now = datetime.now(tz)
@@ -1088,11 +1109,11 @@ async def send_daily_statistics_to_group(bot):
             logging.info(f"Пропуск статистики {today_date} - нет выездов.")
             return
         stats = await get_daily_statistics()
-        if stats["total_trips"] <= 0 and stats["total_time"].total_seconds() <= 0: # noqa
+        if stats["total_trips"] <= 0 and stats[
+                "total_time"].total_seconds() <= 0:  # noqa
             logging.info(
                 f"Пропуск статистики {today_date} - нет данных для отправки.")
             return
-        # Только если есть данные, формируем и отправляем сообщение
         message = await get_daily_statistics_message()
         group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
         if not group_chat_id:
@@ -1158,12 +1179,16 @@ async def update_season_rank(user_id: int,
 
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
+    user = update.effective_user
+    message = update.effective_message
+    if not user or not message:
+        return
+    user_id = user.id
 
     try:
         season = await get_current_season()
         if not season:
-            await update.message.reply_text(
+            await message.reply_text(
                 "ℹ️ В данный момент сезон не активен. "
                 "Ожидайте начала нового сезона!",
                 parse_mode="Markdown"
@@ -1182,11 +1207,13 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         time_str = f"{total_hours}ч {total_minutes}м"
 
         now = timezone.now().date()
-        days_left = (season.end_date - now).days
-
+        if season.end_date:
+            days_left = (season.end_date - now).days
+        else:
+            days_left = 0
         progress_bar = create_progress_bar(level_info["progress"])
-
-        message = (
+        theme_name = getattr(season, "get_theme_display")()
+        msg_text = (
             f"🏆 *Текущий сезон: {season.name}*\n"
             f"⏳ До конца сезона: *{days_left} дней*\n\n"
             "👤 *Ваш профиль*\n\n"
@@ -1198,21 +1225,24 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"📊 Прогресс: {progress_bar} {int(level_info['progress'])}%\n"
             f"⏱ Всего времени в организациях: *{time_str}*\n"
             f"🚗 Всего выездов: *{rank.visits_count}*\n\n"
-            f"{season.get_theme_display()} продолжается! "
+            f"{theme_name} продолжается! "
             "Успейте достичь новых высот!"
         )
     except SeasonRank.DoesNotExist:
-        message = (
+        msg_text = (
             "👤 *Ваш профиль*\n\n"
             "Вы ещё не совершали выездов в текущем сезоне.\n"
             "Используйте команду /join чтобы начать!")
-    await update.message.reply_text(message, parse_mode="Markdown")
+    await message.reply_text(msg_text, parse_mode="Markdown")
 
 
 async def start_weather(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск ежедневной отправки погоды в указанное время"""
+    message = update.effective_message
+    if not message:
+        return
     if not context.args:
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ Укажите время в формате ЧЧ:ММ (например: /start_weather 9:30)"
         )
         return
@@ -1221,11 +1251,11 @@ async def start_weather(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         hour, minute = map(int, time_str.split(":"))
     except ValueError:
-        await update.message.reply_text("❌ Неверный формат времени")
+        await message.reply_text("❌ Неверный формат времени")
         return
 
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
-        await update.message.reply_text("❌ Некорректное время")
+        await message.reply_text("❌ Некорректное время")
         return
 
     try:
@@ -1245,15 +1275,18 @@ async def start_weather(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not scheduler.running:
         scheduler.start()
 
-    await update.message.reply_text(
+    await message.reply_text(
         f"⛅ Задание для отправки погоды установлено на {hour:02}:{minute:02}"
     )
 
 
 async def start_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск ежедневной отправки статистики"""
+    message = update.effective_message
+    if not message:
+        return
     if not context.args:
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ Укажите время в формате ЧЧ:ММ (например: /start_stats 20:00)"
         )
         return
@@ -1262,11 +1295,11 @@ async def start_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         hour, minute = map(int, time_str.split(':'))
     except ValueError:
-        await update.message.reply_text("❌ Неверный формат времени")
+        await message.reply_text("❌ Неверный формат времени")
         return
 
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
-        await update.message.reply_text("❌ Некорректное время")
+        await message.reply_text("❌ Некорректное время")
         return
 
     try:
@@ -1286,7 +1319,7 @@ async def start_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not scheduler.running:
         scheduler.start()
 
-    await update.message.reply_text(
+    await message.reply_text(
         f"📊 Задание для отправки "
         f"статистики установлено на {hour:02}:{minute:02}"
     )
@@ -1294,9 +1327,13 @@ async def start_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск напоминаний о необходимости покинуть организацию"""
+    message = update.effective_message
+    if not message:
+        return
     if not context.args:
-        await update.message.reply_text(
-            "❌ Укажите время в формате ЧЧ:ММ (например: /start_reminder 19:45)"
+        await message.reply_text(
+            "❌ Укажите время в формате ЧЧ:ММ "
+            "(например: /start_reminder 19:45)"
         )
         return
 
@@ -1304,11 +1341,11 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         hour, minute = map(int, time_str.split(':'))
     except ValueError:
-        await update.message.reply_text("❌ Неверный формат времени")
+        await message.reply_text("❌ Неверный формат времени")
         return
 
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
-        await update.message.reply_text("❌ Некорректное время")
+        await message.reply_text("❌ Некорректное время")
         return
 
     for job_id in ["reminder_job", "transport_reminder"]:
@@ -1346,7 +1383,7 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "(только за 7/4/1 дней до конца месяца)"
     )
 
-    await update.message.reply_text(response_message)
+    await message.reply_text(response_message)
 
 
 async def send_daily_tip(bot):
@@ -1375,7 +1412,7 @@ async def send_daily_tip(bot):
         content_preview = truncate_markdown_safe(tip.content, max_length=50)
 
         site_base_url = os.getenv("SITE_URL")
-        tip_detail_url = f"{site_base_url}/tips/{tip.id}/"
+        tip_detail_url = f"{site_base_url}/tips/{tip.pk}/"
 
         message = (
             f"{message_prefix}"
@@ -1410,8 +1447,11 @@ async def send_daily_tip(bot):
 
 async def start_dailytips(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск ежедневной отправки советов в указанное время"""
+    message = update.effective_message
+    if not message:
+        return
     if not context.args:
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ Укажите время в формате ЧЧ:ММ "
             "(например: /start_dailytips 10:00)"
         )
@@ -1422,7 +1462,7 @@ async def start_dailytips(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not (0 <= hour <= 23 and 0 <= minute <= 59):
             raise ValueError
     except ValueError:
-        await update.message.reply_text("❌ Неверный формат времени")
+        await message.reply_text("❌ Неверный формат времени")
         return
 
     try:
@@ -1443,7 +1483,7 @@ async def start_dailytips(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not scheduler.running:
         scheduler.start()
 
-    await update.message.reply_text(
+    await message.reply_text(
         f"✅ Ежедневные советы будут отправляться в {hour:02}:{minute:02}\n"
         "Логика отправки:\n"
         "1. Приоритет у неопубликованных советов\n"
@@ -1453,24 +1493,30 @@ async def start_dailytips(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def stop_dailytips(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Остановка ежедневных советов"""
+    message = update.effective_message
+    if not message:
+        return
     try:
         scheduler.remove_job("dailytips_job")
-        await update.message.reply_text("✅ Рассылка советов остановлена")
+        await message.reply_text(
+            "✅ Рассылка советов остановлена"
+        )
     except JobLookupError:
-        await update.message.reply_text("⚠️ Активная рассылка не найдена")
+        await message.reply_text(
+            "⚠️ Активная рассылка не найдена"
+        )
 
 
 async def handle_unknown_command(update: Update,
                                  context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик только для неизвестных команд
-    (сообщений, начинающихся с /)"""
+    """Обработчик только для неизвестных команд."""
+    message = update.effective_message
+    if not message or not message.text:
+        return
     try:
-        message = update.message
         command = message.text.split()[0].lower()
-
         if not command.startswith("/"):
             return
-
         if command.lstrip("/") in BotMessages.AVAILABLE_COMMANDS:
             return
 
@@ -1491,7 +1537,6 @@ async def handle_unknown_command(update: Update,
                 f"❌ *Неизвестная команда* `{command}`\n\n"
                 "📝 Используйте /help для просмотра доступных команд"
             )
-
         await message.reply_text(
             reply_text,
             parse_mode="Markdown",
@@ -1506,6 +1551,9 @@ async def active_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Показывает всех сотрудников, находящихся в организациях в данный момент.
     """
+    message = update.effective_message
+    if not message:
+        return
     try:
         active_activities = await sync_to_async(list)(
             UserActivity.objects.select_related("company")
@@ -1513,7 +1561,7 @@ async def active_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         if not active_activities:
-            await update.message.reply_text(
+            await message.reply_text(
                 "ℹ️ *Статус:* В данный момент никто "
                 "не находится в организациях.",
                 parse_mode="Markdown"
@@ -1539,14 +1587,17 @@ async def active_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for company, users in companies.items():
             message_lines.append(f"\n🏢 *{company}*:")
             for i, (username, join_time) in enumerate(users, 1):
-                message_lines.append(f"{i}. {username} - прибыл в {join_time}")
+                message_lines.append(
+                    f"{i}. {username} - прибыл в {join_time}")
 
-        message = "\n".join(message_lines)
-        await update.message.reply_text(message, parse_mode="Markdown")
+        msg_text = "\n".join(message_lines)
+        await message.reply_text(
+            msg_text, parse_mode="Markdown"
+        )
 
     except Exception as e:
         logging.error(f"Ошибка при выполнении команды /status: {e}")
-        await update.message.reply_text(
+        await message.reply_text(
             "🚨 Произошла ошибка при получении статуса сотрудников",
             parse_mode="Markdown"
         )
@@ -1567,8 +1618,11 @@ async def send_currency_rates_to_group(bot):
 
 async def start_currency(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Запуск ежедневной отправки курсов в указанное время"""
+    message = update.effective_message
+    if not message:
+        return
     if not context.args:
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ Укажите время в формате ЧЧ:ММ (например: /start_currency 8:00)"
         )
         return
@@ -1579,7 +1633,7 @@ async def start_currency(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not (0 <= hour <= 23 and 0 <= minute <= 59):
             raise ValueError
     except ValueError:
-        await update.message.reply_text("❌ Неверный формат времени")
+        await message.reply_text("❌ Неверный формат времени")
         return
 
     try:
@@ -1600,7 +1654,7 @@ async def start_currency(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not scheduler.running:
         scheduler.start()
 
-    await update.message.reply_text(
+    await message.reply_text(
         f"💱 Задание для отправки курсов установлено на {hour:02}:{minute:02}\n"
         "Курс будет обновляться ежедневно в это время"
     )
@@ -1608,11 +1662,28 @@ async def start_currency(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def stop_currency(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Остановка ежедневной рассылки курсов"""
+    message = update.effective_message
+    if not message:
+        return
     try:
         scheduler.remove_job("currency_job")
-        await update.message.reply_text("✅ Рассылка курсов остановлена")
+        await message.reply_text(
+            "✅ Рассылка курсов остановлена"
+        )
     except JobLookupError:
-        await update.message.reply_text("⚠️ Активная рассылка не найдена")
+        await message.reply_text(
+            "⚠️ Активная рассылка не найдена"
+        )
+
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Отменяет диалог."""
+    if update.effective_message:
+        await update.effective_message.reply_text(
+            "Действие отменено.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+    return ConversationHandler.END
 
 
 class Command(BaseCommand):
@@ -1631,17 +1702,18 @@ class Command(BaseCommand):
                 JOIN_CO: [MessageHandler(
                     filters.TEXT & ~filters.COMMAND, add_new_company)],
             },
-            fallbacks=[CommandHandler(
-                "cancel", lambda update, context: ConversationHandler.END)],
+            fallbacks=[CommandHandler("cancel", cancel)],
         )
 
         application.add_handler(conv_handler)
         application.add_handler(CommandHandler("help", help))
         application.add_handler(CommandHandler("site", site))
-        application.add_handler(CommandHandler("get_chat_info", get_chat_info))
+        application.add_handler(
+            CommandHandler("get_chat_info", get_chat_info))
         application.add_handler(CommandHandler("leave", leave))
         application.add_handler(CommandHandler("mew", mew))
-        application.add_handler(CommandHandler("start_weather", start_weather))
+        application.add_handler(
+            CommandHandler("start_weather", start_weather))
         application.add_handler(CommandHandler("start_stats", start_stats))
         application.add_handler(CommandHandler("profile", profile))
         application.add_handler(
@@ -1665,13 +1737,11 @@ class Command(BaseCommand):
         application.add_handler(
             MessageHandler(filters.COMMAND, handle_unknown_command)
         )
-
+        self.stdout.write(self.style.SUCCESS("Бот запускается... "
+                                             "Нажмите Ctrl+C для остановки."))
         try:
             logger.info("Запуск бота в режиме polling...")
             application.run_polling(allowed_updates=Update.ALL_TYPES)
-        except KeyboardInterrupt:
-            logger.info("Бот остановлен по запросу пользователя")
-            self.stdout.write(self.style.SUCCESS("Бот остановлен."))
-            application.stop()
         except Exception as e:
             logger.error(f"Критическая ошибка при работе бота: {e}")
+        self.stdout.write(self.style.SUCCESS("Бот успешно остановлен."))
