@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+
 def create_progress_bar(progress: float, length: int = 10) -> str:
     filled = min(length, max(0, int(progress / 100 * length)))
     return f"[{'■' * filled}{'□' * (length - filled)}]"
@@ -52,3 +55,17 @@ def get_time_declension(days: int) -> tuple[str, str]:
             day_word = "дней"
     verb = "Остался" if days == 1 else "Осталось"
     return verb, day_word
+
+
+def normalize_duration_to_seconds(value) -> float:
+    """
+    Приводит результат агрегации DurationField к секундам.
+    Обрабатывает разницу между SQLite (int/float) и Postgres (timedelta).
+    """
+    if value is None:
+        return 0.0
+    if isinstance(value, timedelta):
+        return value.total_seconds()
+    if isinstance(value, (int, float)):
+        return value / 1_000_000
+    return 0.0
