@@ -30,3 +30,25 @@ def truncate_markdown_safe(text: str, max_length: int) -> str:
             truncated_text += close_tag
 
     return truncated_text + "..."
+
+
+def get_time_declension(days: int) -> tuple[str, str]:
+    """
+    Возвращает правильную форму глагола и существительного для дней.
+    Пример:
+    1 -> ("Остался", "день")
+    2 -> ("Осталось", "дня")
+    5 -> ("Осталось", "дней")
+    """
+    if 11 <= days % 100 <= 19:
+        day_word = "дней"
+    else:
+        last_digit = days % 10
+        if last_digit == 1:
+            day_word = "день"
+        elif 2 <= last_digit <= 4:
+            day_word = "дня"
+        else:
+            day_word = "дней"
+    verb = "Остался" if days == 1 else "Осталось"
+    return verb, day_word
