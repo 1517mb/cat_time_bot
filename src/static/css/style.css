@@ -498,3 +498,46 @@ html[data-theme="dark"] .menu-label {
 .nav-arrow-btn:hover {
     background: #e0e0e0;
 }
+
+/* Стили для карточек-опций */
+.option-card-label {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid #dbdbdb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 100%;
+    background-color: transparent;
+}
+
+.option-card-label:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 209, 178, 0.05);
+}
+
+.option-card-label input[type="checkbox"] {
+    accent-color: var(--primary-color); 
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+.option-card-label:has(input:checked) {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 209, 178, 0.1);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+html[data-theme="dark"] .option-card-label {
+    border-color: #4b5563;
+}
+html[data-theme="dark"] .option-card-label:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 209, 178, 0.1);
+}
+html[data-theme="dark"] .option-card-label:has(input:checked) {
+    background-color: rgba(0, 209, 178, 0.2);
+}
