@@ -1,0 +1,23 @@
+<p id="global-counter" hx-swap-oob="true" class="tag is-primary is-medium is-rounded has-text-weight-bold">
+    {{ total_passwords }}
+</p>
+
+<div id="random-tip-container" hx-swap-oob="true">
+    <h4 class="subtitle is-6 mb-2">
+        <span class="icon is-small mr-1"><i class="far fa-lightbulb"></i></span>
+        Знаете ли вы?
+    </h4>
+    {% if random_tip %}
+        <div class="notification is-white p-3 is-size-6" style="border-left: 4px solid #3298dc;">
+            <p class="mb-2 has-text-dark"><strong>{{ random_tip.title }}</strong></p>
+            <p class="is-size-7 mb-2 has-text-grey-dark">
+                {{ random_tip.content|striptags|truncatewords:25 }}
+            </p>
+            <a href="{% url 'tip_detail' random_tip.pk %}" target="_blank" class="button is-small is-ghost pl-0">
+                Читать подробнее →
+            </a>
+        </div>
+    {% else %}
+        <p class="is-size-7 has-text-grey">Загрузка советов...</p>
+    {% endif %}
+</div>
