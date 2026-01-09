@@ -541,3 +541,14 @@ html[data-theme="dark"] .option-card-label:hover {
 html[data-theme="dark"] .option-card-label:has(input:checked) {
     background-color: rgba(0, 209, 178, 0.2);
 }
+
+/* Стили для полоски силы */
+.fade-in { animation: fadeIn 0.5s ease; }
+.strength-bar {
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease, background-color 0.5s ease;
+}
+.strength-bar.has-text-danger { width: 15%; background-color: #f14668; }
+.strength-bar.has-text-warning { width: 50%; background-color: #ffdd57; }
+.strength-bar.has-text-success { width: 100%; background-color: #48c774; }
