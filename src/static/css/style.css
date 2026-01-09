@@ -409,3 +409,92 @@ html[data-theme="dark"] .menu-label {
         transform: translateX(20px);
     }
 }
+
+/* =========================================
+   10. СТИЛИ ДЛЯ КНОПОК "ПОДЕЛИТЬСЯ"
+   ========================================= */
+.share-row-base {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.share-row-lg {
+    gap: 12px;
+}
+.share-row-md {
+    gap: 10px;
+}
+
+.share-row-sm {
+    gap: 8px;
+    justify-content: center;
+    padding: 5px 0;
+}
+.share-header {
+    font-family: 'Kanit', sans-serif;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #4a4a4a;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+.btn-share {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white !important;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-share:hover {
+    transform: translateY(-3px);
+    opacity: 0.9;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.btn-share-lg {
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+}
+.btn-share-md {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+}
+.btn-share-sm {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+}
+.bg-vk { background-color: #0077FF; }
+.bg-ok { background-color: #EE8208; }
+.bg-tg { background-color: #2BA6E1; }
+.bg-wa { background-color: #25D366; }
+.bg-x  { background-color: #000000; }
+.bg-more { background-color: #555555; }
+.nav-top-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.nav-arrow-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    transition: background 0.2s;
+}
+.nav-arrow-btn:hover {
+    background: #e0e0e0;
+}
