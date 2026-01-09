@@ -127,7 +127,7 @@ async def check_achievements(
                 ).count(),
 
                 "same_day_users": UserActivity.objects.filter(
-                    company=activity.company,
+                    company__name__iexact=activity.company.name,
                     join_time__date=join_time.date()
                 ).values("user_id").distinct().count(),
 
@@ -229,9 +229,9 @@ async def check_achievements(
             new_achievements.append("🐢 Поспешишь - людей насмешишь")
 
         edit_achievements = {
-            (1, 3): None,
-            (3, 5): "🕰️ Читер: Часовщик II уровня",
-            (5, float('inf')): "🕰️ Читер: Часовщик III уровня"
+            (1, 2): None,
+            (2, 4): "🕰️ Читер: Часовщик II уровня",
+            (4, float('inf')): "🕰️ Читер: Часовщик III уровня"
         }
 
         if activity.edited:
