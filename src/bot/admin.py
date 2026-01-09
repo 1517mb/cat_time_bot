@@ -13,6 +13,7 @@ from bot.models import (
     Quote,
     Season,
     SeasonRank,
+    SiteStatistics,
     Tag,
     UserActivity,
 )
@@ -260,3 +261,14 @@ class CurrencyRateAdmin(admin.ModelAdmin):
         queryset, use_distinct = super().get_search_results(
             request, queryset, search_term)
         return queryset, use_distinct
+
+
+@admin.register(SiteStatistics)
+class SiteStatisticsAdmin(admin.ModelAdmin):
+    list_display = ('total_passwords_generated',)
+
+    def has_add_permission(self, request):
+        return not SiteStatistics.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
