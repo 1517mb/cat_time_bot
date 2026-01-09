@@ -7,10 +7,12 @@ from django.db.models import F, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods, require_POST
+from django.template.loader import render_to_string
 
-from bot.models import DailytTips, DailytTipView, Tag
+from bot.models import DailytTips, DailytTipView, Tag, SiteStatistics
 
 from .forms import PasswordGeneratorForm
+from bot.services import GamificationService
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,10 @@ PASSWORD_CHARSETS = {
 
 def index(request):
     """Главная страница генератора паролей"""
+    stats = SiteStatistics.get_stats()
+    raw_count = stats.total_passwords_generated
+    formatted_count = GamificationService.format_number(raw_count)
+    random_tip = GamificationService.get_smart_random_tip(request)
     initial_data = {
         "length": DEFAULT_PASSWORD_LENGTH,
         "include_digits": True,
@@ -32,78 +38,130 @@ def index(request):
         "include_underscore": False
     }
     form = PasswordGeneratorForm(initial=initial_data)
-    return render(request, "index.html", {"form": form})
+    context = {
+        "form": form,
+        "total_passwords": formatted_count,
+        "random_tip": random_tip
+    }
+    return render(request, "index.html", context)
 
 
 @require_http_methods(["GET", "POST"])
 def generate_password(request):
-    """Генерация пароля через HTMX"""
+    """Генерация пароля через HTMX с обновлением статистики (OOB)."""
     try:
         if request.method == "POST":
             form = PasswordGeneratorForm(request.POST)
             if form.is_valid():
                 length = form.cleaned_data["length"]
                 include_digits = form.cleaned_data["include_digits"]
-                include_special_chars = form.cleaned_data[
-                    "include_special_chars"]
-                include_hyphen = form.cleaned_data.get("include_hyphen", False)
+                include_special = form.cleaned_data[
+                    "include_special_chars"
+                ]
+                include_hyphen = form.cleaned_data.get(
+                    "include_hyphen", False
+                )
                 include_underscore = form.cleaned_data.get(
-                    "include_underscore", False)
-
+                    "include_underscore", False
+                )
                 characters = PASSWORD_CHARSETS["letters"]
                 if include_digits:
                     characters += PASSWORD_CHARSETS["digits"]
-                if include_special_chars:
+                if include_special:
                     characters += PASSWORD_CHARSETS["special"]
-
-                # Определяем обязательные разделители
                 required_separators = []
                 if include_hyphen:
                     required_separators.append("-")
                 if include_underscore:
                     required_separators.append("_")
-                min_required_length = len(required_separators) * 2
-                if length < min_required_length:
-                    logger.warning("Длина пароля меньше минимально необходимой: %s < %s", # noqa
-                                   length, min_required_length)
-                    return HttpResponse(f"Длина пароля должна быть не менее {min_required_length} символов для выбранных разделителей", status=400) # noqa
+                min_req_len = len(required_separators) * 2
+                if length < min_req_len:
+                    logger.warning(
+                        "Длина пароля меньше необходимой: %s < %s",
+                        length, min_req_len
+                    )
+                    error_msg = (
+                        f"Длина пароля должна быть не менее {min_req_len} "
+                        "символов для выбранных разделителей"
+                    )
+                    return HttpResponse(error_msg, status=400)
 
                 if length < 8:
-                    logger.warning("Слишком маленькая длина пароля: %s",
-                                   length)
-                    return HttpResponse("Минимальная длина пароля - 4 символа",
-                                        status=400)
-
-                # Генерируем пароль с обязательными разделителями
+                    logger.warning(
+                        "Слишком маленькая длина пароля: %s", length
+                    )
+                    return HttpResponse(
+                        "Минимальная длина пароля - 4 символа",
+                        status=400
+                    )
                 password = generate_password_with_min_separators(
                     length, characters, required_separators
                 )
-                # Рассчитываем время взлома
+                is_limited = GamificationService.is_rate_limited(request)
+                new_count_fmt = None
+
+                if not is_limited:
+                    new_raw = GamificationService.increment_global_counter()
+                    new_count_fmt = GamificationService.format_number(new_raw)
+                else:
+                    stats = SiteStatistics.get_stats()
+                    new_count_fmt = GamificationService.format_number(
+                        stats.total_passwords_generated
+                    )
+                new_tip = GamificationService.get_smart_random_tip(request)
                 crack_info = estimate_cracking_time(form.cleaned_data)
-                return render(request,
-                              "password_partial.html",
-                              {"password": password,
-                               "crack_info": crack_info})
+                main_html = render_to_string(
+                    "password_partial.html",
+                    {
+                        "password": password,
+                        "crack_info": crack_info
+                    },
+                    request=request
+                )
+                gamification_html = render_to_string(
+                    "generator/partials/gamification_oob.html",
+                    {
+                        "total_passwords": new_count_fmt,
+                        "random_tip": new_tip
+                    },
+                    request=request
+                )
+                return HttpResponse(main_html + gamification_html)
             logger.warning("Неверные данные формы: %s", form.errors)
-            return render(request, "form_errors_partial.html", {"form": form})
+            return render(
+                request,
+                "form_errors_partial.html",
+                {"form": form}
+            )
+
         return index(request)
     except Exception as e:
-        logger.error("Ошибка при генерации пароля: %s", str(e), exc_info=True)
+        logger.error(
+            "Ошибка при генерации пароля: %s", str(e), exc_info=True
+        )
         return HttpResponse("Внутренняя ошибка сервера", status=500)
 
 
-def generate_password_with_min_separators(length, characters,
-                                          required_separators):
-    """Генерирует пароль с минимум 2 символами каждого
-    обязательного разделителя"""
+def generate_password_with_min_separators(
+    length, characters, required_separators
+):
+    """
+    Генерирует пароль с минимум 2 символами каждого
+    обязательного разделителя.
+    """
     if not required_separators:
-        return "".join(secrets.choice(characters) for _ in range(length))
+        return "".join(
+            secrets.choice(characters) for _ in range(length)
+        )
+
     password_chars = []
     for separator in required_separators:
         password_chars.extend([separator, separator])
+
     remaining_length = length - len(password_chars)
     for _ in range(remaining_length):
         password_chars.append(secrets.choice(characters))
+
     secrets.SystemRandom().shuffle(password_chars)
     return "".join(password_chars)
 
@@ -115,19 +173,25 @@ def estimate_cracking_time(form_data):
     """
     length = form_data.get("length")
     if not length:
-        return {"text": "не удалось рассчитать",
-                "color_class": "has-text-grey"}
-    character_pool_size = len(string.ascii_letters)
+        return {
+            "text": "не удалось рассчитать",
+            "color_class": "has-text-grey"
+        }
+
+    pool_size = len(string.ascii_letters)
     if form_data.get("include_digits"):
-        character_pool_size += len(string.digits)
+        pool_size += len(string.digits)
+
     if form_data.get("include_special_chars"):
-        special_chars = string.punctuation.replace("-", "").replace("_", "")
-        character_pool_size += len(special_chars)
+        special = string.punctuation.replace("-", "").replace("_", "")
+        pool_size += len(special)
+
     if form_data.get("include_hyphen"):
-        character_pool_size += 1
+        pool_size += 1
     if form_data.get("include_underscore"):
-        character_pool_size += 1
-    total_combinations = character_pool_size ** length
+        pool_size += 1
+
+    total_combinations = pool_size ** length
     guesses_per_second = 10**10
     seconds_to_crack = (total_combinations / 2) / guesses_per_second
     if seconds_to_crack < 60 * 60 * 24:
@@ -141,6 +205,7 @@ def estimate_cracking_time(form_data):
         else:
             text = f"около {int(seconds_to_crack / 3600)} ч."
         return {"text": text, "color_class": color_class}
+
     days = seconds_to_crack / (3600 * 24)
     if days < 365 * 100:
         color_class = "has-text-warning"
@@ -149,6 +214,7 @@ def estimate_cracking_time(form_data):
         else:
             text = f"около {int(days / 365)} лет"
         return {"text": text, "color_class": color_class}
+
     color_class = "has-text-success"
     years = days / 365
     if years < 1_000_000:
