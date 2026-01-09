@@ -18,6 +18,7 @@ Django==6.0.1
 django-ckeditor-5==0.2.19
 django-import-export==4.3.14
 django-js-asset==3.1.2
+ephem==4.2
 et_xmlfile==2.0.0
 frozenlist==1.8.0
 h11==0.16.0
