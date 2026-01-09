@@ -533,3 +533,32 @@ class DailytTipView(models.Model):
             tip=tip,
             ip_hash=cls.get_ip_hash(ip)
         )
+
+
+class SiteStatistics(models.Model):
+    """
+    Модель для хранения глобальной статистики сайта.
+    Реализует паттерн Singleton (одна запись).
+    """
+    total_passwords_generated = models.PositiveBigIntegerField(
+        default=0,
+        verbose_name="Сгенерировано паролей"
+    )
+
+    class Meta:
+        verbose_name = "Статистика сайта"
+        verbose_name_plural = "Статистика сайта"
+
+    def __str__(self):
+        return f"Счетчик: {self.total_passwords_generated}"
+
+    def save(self, *args, **kwargs):
+        """Гарантируем, что ID всегда равен 1"""
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_stats(cls):
+        """Возвращает или создает единственный экземпляр статистики"""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
