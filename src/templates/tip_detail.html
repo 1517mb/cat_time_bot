@@ -16,9 +16,28 @@
 {% block content %}
 <section class="section">
     <div class="container">
+        
+        <div class="nav-top-buttons">
+            {% if prev_tip %}
+                <a href="{% url 'tip_detail' prev_tip.pk %}" class="nav-arrow-btn" title="Предыдущий совет">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            {% else %}
+                <div></div> 
+            {% endif %}
+
+            {% if next_tip %}
+                <a href="{% url 'tip_detail' next_tip.pk %}" class="nav-arrow-btn" title="Следующий совет">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            {% else %}
+                 <div></div>
+            {% endif %}
+        </div>
         <div class="card">
             <div class="card-content">
                 <h1 class="title">{{ tip.title }}</h1>
+                
                 {% if tip.tags.all %}
                     <div class="tags are-medium mb-4">
                         {% for tag in tip.tags.all %}
@@ -29,51 +48,71 @@
                         {% endfor %}
                     </div>
                 {% endif %}
+                
                 <div class="subtitle is-6 has-text-grey mb-5">
                     <div class="icon-text mb-2">
-                        <span class="icon">
-                            <i class="fas fa-user"></i>
-                        </span>
+                        <span class="icon"><i class="fas fa-user"></i></span>
                         <span>{{ tip.author.username }}</span>
                     </div>
-                    
                     <div class="icon-text mb-2">
-                        <span class="icon">
-                            <i class="far fa-calendar-alt"></i>
-                        </span>
+                        <span class="icon"><i class="far fa-calendar-alt"></i></span>
                         <span>{{ tip.pub_date|date:"d.m.Y H:i" }}</span>
                     </div>
-                    
                     <div class="icon-text">
-                        <span class="icon">
-                            <i class="fas fa-eye"></i>
-                        </span>
+                        <span class="icon"><i class="fas fa-eye"></i></span>
                         <span>{{ tip.views_count }} просмотров</span>
                     </div>
                 </div>
-
 
                 <div class="content markdown-content">
                     {{ tip.content|safe }}
                 </div>
 
-                <div class="mt-4 buttons">
+                <hr>
+
+                <div class="share-section mt-5">
+                    <h2 class="share-header">ПОДЕЛИТЬСЯ</h2>
+                    <div class="share-row-base share-row-lg">
+                        <a href="https://vk.com/share.php?url={{ request.build_absolute_uri }}&title={{ tip.title }}" 
+                           target="_blank" class="btn-share btn-share-lg bg-vk" title="ВКонтакте">
+                           <i class="fab fa-vk"></i>
+                        </a>
+
+                        <a href="https://connect.ok.ru/offer?url={{ request.build_absolute_uri }}&title={{ tip.title }}" 
+                           target="_blank" class="btn-share btn-share-lg bg-ok" title="Одноклассники">
+                           <i class="fab fa-odnoklassniki"></i>
+                        </a>
+
+                        <a href="https://t.me/share/url?url={{ request.build_absolute_uri }}&text={{ tip.title }}" 
+                           target="_blank" class="btn-share btn-share-lg bg-tg" title="Telegram">
+                           <i class="fab fa-telegram-plane"></i>
+                        </a>
+
+                        <a href="https://api.whatsapp.com/send?text={{ tip.title }}%20{{ request.build_absolute_uri }}" 
+                           target="_blank" class="btn-share btn-share-lg bg-wa" title="WhatsApp">
+                           <i class="fab fa-whatsapp"></i>
+                        </a>
+
+                        <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ tip.title }}" 
+                           target="_blank" class="btn-share btn-share-lg bg-x" title="X (Twitter)">
+                           <i class="fab fa-x-twitter"></i> 
+                           </a>
+
+                        <button id="native-share-btn" class="btn-share btn-share-lg bg-more" style="display: none;" title="Ещё...">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-6 buttons">
                     {% if tip.external_link %}
-                    <a href="{{ tip.external_link }}" 
-                       class="button is-primary is-outlined"
-                       target="_blank"
-                       rel="noopener noreferrer">
-                        <span class="icon">
-                            <i class="fas fa-external-link-alt"></i>
-                        </span>
+                    <a href="{{ tip.external_link }}" class="button is-primary is-outlined" target="_blank">
+                        <span class="icon"><i class="fas fa-external-link-alt"></i></span>
                         <span>Источник</span>
                     </a>
                     {% endif %}
                     
                     <a href="{% url 'tips' %}" class="button">
-                        <span class="icon">
-                            <i class="fas fa-arrow-left"></i>
-                        </span>
+                        <span class="icon"><i class="fas fa-arrow-left"></i></span>
                         <span>Назад к списку</span>
                     </a>
                 </div>
@@ -81,4 +120,29 @@
         </div>
     </div>
 </section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const shareBtn = document.getElementById('native-share-btn');
+        
+        // Проверяем поддержку Web Share API (обычно это мобильные устройства)
+        if (navigator.share) {
+            shareBtn.style.display = 'inline-flex'; // Показываем кнопку
+            
+            shareBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.share({
+                        title: '{{ tip.title|escapejs }}',
+                        text: 'Полезный совет: {{ tip.title|escapejs }}',
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    // Ошибки игнорируем (например, если пользователь отменил шеринг)
+                    console.log('Share canceled or failed');
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

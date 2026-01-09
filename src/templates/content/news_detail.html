@@ -59,6 +59,39 @@
                     <div class="content is-medium theme-text text-justify">
                         {{ news.content|safe }}
                     </div>
+                    <div class="mt-5 mb-5">
+                        <p class="is-size-7 has-text-weight-bold has-text-grey mb-3" style="text-transform: uppercase;">Поделиться новостью:</p>
+                        <div class="share-row-base share-row-md">
+                            <a href="https://vk.com/share.php?url={{ request.build_absolute_uri }}&title={{ news.title }}" 
+                            target="_blank" class="btn-share btn-share-md bg-vk" title="ВКонтакте">
+                            <i class="fab fa-vk"></i>
+                            </a>
+
+                            <a href="https://connect.ok.ru/offer?url={{ request.build_absolute_uri }}&title={{ news.title }}" 
+                            target="_blank" class="btn-share btn-share-md bg-ok" title="Одноклассники">
+                            <i class="fab fa-odnoklassniki"></i>
+                            </a>
+
+                            <a href="https://t.me/share/url?url={{ request.build_absolute_uri }}&text={{ news.title }}" 
+                            target="_blank" class="btn-share btn-share-md bg-tg" title="Telegram">
+                            <i class="fab fa-telegram-plane"></i>
+                            </a>
+
+                            <a href="https://api.whatsapp.com/send?text={{ news.title }}%20{{ request.build_absolute_uri }}" 
+                            target="_blank" class="btn-share btn-share-md bg-wa" title="WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                            </a>
+
+                            <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ news.title }}" 
+                            target="_blank" class="btn-share btn-share-md bg-x" title="X (Twitter)">
+                            <i class="fa-brands fa-x-twitter"></i>
+                            </a>
+
+                            <button id="native-share-btn" class="btn-share btn-share-md bg-more" style="display: none;" title="Ещё...">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                    </div>
     
                     <div class="mt-6 pt-4 is-flex is-justify-content-space-between is-align-items-center" style="border-top: 1px solid var(--bulma-border);">
                         <a href="{% url 'content:list' %}" class="button is-ghost pl-0 theme-link-grey">
@@ -81,4 +114,25 @@
         </div>
     </div>
 </section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shareBtn = document.getElementById('native-share-btn');
+    if (shareBtn && navigator.share) {
+        shareBtn.style.display = 'flex';
+        shareBtn.addEventListener('click', async () => {
+            try {
+                await navigator.share({
+                    title: '{{ news.title|escapejs }}',
+                    text: '{{ news.title|escapejs }}',
+                    url: window.location.href
+                });
+            } catch (err) {
+                console.log('Share canceled');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
