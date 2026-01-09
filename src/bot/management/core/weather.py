@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import math
 import os
 from datetime import datetime
 from datetime import timezone as dt_timezone
@@ -7,6 +8,9 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import aiohttp
+import ephem
+
+logger = logging.getLogger(__name__)
 
 
 def get_kp_description(kp_index: int) -> str:
@@ -44,6 +48,48 @@ def get_moon_translation(moon_phase_en: str) -> str:
         "Waning Crescent": "Убывающий серп 🌘",
     }
     return phases.get(moon_phase_en, moon_phase_en)
+
+
+def get_moon_phase_local() -> dict:
+    """
+    Считает фазу Луны локально с помощью библиотеки ephem.
+    Использует getattr для обхода ошибок анализатора кода (C-extension).
+    """
+    try:
+        observer = ephem.Observer()
+        observer.date = datetime.now(dt_timezone.utc)
+        Sun = getattr(ephem, "Sun")
+        Moon = getattr(ephem, "Moon")
+        Ecliptic = getattr(ephem, "Ecliptic")
+        sun = Sun(observer)
+        moon = Moon(observer)
+        sun_ecl = Ecliptic(sun)
+        moon_ecl = Ecliptic(moon)
+        elongation = (moon_ecl.lon - sun_ecl.lon) % (2 * math.pi)
+        days_into_cycle = (elongation / (2 * math.pi)) * 29.53
+        if days_into_cycle < 1:
+            phase_name = "New Moon"
+        elif days_into_cycle < 6.5:
+            phase_name = "Waxing Crescent"
+        elif days_into_cycle < 8.3:
+            phase_name = "First Quarter"
+        elif days_into_cycle < 13.8:
+            phase_name = "Waxing Gibbous"
+        elif days_into_cycle < 15.8:
+            phase_name = "Full Moon"
+        elif days_into_cycle < 21.1:
+            phase_name = "Waning Gibbous"
+        elif days_into_cycle < 23.1:
+            phase_name = "Last Quarter"
+        elif days_into_cycle < 28.5:
+            phase_name = "Waning Crescent"
+        else:
+            phase_name = "New Moon"
+
+        return {"phase": get_moon_translation(phase_name)}
+    except Exception as e:
+        logger.error(f"Ошибка локального расчета Луны: {e}")
+        return {"phase": "Ошибка расчета 🌑"}
 
 
 async def fetch_owm_weather(session, city, api_key):
@@ -91,25 +137,16 @@ async def fetch_mag_data(session):
     return None
 
 
-async def fetch_moon_data(session, city):
-    """Получает фазу Луны с wttr.in."""
-    url = f"https://wttr.in/{city}?format=j1"
-    try:
-        async with session.get(url) as response:
-            if response.status == 200:
-                return await response.json()
-            logging.warning(f"Moon API (wttr.in) error: {response.status}")
-    except Exception as e:
-        logging.error(f"Moon fetch error: {e}")
-    return None
-
-
 def parse_current_weather(data):
     """Парсит 'сырой' JSON от OWM Weather."""
     if not data or data["cod"] != 200:
         return None
 
     try:
+        if not data.get("weather"):
+            logger.warning("Пришел пустой массив weather")
+            return None
+
         def get_wind_direction(deg):
             directions = [
                 "северный", "северо-восточный", "восточный",
@@ -175,7 +212,7 @@ def parse_current_weather(data):
 
 def parse_forecast(data):
     """Парсит 'сырой' JSON от OWM Forecast."""
-    if not data or data["cod"] != "200":
+    if not data or str(data.get("cod")) != "200":
         return None
 
     try:
@@ -183,8 +220,11 @@ def parse_forecast(data):
         current_date = datetime.now(moscow_tz).date()
         forecast: dict[str, Any] = {"morning": None,
                                     "day": None, "evening": None}
-
+        if not data.get("list"):
+            return None
         for entry in data["list"]:
+            if not entry.get("weather"):
+                continue
             entry_time_utc = datetime.fromtimestamp(
                 entry["dt"], tz=dt_timezone.utc)
             entry_time_moscow = entry_time_utc.astimezone(moscow_tz)
@@ -215,18 +255,6 @@ def parse_mag_data(data):
         return {"status": get_kp_description(kp_index)}
     except Exception as e:
         logging.warning(f"Mag parse error: {e}. Data received: {data}")
-        return None
-
-
-def parse_moon_data(data):
-    """Парсит 'сырой' JSON от wttr.in."""
-    if not data:
-        return None
-    try:
-        moon_phase_en = data["weather"][0]["astronomy"][0]["moon_phase"]
-        return {"phase": get_moon_translation(moon_phase_en)}
-    except Exception as e:
-        logging.warning(f"Moon parse error: {e}")
         return None
 
 
@@ -293,7 +321,7 @@ def format_weather_message(city_ru, weather_data,
         lines.append("<i>Прогноз недоступен</i>")
 
     lines.append("\n<i>По данным openweathermap.org, "
-                 "swpc.noaa.gov, wttr.in</i>")
+                 "swpc.noaa.gov</i>")
     return "\n".join(lines)
 
 
@@ -311,13 +339,12 @@ async def get_weather():
             fetch_owm_weather(session, city, api_key),
             fetch_owm_forecast(session, city, api_key),
             fetch_mag_data(session),
-            fetch_moon_data(session, city)
         )
-        owm_weather_raw, owm_forecast_raw, mag_raw, moon_raw = results
+        owm_weather_raw, owm_forecast_raw, mag_raw = results
         weather_data = parse_current_weather(owm_weather_raw)
         forecast_data = parse_forecast(owm_forecast_raw)
         mag_data = parse_mag_data(mag_raw)
-        moon_data = parse_moon_data(moon_raw)
+        moon_data = get_moon_phase_local()
         return format_weather_message(
             city_ru,
             weather_data,
