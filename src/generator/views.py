@@ -191,7 +191,7 @@ def daily_tips_view(request):
         tips = paginator.page(1)
     except EmptyPage:
         tips = paginator.page(paginator.num_pages)
-    page_range = paginator.get_elided_page_range( # type: ignore
+    page_range = paginator.get_elided_page_range(  # type: ignore
         number=tips.number,
         on_each_side=2,
         on_ends=1
@@ -226,14 +226,27 @@ def get_client_ip(request):
 
 
 def daily_tip_detail_view(request, pk):
-    """Детальный просмотр совета с уникальным учётом"""
+    """Детальный просмотр совета с уникальным учётом и навигацией"""
     tip = get_object_or_404(DailytTips, pk=pk)
     client_ip = get_client_ip(request)
-
     if not DailytTipView.already_viewed(tip.pk, client_ip, ttl_minutes=30):
         DailytTips.objects.filter(pk=tip.pk).update(
             views_count=F('views_count') + 1)
         DailytTipView.log_view(tip, client_ip)
 
     tip.refresh_from_db()
-    return render(request, "tip_detail.html", {"tip": tip})
+    next_tip = DailytTips.objects.filter(
+        is_published=True,
+        pub_date__gt=tip.pub_date
+    ).order_by('pub_date').first()
+    prev_tip = DailytTips.objects.filter(
+        is_published=True,
+        pub_date__lt=tip.pub_date
+    ).order_by('-pub_date').first()
+
+    context = {
+        "tip": tip,
+        "next_tip": next_tip,
+        "prev_tip": prev_tip,
+    }
+    return render(request, "tip_detail.html", context)
