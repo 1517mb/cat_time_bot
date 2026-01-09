@@ -17,4 +17,19 @@
 </div>
 {% endblock %}
 {% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const numInput = document.getElementById('id_length');
+    const rangeInput = document.getElementById('length_range');
+
+    if (numInput && rangeInput) {
+        rangeInput.addEventListener('input', function() {
+            numInput.value = this.value;
+        });
+        numInput.addEventListener('input', function() {
+            rangeInput.value = this.value;
+        });
+    }
+});
+</script>
 {% endblock %}
