@@ -1,35 +1,37 @@
 import logging
-import secrets
 import string
 
+from django.core.cache import cache
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import F, Q
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.views.decorators.http import require_http_methods, require_POST
 from django.template.loader import render_to_string
+from django.views.decorators.http import require_http_methods, require_POST
 
-from bot.models import DailytTips, DailytTipView, Tag, SiteStatistics
-
-from .forms import PasswordGeneratorForm
+from bot.models import DailytTips, DailytTipView, SiteStatistics, Tag
 from bot.services import GamificationService
+
+from .forms import PASSWORD_CHARSETS, PasswordGeneratorForm
+from .utils import (
+    calculate_crack_time,
+    generate_password_safe,
+    get_client_ip,
+    get_user_agent_info,
+)
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_PASSWORD_LENGTH = 12
-PASSWORD_CHARSETS = {
-    "letters": string.ascii_letters,
-    "digits": string.digits,
-    "special": string.punctuation,
-}
 
 
-def index(request):
-    """Главная страница генератора паролей"""
+def index(request: HttpRequest) -> HttpResponse:
+    """Главная страница генератора паролей."""
     stats = SiteStatistics.get_stats()
     raw_count = stats.total_passwords_generated
     formatted_count = GamificationService.format_number(raw_count)
     random_tip = GamificationService.get_smart_random_tip(request)
+
     initial_data = {
         "length": DEFAULT_PASSWORD_LENGTH,
         "include_digits": True,
@@ -38,6 +40,7 @@ def index(request):
         "include_underscore": False
     }
     form = PasswordGeneratorForm(initial=initial_data)
+
     context = {
         "form": form,
         "total_passwords": formatted_count,
@@ -47,209 +50,90 @@ def index(request):
 
 
 @require_http_methods(["GET", "POST"])
-def generate_password(request):
-    """Генерация пароля через HTMX с обновлением статистики (OOB)."""
+def generate_password(request: HttpRequest) -> HttpResponse:
+    """Генерация пароля через HTMX."""
     try:
         if request.method == "POST":
             form = PasswordGeneratorForm(request.POST)
             if form.is_valid():
-                length = form.cleaned_data["length"]
-                include_digits = form.cleaned_data["include_digits"]
-                include_special = form.cleaned_data[
-                    "include_special_chars"
-                ]
-                include_hyphen = form.cleaned_data.get(
-                    "include_hyphen", False
-                )
-                include_underscore = form.cleaned_data.get(
-                    "include_underscore", False
-                )
-                characters = PASSWORD_CHARSETS["letters"]
-                if include_digits:
-                    characters += PASSWORD_CHARSETS["digits"]
-                if include_special:
-                    characters += PASSWORD_CHARSETS["special"]
-                required_separators = []
-                if include_hyphen:
-                    required_separators.append("-")
-                if include_underscore:
-                    required_separators.append("_")
-                min_req_len = len(required_separators) * 2
-                if length < min_req_len:
-                    logger.warning(
-                        "Длина пароля меньше необходимой: %s < %s",
-                        length, min_req_len
-                    )
-                    error_msg = (
-                        f"Длина пароля должна быть не менее {min_req_len} "
-                        "символов для выбранных разделителей"
-                    )
-                    return HttpResponse(error_msg, status=400)
+                data = form.cleaned_data
+                chars = PASSWORD_CHARSETS["letters"]
+                if data["include_digits"]:
+                    chars += PASSWORD_CHARSETS["digits"]
+                if data["include_special_chars"]:
+                    chars += PASSWORD_CHARSETS["special"]
 
-                if length < 8:
-                    logger.warning(
-                        "Слишком маленькая длина пароля: %s", length
-                    )
-                    return HttpResponse(
-                        "Минимальная длина пароля - 4 символа",
-                        status=400
-                    )
-                password = generate_password_with_min_separators(
-                    length, characters, required_separators
+                req_separators = []
+                if data.get("include_hyphen"):
+                    req_separators.append("-")
+                if data.get("include_underscore"):
+                    req_separators.append("_")
+                password = generate_password_safe(
+                    data["length"], chars, req_separators
                 )
                 is_limited = GamificationService.is_rate_limited(request)
-                new_count_fmt = None
-
                 if not is_limited:
-                    new_raw = GamificationService.increment_global_counter()
-                    new_count_fmt = GamificationService.format_number(new_raw)
+                    new_cnt = GamificationService.increment_global_counter()
+                    count_fmt = GamificationService.format_number(new_cnt)
                 else:
                     stats = SiteStatistics.get_stats()
-                    new_count_fmt = GamificationService.format_number(
+                    count_fmt = GamificationService.format_number(
                         stats.total_passwords_generated
                     )
                 new_tip = GamificationService.get_smart_random_tip(request)
-                crack_info = estimate_cracking_time(form.cleaned_data)
+                crack_info = calculate_crack_time(data)
                 main_html = render_to_string(
                     "password_partial.html",
-                    {
-                        "password": password,
-                        "crack_info": crack_info
-                    },
+                    {"password": password, "crack_info": crack_info},
                     request=request
                 )
                 gamification_html = render_to_string(
                     "generator/partials/gamification_oob.html",
-                    {
-                        "total_passwords": new_count_fmt,
-                        "random_tip": new_tip
-                    },
+                    {"total_passwords": count_fmt, "random_tip": new_tip},
                     request=request
                 )
                 return HttpResponse(main_html + gamification_html)
-            logger.warning("Неверные данные формы: %s", form.errors)
             return render(
-                request,
-                "form_errors_partial.html",
-                {"form": form}
+                request, "form_errors_partial.html", {"form": form}
             )
 
         return index(request)
     except Exception as e:
         logger.error(
-            "Ошибка при генерации пароля: %s", str(e), exc_info=True
+            "Error generating password: %s", str(e), exc_info=True
         )
         return HttpResponse("Внутренняя ошибка сервера", status=500)
 
 
-def generate_password_with_min_separators(
-    length, characters, required_separators
-):
-    """
-    Генерирует пароль с минимум 2 символами каждого
-    обязательного разделителя.
-    """
-    if not required_separators:
-        return "".join(
-            secrets.choice(characters) for _ in range(length)
-        )
-
-    password_chars = []
-    for separator in required_separators:
-        password_chars.extend([separator, separator])
-
-    remaining_length = length - len(password_chars)
-    for _ in range(remaining_length):
-        password_chars.append(secrets.choice(characters))
-
-    secrets.SystemRandom().shuffle(password_chars)
-    return "".join(password_chars)
-
-
-def estimate_cracking_time(form_data):
-    """
-    Рассчитывает время взлома и возвращает СЛОВАРЬ
-    с текстом и CSS-классом цвета.
-    """
-    length = form_data.get("length")
-    if not length:
-        return {
-            "text": "не удалось рассчитать",
-            "color_class": "has-text-grey"
-        }
-
-    pool_size = len(string.ascii_letters)
-    if form_data.get("include_digits"):
-        pool_size += len(string.digits)
-
-    if form_data.get("include_special_chars"):
-        special = string.punctuation.replace("-", "").replace("_", "")
-        pool_size += len(special)
-
-    if form_data.get("include_hyphen"):
-        pool_size += 1
-    if form_data.get("include_underscore"):
-        pool_size += 1
-
-    total_combinations = pool_size ** length
-    guesses_per_second = 10**10
-    seconds_to_crack = (total_combinations / 2) / guesses_per_second
-    if seconds_to_crack < 60 * 60 * 24:
-        color_class = "has-text-danger"
-        if seconds_to_crack < 1:
-            text = "мгновенно"
-        elif seconds_to_crack < 60:
-            text = f"около {int(seconds_to_crack)} сек."
-        elif seconds_to_crack < 60 * 60:
-            text = f"около {int(seconds_to_crack / 60)} мин."
-        else:
-            text = f"около {int(seconds_to_crack / 3600)} ч."
-        return {"text": text, "color_class": color_class}
-
-    days = seconds_to_crack / (3600 * 24)
-    if days < 365 * 100:
-        color_class = "has-text-warning"
-        if days < 365:
-            text = f"около {int(days)} дн."
-        else:
-            text = f"около {int(days / 365)} лет"
-        return {"text": text, "color_class": color_class}
-
-    color_class = "has-text-success"
-    years = days / 365
-    if years < 1_000_000:
-        text = f"около {int(years / 1_000)} тыс. лет"
-    else:
-        text = f"около {int(years / 1_000_000)} млн. лет"
-    return {"text": text, "color_class": color_class}
-
-
 @require_POST
-def copy_password(request):
-    """Обработчик копирования пароля"""
+def copy_password(request: HttpRequest) -> JsonResponse:
+    """API endpoint для копирования (логирование, если нужно)."""
     return JsonResponse({"status": "ok"})
 
 
-def daily_tips_view(request):
-    """Список полезных советов с пагинацией, поиском и фильтрацией по тегам"""
-    tips_list = DailytTips.objects.filter(
-        is_published=True).order_by("-pub_date")
+def daily_tips_view(request: HttpRequest) -> HttpResponse:
+    """Список советов с пагинацией и кешированием популярных."""
+    tips_qs = DailytTips.objects.filter(
+        is_published=True
+    ).prefetch_related("tags").order_by("-pub_date")
+
     all_tags = Tag.objects.all()
-    search_query = request.GET.get('q')
+    search_query = request.GET.get("q")
+
     if search_query:
-        tips_list = tips_list.filter(
-            Q(title__icontains=search_query) | Q(
-                content__icontains=search_query)
+        tips_qs = tips_qs.filter(
+            Q(title__icontains=search_query) |
+            Q(content__icontains=search_query)
         )
-    selected_tag_ids = request.GET.getlist('tags')
-    if selected_tag_ids:
+    selected_tags = request.GET.getlist("tags")
+    if selected_tags:
         try:
-            selected_tag_ids = [int(id) for id in selected_tag_ids]
-            tips_list = tips_list.filter(
-                tags__id__in=selected_tag_ids).distinct()
+            ids = [int(i) for i in selected_tags]
+            tips_qs = tips_qs.filter(tags__id__in=ids).distinct()
         except (ValueError, TypeError):
-            selected_tag_ids = []
-    paginator = Paginator(tips_list, 6)
+            selected_tags = []
+
+    paginator = Paginator(tips_qs, 6)
     page_number = request.GET.get("page")
     try:
         tips = paginator.page(page_number)
@@ -257,62 +141,73 @@ def daily_tips_view(request):
         tips = paginator.page(1)
     except EmptyPage:
         tips = paginator.page(paginator.num_pages)
-    page_range = paginator.get_elided_page_range(  # type: ignore
-        number=tips.number,
-        on_each_side=2,
-        on_ends=1
-    )
+    popular_tips = cache.get("popular_tips_sidebar")
+    if not popular_tips:
+        popular_tips = list(
+            DailytTips.objects.filter(is_published=True)
+            .order_by("-views_count")[:5]
+        )
+        cache.set("popular_tips_sidebar", popular_tips, 300)
     query_params = request.GET.copy()
-    if 'page' in query_params:
-        del query_params['page']
-    query_string = query_params.urlencode()
-    popular_tips = DailytTips.objects.filter(
-        is_published=True).order_by('-views_count')[:5]
+    query_params.pop("page", None)
+
     context = {
         "tips": tips,
-        "search_query": search_query or '',
+        "search_query": search_query or "",
         "all_tags": all_tags,
-        "selected_tag_ids": selected_tag_ids,
-        "current_page": tips.number,
-        "total_pages": paginator.num_pages,
+        "selected_tag_ids": [int(x) for x in selected_tags],
+        "page_range": paginator.get_elided_page_range(  # type: ignore
+            number=tips.number, on_each_side=2, on_ends=1
+        ),
         "popular_tips": popular_tips,
-        "page_range": page_range,
-        "ellipsis": "...",
-        "query_string": query_string,
+        "query_string": query_params.urlencode(),
     }
     return render(request, "tips.html", context)
 
 
-def get_client_ip(request):
-    """Определение IP клиента"""
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")
-
-
-def daily_tip_detail_view(request, pk):
-    """Детальный просмотр совета с уникальным учётом и навигацией"""
+def daily_tip_detail_view(
+    request: HttpRequest, pk: int
+) -> HttpResponse:
+    """Детальный просмотр совета с навигацией."""
     tip = get_object_or_404(DailytTips, pk=pk)
     client_ip = get_client_ip(request)
-    if not DailytTipView.already_viewed(tip.pk, client_ip, ttl_minutes=30):
-        DailytTips.objects.filter(pk=tip.pk).update(
-            views_count=F('views_count') + 1)
-        DailytTipView.log_view(tip, client_ip)
 
-    tip.refresh_from_db()
+    if not DailytTipView.already_viewed(
+        tip.pk, client_ip, ttl_minutes=30
+    ):
+        DailytTips.objects.filter(pk=tip.pk).update(
+            views_count=F("views_count") + 1
+        )
+        DailytTipView.log_view(tip, client_ip)
+        tip.refresh_from_db()
+        cache.delete("popular_tips_sidebar")
     next_tip = DailytTips.objects.filter(
-        is_published=True,
-        pub_date__gt=tip.pub_date
-    ).order_by('pub_date').first()
+        is_published=True, pub_date__gt=tip.pub_date
+    ).order_by("pub_date").first()
+
     prev_tip = DailytTips.objects.filter(
-        is_published=True,
-        pub_date__lt=tip.pub_date
-    ).order_by('-pub_date').first()
+        is_published=True, pub_date__lt=tip.pub_date
+    ).order_by("-pub_date").first()
 
     context = {
         "tip": tip,
         "next_tip": next_tip,
-        "prev_tip": prev_tip,
+        "prev_tip": prev_tip
     }
     return render(request, "tip_detail.html", context)
+
+
+def my_ip_view(request: HttpRequest) -> HttpResponse:
+    """Отображает техническую информацию о клиенте."""
+    ip_address = get_client_ip(request)
+    ua_string = request.META.get("HTTP_USER_AGENT", "")
+    ua_data = get_user_agent_info(ua_string)
+    context = {
+        "ip_address": ip_address,
+        "browser": ua_data["browser"],
+        "os": ua_data["os"],
+        "device": ua_data["device"],
+        "is_mobile": ua_data["is_mobile"],
+        "ua_raw": ua_string,
+    }
+    return render(request, "generator/tools/my_ip.html", context)
