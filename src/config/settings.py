@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "pages.apps.PagesConfig",
     "import_export",
     "django_ckeditor_5",
+    "request"
 ]
 
 MIDDLEWARE = [
@@ -47,6 +48,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "request.middleware.RequestMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -100,6 +102,7 @@ LANGUAGE_CODE = "ru-ru"
 USE_TZ = True
 
 USE_I18N = True
+USE_L10N = True
 
 TIME_ZONE = "Europe/Moscow"
 
@@ -261,3 +264,32 @@ if DEBUG:
         os.path.join(BASE_DIR, "static"),
     ]
     STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# =========================================
+# НАСТРОЙКИ DJANGO-REQUEST
+# =========================================
+REQUEST_IGNORE_PATHS = (
+    r'^admin/',
+    r'^static/',
+    r'^media/',
+    r'^favicon\.ico',
+    r'^robots\.txt',
+    r'^__debug__/',
+)
+REQUEST_IGNORE_USER_AGENTS = (
+    r'^$',
+    r'Googlebot',
+    r'Baiduspider',
+    r'YandexBot',
+    r'YandexMetrika',
+    r'Bingbot',
+    r'AhrefsBot',
+    r'MJ12bot',
+)
+
+REQUEST_IGNORE_USERNAME = (
+    os.getenv("IGNORE_USERNAME", "").split(",")
+)
+REQUEST_LOG_IP = True
+REQUEST_LOG_USER = True
+REQUEST_IGNORE_AJAX = True
