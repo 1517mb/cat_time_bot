@@ -71,15 +71,25 @@
         </button>
       </p>
     </div>
-    <div class="has-text-centered mt-4">
-      <p class="is-size-7">
-        <a href="{% url 'pages:privacy_policy' %}" class="has-text-grey">Политика конфиденциальности</a> | 
-        <a href="{% url 'pages:terms_of_use' %}" class="has-text-grey">Условия использования</a>
-      </p>
-      <p class="mt-2">
-        Все права защищены &copy; 2024 - {% now "Y" %}
-      </p>
+    <footer class="footer pt-6 pb-6">
+  <div class="content has-text-centered">
+    
+    <div class="mb-2">
+      <a href="{% url 'pages:privacy_policy' %}" class="has-text-grey is-size-7 hover-dark">
+        Политика конфиденциальности
+      </a>
+      <span class="has-text-grey-lighter mx-2">|</span>
+      <a href="{% url 'pages:terms_of_use' %}" class="has-text-grey is-size-7 hover-dark">
+        Условия использования
+      </a>
     </div>
+
+    <p class="is-size-7 has-text-grey-light">
+      &copy; 2024 - {% now "Y" %} 
+      <a href="https://riopass.ru" class="has-text-grey has-text-weight-medium">Riopass</a>. 
+      Все права защищены.
+    </p>
+
   </div>
 </footer>
 
