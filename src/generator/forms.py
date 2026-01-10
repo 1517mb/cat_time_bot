@@ -1,11 +1,19 @@
+import string
+
 from django import forms
+
+PASSWORD_CHARSETS = {
+    "letters": string.ascii_letters,
+    "digits": string.digits,
+    "special": string.punctuation,
+}
 
 
 class PasswordGeneratorForm(forms.Form):
     length = forms.IntegerField(
         initial=12,
         min_value=8,
-        max_value=50,
+        max_value=64,
         widget=forms.NumberInput(attrs={
             "class": "input",
             "id": "length",
@@ -44,3 +52,33 @@ class PasswordGeneratorForm(forms.Form):
             "id": "include_underscore",
         }),
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        length = cleaned_data.get("length")
+        include_hyphen = cleaned_data.get("include_hyphen")
+        include_underscore = cleaned_data.get("include_underscore")
+
+        if length is None:
+            return cleaned_data
+        req_separators_count = 0
+        if include_hyphen:
+            req_separators_count += 1
+        if include_underscore:
+            req_separators_count += 1
+
+        min_req_len = req_separators_count * 2
+
+        if length < min_req_len:
+            self.add_error(
+                "length",
+                f"Для выбранных разделителей длина должна быть не менее "
+                f"{min_req_len} символов."
+            )
+
+        if length < 8:
+            self.add_error(
+                "length", "Минимальная длина пароля - 8 символа."
+            )
+
+        return cleaned_data
