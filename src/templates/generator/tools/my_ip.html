@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8-tablet is-6-desktop">
+        
+        <h1 class="title has-text-centered mb-6">
+            👁️ Как вас видят сайты
+        </h1>
+
+        <div class="box has-text-centered py-6 main-card">
+          <p class="heading is-size-6 has-text-grey">Ваш IP-адрес</p>
+          <h2 class="title is-1 is-family-code has-text-link mt-2" id="ip-text">
+            {{ ip_address }}
+          </h2>
+          <button class="button is-small is-rounded is-light mt-2" onclick="copyIp()">
+            <span class="icon is-small"><i class="fas fa-copy"></i></span>
+            <span>Копировать</span>
+          </button>
+        </div>
+
+        <div class="columns is-multiline mt-4">
+          
+          <div class="column is-6">
+            <div class="box h-100 pl-5 pr-5">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon is-large has-text-info">
+                    <i class="fab fa-chrome fa-2x"></i>
+                  </span>
+                </div>
+                <div class="media-content">
+                  <p class="heading">Браузер</p>
+                  <p class="title is-5" id="js-browser">{{ browser }}</p>
+                  <p class="subtitle is-7 has-text-grey-light">
+                      Определено сервером
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="column is-6">
+            <div class="box h-100 pl-5 pr-5">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon is-large has-text-success">
+                    <i class="fas fa-laptop fa-2x"></i>
+                  </span>
+                </div>
+                <div class="media-content">
+                  <p class="heading">Система</p>
+                  <p class="title is-5" id="js-os">{{ os }}</p>
+                  <p class="subtitle is-7 has-text-grey-light" id="js-platform">
+                    {{ device }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="message is-small mt-5">
+            <div class="message-header">
+                <p>Техническая строка (User Agent)</p>
+            </div>
+          <div class="message-body is-family-code is-size-7" style="word-break: break-all;">
+            {{ ua_raw }}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  function copyIp() {
+    const ipText = document.getElementById('ip-text').innerText;
+    navigator.clipboard.writeText(ipText).then(() => {
+      alert('IP скопирован!');
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    if (navigator.userAgentData) {
+      navigator.userAgentData.getHighEntropyValues(
+          ['platform', 'platformVersion', 'model']
+      ).then(ua => {
+          if (ua.brands && ua.brands.length > 0) {
+             let brand = ua.brands.find(
+                 b => !b.brand.includes("Not") && !b.brand.includes("Brand")
+             );
+             if (brand) {
+                document.getElementById('js-browser').innerText = 
+                    `${brand.brand} ${brand.version}`;
+             }
+          }
+          if (ua.platform === "Windows") {
+            const majorVer = parseInt(ua.platformVersion.split('.')[0]);
+            if (majorVer >= 13) {
+              document.getElementById('js-os').innerText = "Windows 11";
+            }
+          }
+          if (ua.model) {
+             document.getElementById('js-platform').innerText = ua.model;
+          }
+        });
+    }
+  });
+</script>
+{% endblock %}
