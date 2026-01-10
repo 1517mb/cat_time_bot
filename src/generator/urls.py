@@ -12,4 +12,5 @@ urlpatterns = [
     path("copy-password/",
          views.copy_password,
          name="copy_password"),
+    path("tools/my-ip/", views.my_ip_view, name="my_ip"),
 ]
