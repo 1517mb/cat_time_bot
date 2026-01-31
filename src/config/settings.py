@@ -307,3 +307,12 @@ REQUEST_IGNORE_USERNAME = (
 REQUEST_LOG_IP = True
 REQUEST_LOG_USER = True
 REQUEST_IGNORE_AJAX = True
+REQUEST_PLUGINS = (
+    "config.request_plugins.RuTrafficInformation",
+    "config.request_plugins.RuLatestRequests",
+    "config.request_plugins.RuTopPaths",
+    "config.request_plugins.RuTopErrorPaths",
+    "config.request_plugins.RuTopReferrers",
+    "config.request_plugins.RuTopSearchPhrases",
+    "config.request_plugins.RuTopBrowsers",
+)
