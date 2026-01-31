@@ -1,0 +1,559 @@
+# Translation of django-request to Russian
+# Copyright (C) 2024
+# This file is distributed under the same license as the django-request package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: django-request\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-16 21:14+0200\n"
+"PO-Revision-Date: 2024-02-01 12:00+0300\n"
+"Last-Translator: \n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: request/admin.py:20 request/templates/admin/request/request/overview.html:34
+msgid "Request"
+msgstr "Запрос"
+
+#: request/admin.py:21 request/templates/request/plugins/latestrequests.html:7
+msgid "Response"
+msgstr "Ответ"
+
+#: request/admin.py:23
+msgid "User info"
+msgstr "Инфо о пользователе"
+
+#: request/admin.py:38
+msgid "Show only requests from this user."
+msgstr "Показать запросы только этого пользователя."
+
+#: request/admin.py:44
+msgid "Show only requests from this IP address."
+msgstr "Показать запросы только с этого IP."
+
+#: request/admin.py:78
+msgid "Request overview"
+msgstr "Обзор запросов"
+
+#: request/models.py:19
+msgid "response"
+msgstr "ответ"
+
+#: request/models.py:23
+msgid "method"
+msgstr "метод"
+
+#: request/models.py:24
+msgid "path"
+msgstr "путь"
+
+#: request/models.py:25
+msgid "time"
+msgstr "время"
+
+#: request/models.py:27
+msgid "is secure"
+msgstr "безопасный (HTTPS)"
+
+#: request/models.py:29
+msgid "is ajax"
+msgstr "AJAX"
+
+#: request/models.py:31
+msgid "Whether this request was used via JavaScript."
+msgstr "Был ли запрос отправлен через JavaScript."
+
+#: request/models.py:35
+msgid "ip address"
+msgstr "IP-адрес"
+
+#: request/models.py:40
+msgid "user"
+msgstr "пользователь"
+
+#: request/models.py:43
+msgid "referer"
+msgstr "referer (откуда пришел)"
+
+#: request/models.py:45
+msgid "user agent"
+msgstr "user agent"
+
+#: request/models.py:47
+msgid "language"
+msgstr "язык"
+
+#: request/models.py:53
+msgid "request"
+msgstr "запрос"
+
+#: request/models.py:54
+msgid "requests"
+msgstr "запросы"
+
+#: request/templates/admin/request/app_index.html:10
+#, python-format
+msgid "Models available in the %(name)s application."
+msgstr "Модели, доступные в приложении %(name)s."
+
+#: request/templates/admin/request/app_index.html:11
+#, python-format
+msgid "%(name)s"
+msgstr "%(name)s"
+
+#: request/templates/admin/request/app_index.html:21
+msgid "Add"
+msgstr "Добавить"
+
+#: request/templates/admin/request/app_index.html:27
+msgid "Change"
+msgstr "Изменить"
+
+#: request/templates/admin/request/app_index.html:35
+#: request/templates/admin/request/request/change_list.html:6
+#: request/templates/admin/request/request/overview.html:36
+msgid "Overview"
+msgstr "Обзор статистики"
+
+#: request/templates/admin/request/app_index.html:45
+msgid "You don't have permission to edit anything."
+msgstr "У вас нет прав для редактирования."
+
+#: request/templates/admin/request/request/change_list.html:10
+#, python-format
+msgid "Add %(name)s"
+msgstr "Добавить %(name)s"
+
+#: request/templates/admin/request/request/overview.html:33
+msgid "Home"
+msgstr "Главная"
+
+#: request/templates/admin/request/request/overview.html:35
+msgid "Requests"
+msgstr "Запросы"
+
+#: request/templates/admin/request/request/overview.html:46
+msgid "Traffic graph"
+msgstr "График трафика"
+
+#: request/templates/admin/request/request/overview.html:47
+msgid "Week"
+msgstr "Неделя"
+
+#: request/templates/admin/request/request/overview.html:48
+msgid "Month"
+msgstr "Месяц"
+
+#: request/templates/admin/request/request/overview.html:49
+msgid "Year"
+msgstr "Год"
+
+#: request/templates/request/plugins/activeusers.html:6 request/traffic.py:195
+#: request/traffic.py:196
+msgid "User"
+msgstr "Пользователь"
+
+#: request/templates/request/plugins/latestrequests.html:5
+#: request/templates/request/plugins/toppaths.html:5
+msgid "Path"
+msgstr "Путь"
+
+#: request/templates/request/plugins/latestrequests.html:6
+msgid "From"
+msgstr "От кого"
+
+#: request/templates/request/plugins/latestrequests.html:8
+msgid "Time"
+msgstr "Время"
+
+#: request/templates/request/plugins/topbrowsers.html:5
+msgid "Browser"
+msgstr "Браузер"
+
+#: request/templates/request/plugins/topbrowsers.html:6
+#: request/templates/request/plugins/toppaths.html:6
+#: request/templates/request/plugins/topreferrers.html:6
+#: request/templates/request/plugins/topsearchphrases.html:6
+msgid "Visits"
+msgstr "Визиты"
+
+#: request/templates/request/plugins/topreferrers.html:5
+msgid "Referrer"
+msgstr "Источник (Referrer)"
+
+#: request/templates/request/plugins/topsearchphrases.html:5
+msgid "Phrase"
+msgstr "Фраза"
+
+#: request/templates/request/plugins/trafficinformation.html:6
+msgid "Today"
+msgstr "Сегодня"
+
+#: request/templates/request/plugins/trafficinformation.html:7
+msgid "This week"
+msgstr "Эта неделя"
+
+#: request/templates/request/plugins/trafficinformation.html:8
+msgid "This month"
+msgstr "Этот месяц"
+
+#: request/templates/request/plugins/trafficinformation.html:9
+msgid "This year"
+msgstr "Этот год"
+
+#: request/templates/request/plugins/trafficinformation.html:10
+msgid "Alltime"
+msgstr "Всё время"
+
+#: request/traffic.py:114
+msgid "Ajax"
+msgstr "Ajax"
+
+#: request/traffic.py:121 request/traffic.py:122
+msgid "Not Ajax"
+msgstr "Не Ajax"
+
+#: request/traffic.py:129
+msgid "Error"
+msgstr "Ошибка"
+
+#: request/traffic.py:130
+msgid "Errors"
+msgstr "Ошибки"
+
+#: request/traffic.py:137
+msgid "Error 404"
+msgstr "Ошибка 404"
+
+#: request/traffic.py:138
+msgid "Errors 404"
+msgstr "Ошибки 404"
+
+#: request/traffic.py:145
+msgid "Hit"
+msgstr "Хит"
+
+#: request/traffic.py:146
+msgid "Hits"
+msgstr "Хиты"
+
+#: request/traffic.py:153
+msgid "Search"
+msgstr "Поиск"
+
+#: request/traffic.py:154
+msgid "Searches"
+msgstr "Поиски"
+
+#: request/traffic.py:161 request/traffic.py:162
+msgid "Secure"
+msgstr "Безопасный"
+
+#: request/traffic.py:169 request/traffic.py:170
+msgid "Unsecure"
+msgstr "Небезопасный"
+
+#: request/traffic.py:177
+msgid "Unique Visit"
+msgstr "Уникальный визит"
+
+#: request/traffic.py:178
+msgid "Unique Visits"
+msgstr "Уникальные визиты"
+
+#: request/traffic.py:187 request/traffic.py:188
+msgid "Unique Visitor"
+msgstr "Уникальный посетитель"
+
+#: request/traffic.py:203 request/traffic.py:204
+msgid "Unique User"
+msgstr "Уникальный пользователь"
+
+#: request/utils.py:12
+msgid "Continue"
+msgstr "Продолжить"
+
+#: request/utils.py:13
+msgid "Switching Protocols"
+msgstr "Переключение протоколов"
+
+#: request/utils.py:14
+msgid "Processing (WebDAV)"
+msgstr "Обработка (WebDAV)"
+
+#: request/utils.py:15
+msgid "Early Hints"
+msgstr "Ранние подсказки"
+
+#: request/utils.py:17
+msgid "OK"
+msgstr "ОК"
+
+#: request/utils.py:18
+msgid "Created"
+msgstr "Создано"
+
+#: request/utils.py:19
+msgid "Accepted"
+msgstr "Принято"
+
+#: request/utils.py:20
+msgid "Non-Authoritative Information"
+msgstr "Информация не из первоисточника"
+
+#: request/utils.py:21
+msgid "No Content"
+msgstr "Нет содержимого"
+
+#: request/utils.py:22
+msgid "Reset Content"
+msgstr "Сбросить содержимое"
+
+#: request/utils.py:23
+msgid "Partial Content"
+msgstr "Частичное содержимое"
+
+#: request/utils.py:24
+msgid "Multi-Status (WebDAV)"
+msgstr "Многостатусный (WebDAV)"
+
+#: request/utils.py:25
+msgid "Already Reported (WebDAV)"
+msgstr "Уже сообщено (WebDAV)"
+
+#: request/utils.py:26
+msgid "IM Used (HTTP Delta encoding)"
+msgstr "IM использован"
+
+#: request/utils.py:28
+msgid "Multiple Choices"
+msgstr "Множественный выбор"
+
+#: request/utils.py:29
+msgid "Moved Permanently"
+msgstr "Перемещено навсегда"
+
+#: request/utils.py:30
+msgid "Found"
+msgstr "Найдено"
+
+#: request/utils.py:31
+msgid "See Other"
+msgstr "Смотреть другое"
+
+#: request/utils.py:32
+msgid "Not Modified"
+msgstr "Не изменено"
+
+#: request/utils.py:33
+msgid "Use Proxy"
+msgstr "Использовать прокси"
+
+#: request/utils.py:34
+msgid "Switch Proxy"
+msgstr "Переключить прокси"
+
+#: request/utils.py:35
+msgid "Temporary Redirect"
+msgstr "Временное перенаправление"
+
+#: request/utils.py:36
+msgid "Permanent Redirect"
+msgstr "Постоянное перенаправление"
+
+#: request/utils.py:38
+msgid "Bad Request"
+msgstr "Плохой запрос"
+
+#: request/utils.py:39
+msgid "Unauthorized"
+msgstr "Не авторизован"
+
+#: request/utils.py:40
+msgid "Payment Required"
+msgstr "Требуется оплата"
+
+#: request/utils.py:41
+msgid "Forbidden"
+msgstr "Запрещено"
+
+#: request/utils.py:42
+msgid "Not Found"
+msgstr "Не найдено"
+
+#: request/utils.py:43
+msgid "Method Not Allowed"
+msgstr "Метод не разрешен"
+
+#: request/utils.py:44
+msgid "Not Acceptable"
+msgstr "Неприемлемо"
+
+#: request/utils.py:45
+msgid "Proxy Authentication Required"
+msgstr "Требуется аутентификация прокси"
+
+#: request/utils.py:46
+msgid "Request Timeout"
+msgstr "Тайм-аут запроса"
+
+#: request/utils.py:47
+msgid "Conflict"
+msgstr "Конфликт"
+
+#: request/utils.py:48
+msgid "Gone"
+msgstr "Удален"
+
+#: request/utils.py:49
+msgid "Length Required"
+msgstr "Требуется длина"
+
+#: request/utils.py:50
+msgid "Precondition Failed"
+msgstr "Условие ложно"
+
+#: request/utils.py:51
+msgid "Request Entity Too Large"
+msgstr "Запрос слишком велик"
+
+#: request/utils.py:52
+msgid "Request-URI Too Long"
+msgstr "URI запроса слишком длинный"
+
+#: request/utils.py:53
+msgid "Unsupported Media Type"
+msgstr "Неподдерживаемый тип данных"
+
+#: request/utils.py:54
+msgid "Requested Range Not Satisfiable"
+msgstr "Диапазон не достижим"
+
+#: request/utils.py:55
+msgid "Expectation Failed"
+msgstr "Ожидание не оправдалось"
+
+#: request/utils.py:56
+msgid "I'm a teapot"
+msgstr "Я чайник"
+
+#: request/utils.py:57
+msgid "Unprocessable Entity (WebDAV)"
+msgstr "Необрабатываемый экземпляр (WebDAV)"
+
+#: request/utils.py:58
+msgid "Locked (WebDAV)"
+msgstr "Заблокировано (WebDAV)"
+
+#: request/utils.py:59
+msgid "Failed Dependency (WebDAV)"
+msgstr "Ошибка зависимости (WebDAV)"
+
+#: request/utils.py:60
+msgid "Unordered Collection"
+msgstr "Неупорядоченная коллекция"
+
+#: request/utils.py:61
+msgid "Upgrade Required"
+msgstr "Требуется обновление"
+
+#: request/utils.py:62
+msgid "Precondition Required"
+msgstr "Требуется предопределенное условие"
+
+#: request/utils.py:63
+msgid "Too Many Requests"
+msgstr "Слишком много запросов"
+
+#: request/utils.py:64
+msgid "Request Header Fields Too Large"
+msgstr "Заголовки запроса слишком большие"
+
+#: request/utils.py:65
+msgid "Retry With"
+msgstr "Повторить с"
+
+#: request/utils.py:66
+msgid "Unavailable For Legal Reasons"
+msgstr "Недоступно по юридическим причинам"
+
+#: request/utils.py:68
+msgid "Internal Server Error"
+msgstr "Внутренняя ошибка сервера"
+
+#: request/utils.py:69
+msgid "Not Implemented"
+msgstr "Не реализовано"
+
+#: request/utils.py:70
+msgid "Bad Gateway"
+msgstr "Плохой шлюз"
+
+#: request/utils.py:71
+msgid "Service Unavailable"
+msgstr "Сервис недоступен"
+
+#: request/utils.py:72
+msgid "Gateway Timeout"
+msgstr "Тайм-аут шлюза"
+
+#: request/utils.py:73
+msgid "HTTP Version Not Supported"
+msgstr "Версия HTTP не поддерживается"
+
+#: request/utils.py:74
+msgid "Variant Also Negotiates"
+msgstr "Вариант тоже согласовывает"
+
+#: request/utils.py:75
+msgid "Insufficient Storage (WebDAV)"
+msgstr "Недостаточно места (WebDAV)"
+
+#: request/utils.py:76
+msgid "Bandwidth Limit Exceeded"
+msgstr "Превышен лимит пропускной способности"
+
+#: request/utils.py:77
+msgid "Not Extended"
+msgstr "Не расширено"
+
+#: request/utils.py:78
+msgid "Network Authentication Required"
+msgstr "Требуется сетевая аутентификация"
+
+#: request/plugins.py:22
+msgid "Traffic Information"
+msgstr "Информация о трафике"
+
+#: request/plugins.py:53
+msgid "Latest Requests"
+msgstr "Последние запросы"
+
+#: request/plugins.py:68
+msgid "Top Paths"
+msgstr "Популярные страницы"
+
+#: request/plugins.py:82
+msgid "Top Error Paths"
+msgstr "Частые ошибки"
+
+#: request/plugins.py:96
+msgid "Top Referrers"
+msgstr "Популярные источники"
+
+#: request/plugins.py:110
+msgid "Top Search Phrases"
+msgstr "Поисковые запросы"
+
+#: request/plugins.py:124
+msgid "Top Browsers"
+msgstr "Популярные браузеры"
+
+#: request/plugins.py:138
+msgid "Active Users"
+msgstr "Активные пользователи"
