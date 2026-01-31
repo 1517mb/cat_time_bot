@@ -285,6 +285,16 @@ REQUEST_IGNORE_USER_AGENTS = (
     r'Bingbot',
     r'AhrefsBot',
     r'MJ12bot',
+    r'SemrushBot',
+    r'DotBot',
+    r'PetalBot',
+    r'Bytespider',
+    r'Barkrowler',
+    r'BingoBot',
+    r'Amazonbot',
+    r'python-requests',
+    r'curl',
+    r'Wget',
 )
 
 REQUEST_IGNORE_USERNAME = (
