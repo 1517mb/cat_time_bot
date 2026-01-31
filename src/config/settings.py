@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "pages.apps.PagesConfig",
     "import_export",
     "django_ckeditor_5",
-    "request"
+    "config.apps.RequestConfig"
 ]
 
 MIDDLEWARE = [
@@ -105,6 +105,10 @@ USE_I18N = True
 USE_L10N = True
 
 TIME_ZONE = "Europe/Moscow"
+
+LOCALE_PATHS = (
+    os.path.join(BASE_DIR, "locale"),
+)
 
 STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
