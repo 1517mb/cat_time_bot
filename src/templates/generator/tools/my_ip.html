@@ -1,5 +1,16 @@
 {% extends "base.html" %}
+{% load static %}
+{% block meta %}
+  <meta name="description" content="Узнайте свой IP-адрес, браузер, операционную систему и User Agent.">
+  <meta name="keywords" content="мой ip, узнать ip, ip адрес, браузер, user agent">
+  <meta property="og:title" content="Мой IP — как вас видят сайты">
+  <meta property="og:description" content="Страница 'Мой IP' показывает IP-адрес, браузер, ОС и техническую строку User Agent.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/share/logo_share.png' %}">
+{% endblock %}
 
+{% block title %}Мой IP{% endblock %}
 {% block content %}
 <section class="section">
   <div class="container">
