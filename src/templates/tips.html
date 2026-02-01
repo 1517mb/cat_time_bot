@@ -4,204 +4,250 @@
 
 {% block content %}
 <section class="section">
-    <div class="container">
-        <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
-            <ul>
-                <li>
-                    <a href="/">
-                        <span class="icon is-small"><i class="fas fa-home"></i></span>
-                        <span>Главная</span>
-                    </a>
-                </li>
-                <li class="is-active">
-                    <a href="#" aria-current="page">
-                        <span class="icon is-small"><i class="far fa-lightbulb"></i></span>
-                        <span>Советы</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+  <div class="container">
 
-        <h1 class="title is-2 mb-6 theme-aware-title">💡 Полезные Советы</h1>
+    <nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
+      <ul>
+        <li>
+          <a href="/">
+            <span class="icon is-small"><i class="fas fa-home"></i></span>
+            <span>Главная</span>
+          </a>
+        </li>
+        <li class="is-active">
+          <a href="#" aria-current="page">
+            <span class="icon is-small"><i class="far fa-lightbulb"></i></span>
+            <span>Советы</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
 
-        <div class="box mb-6">
-            <form method="GET" action="{% url 'tips' %}" id="tips-filter-form">
-                <div class="columns is-multiline">
-                    
-                    <div class="column is-12-mobile is-7-tablet">
-                        <div class="field">
-                            <label class="label">Поиск</label>
-                            <div class="control has-icons-left">
-                                <input class="input" type="text" id="search-input" name="q" 
-                                       placeholder="Например: Как настроить роутер..." 
-                                       value="{{ search_query }}">
-                                <span class="icon is-small is-left"><i class="fas fa-search"></i></span>
-                            </div>
-                        </div>
-                    </div>
+    <h1 class="title is-2 mb-6 theme-aware-title">💡 Полезные Советы</h1>
 
-                    <div class="column is-12-mobile is-5-tablet">
-                         <div class="field">
-                            <label class="label">Фильтр по тегам</label>
-                            <div class="control">
-                                <div class="tags are-medium">
-                                    {% for tag in all_tags %}
-                                    <label class="tag is-clickable {% if tag.id in selected_tag_ids %}is-primary{% else %}is-light{% endif %}" 
-                                           style="cursor: pointer; user-select: none;">
-                                        <input type="checkbox" name="tags" value="{{ tag.id }}" 
-                                               {% if tag.id in selected_tag_ids %}checked{% endif %} 
-                                               style="display: none;"
-                                               onchange="this.form.submit()">
-                                        {{ tag.name }}
-                                    </label>
-                                    {% empty %}
-                                    <p class="help">Теги пока не созданы.</p>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="field is-grouped is-grouped-right mt-4">
-                    <div class="control">
-                        <button type="submit" class="button is-primary">
-                            <span class="icon"><i class="fas fa-filter"></i></span>
-                            <span>Найти</span>
-                        </button>
-                    </div>
-                    <div class="control">
-                        <a href="{% url 'tips' %}" class="button is-light">
-                            <span class="icon"><i class="fas fa-undo"></i></span>
-                            <span>Сбросить</span>
-                        </a>
-                    </div>
-                </div>
-            </form>
+    <!-- ФИЛЬТРЫ -->
+    <div class="box mb-6">
+    <form method="GET" action="{% url 'tips' %}" id="tips-filter-form">
+    <label class="label mb-2">Поиск и фильтры</label>
+    <div class="field tips-custom-group">
+    <!-- Поиск -->
+    <div class="control is-expanded has-icons-left">
+        <input
+        class="input tips-search-input"
+        type="text"
+        name="q"
+        placeholder="Например: Как настроить роутер..."
+        value="{{ search_query }}"
+        >
+        <span class="icon is-small is-left">
+        <i class="fas fa-search"></i>
+        </span>
+    </div>
+    <!-- Dropdown тегов -->
+    <div class="control">
+        <div class="dropdown" id="tagsDropdown">
+        <div class="dropdown-trigger">
+            <button
+            class="button is-light tips-tag-btn"
+            type="button"
+            aria-haspopup="true"
+            aria-controls="tagsDropdownMenu"
+            >
+            <span>Теги</span>
+            <span class="icon is-small"><i class="fas fa-angle-down"></i></span>
+            </button>
         </div>
 
-        <div class="columns">
-            <div class="column is-12-mobile is-9-desktop">
-                {% if tips %}
-                <div class="columns is-multiline">
-                    {% for tip in tips %}
-                    <div class="column is-12-mobile is-6-tablet is-4-desktop is-flex">
-                        
-                        <div class="card resource-card is-flex-grow-1">
-                            <div class="card-content">
-                                <p class="title is-5 mb-3">
-                                    <a href="{% url 'tip_detail' tip.pk %}" class="has-text-dark">
-                                        {{ tip.title }}
-                                    </a>
-                                </p>
-                                
-                                <div class="level is-mobile mb-3 is-size-7 has-text-grey">
-                                    <div class="level-left">
-                                        <div class="level-item">
-                                            <span class="icon is-small mr-1"><i class="far fa-calendar-alt"></i></span>
-                                            {{ tip.pub_date|date:"d.m.y" }}
-                                        </div>
-                                        <div class="level-item">
-                                            <span class="icon is-small mr-1"><i class="fas fa-eye"></i></span>
-                                            {{ tip.views_count }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {% if tip.tags.all %}
-                                    <div class="tags are-small mb-3">
-                                        {% for tag in tip.tags.all|slice:":3" %}
-                                            <a href="{% url 'tips' %}?tags={{ tag.id }}" class="tag is-light" style="text-decoration: none;">
-                                                {{ tag.name }}
-                                            </a>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-
-                                <div class="content is-small mb-0" style="overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                                    {{ tip.content|safe}}
-                                </div>
-                            </div>
-                            
-                            <footer class="card-footer mt-auto">
-                                <a href="{% url 'tip_detail' tip.pk %}" class="card-footer-item has-text-primary has-text-weight-medium">
-                                    Читать далее
-                                </a>
-                                {% if tip.external_link %}
-                                <a href="{{ tip.external_link }}" class="card-footer-item has-text-grey" target="_blank">
-                                    <span class="icon"><i class="fas fa-external-link-alt"></i></span>
-                                </a>
-                                {% endif %}
-                            </footer>
-                        </div>
-                    </div>
-                    {% endfor %}
+        <div class="dropdown-menu" id="tagsDropdownMenu" role="menu">
+            <div class="dropdown-content">
+            <div class="dropdown-item">
+                <div class="tags are-medium" style="max-height: 180px; overflow:auto;">
+                {% for tag in all_tags %}
+                    <label class="tag is-clickable {% if tag.id in selected_tag_ids %}is-primary{% else %}is-light{% endif %}" style="cursor: pointer; user-select: none;">
+                    <input type="checkbox" name="tags" value="{{ tag.id }}" {% if tag.id in selected_tag_ids %}checked{% endif %} style="display:none;" onchange="this.form.submit()">
+                    {{ tag.name }}
+                    </label>
+                {% empty %}
+                    <p class="help">Теги пока не созданы.</p>
+                {% endfor %}
                 </div>
-
-                <nav class="pagination is-centered is-rounded my-6" role="navigation" aria-label="pagination">
-                    {% if tips.has_previous %}
-                        <a href="?{{ query_string }}&page={{ tips.previous_page_number }}" class="pagination-previous">
-                            <span class="icon"><i class="fas fa-chevron-left"></i></span> Назад
-                        </a>
-                    {% else %}
-                        <a class="pagination-previous" disabled>Назад</a>
-                    {% endif %}
-
-                    {% if tips.has_next %}
-                        <a href="?{{ query_string }}&page={{ tips.next_page_number }}" class="pagination-next">
-                            Вперед <span class="icon"><i class="fas fa-chevron-right"></i></span>
-                        </a>
-                    {% else %}
-                        <a class="pagination-next" disabled>Вперед</a>
-                    {% endif %}
-
-                    <ul class="pagination-list">
-                        {% for num in tips.paginator.page_range %}
-                            {% if tips.number == num %}
-                                <li><a class="pagination-link is-current" aria-label="Page {{ num }}">{{ num }}</a></li>
-                            {% elif num > tips.number|add:'-3' and num < tips.number|add:'3' %}
-                                <li><a href="?{{ query_string }}&page={{ num }}" class="pagination-link">{{ num }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-                    </ul>
-                </nav>
-                
-                {% else %}
-                <div class="notification is-light has-text-centered">
-                    <p class="title is-5">Советы не найдены 😔</p>
-                    <p>Попробуйте изменить запрос или сбросить фильтры.</p>
-                </div>
-                {% endif %}
             </div>
-
-            <div class="column is-12-mobile is-3-desktop">
-                <div class="box" style="position: sticky; top: 20px;"> 
-                    <h2 class="title is-5 mb-4">
-                        <span class="icon-text">
-                            <span class="icon has-text-warning"><i class="fas fa-fire"></i></span>
-                            <span>Популярное</span>
-                        </span>
-                    </h2>
-                    <aside class="menu">
-                        <ul class="menu-list">
-                            {% for pop_tip in popular_tips %}
-                            <li>
-                                <a href="{% url 'tip_detail' pop_tip.pk %}" class="is-size-6 py-2">
-                                    {{ pop_tip.title|truncatechars:100 }}
-                                    <br>
-                                    <span class="is-size-7 has-text-grey">
-                                        <i class="fas fa-eye mr-1"></i> {{ pop_tip.views_count }}
-                                    </span>
-                                </a>
-                            </li>
-                            {% empty %}
-                            <li><p class="is-size-7 has-text-grey">Популярных советов пока нет.</p></li>
-                            {% endfor %}
-                        </ul>
-                    </aside>
-                </div>
-            </div> 
-        </div> 
+            {% if selected_tag_ids or search_query %}
+                <hr class="dropdown-divider">
+                <a class="dropdown-item" href="{% url 'tips' %}">Сбросить фильтры</a>
+            {% endif %}
+            </div>
+        </div>
+        </div>
     </div>
+    <div class="control">
+        <button type="submit" class="button is-primary tips-find-btn">
+        <span class="icon"><i class="fas fa-filter"></i></span>
+        <span>Найти</span>
+        </button>
+    </div>
+    <div class="control">
+        <a href="{% url 'tips' %}" class="button is-text tips-reset-link">
+        <span class="icon"><i class="fas fa-undo"></i></span>
+        <span>Сбросить</span>
+        </a>
+    </div>
+
+    </div>
+
+    </form>
+    </div>
+    <div class="columns is-multiline">
+      <div class="column is-12 is-8-widescreen">
+        {% if tips %}
+          <div class="columns is-multiline tip-grid">
+            {% for tip in tips %}
+              <div class="column is-12-mobile is-6-tablet is-6-desktop is-flex">
+                <div class="card resource-card is-flex-grow-1">
+                  <div class="card-content">
+
+                    <p class="title is-5 mb-3">
+                      <a href="{% url 'tip_detail' tip.pk %}" class="has-text-dark">
+                        {{ tip.title }}
+                      </a>
+                    </p>
+
+                    <div class="level is-mobile mb-3 is-size-7 has-text-grey">
+                      <div class="level-left">
+                        <div class="level-item">
+                          <span class="icon is-small mr-1"><i class="far fa-calendar-alt"></i></span>
+                          {{ tip.pub_date|date:"d.m.y" }}
+                        </div>
+                        <div class="level-item">
+                          <span class="icon is-small mr-1"><i class="fas fa-eye"></i></span>
+                          {{ tip.views_count }}
+                        </div>
+                      </div>
+                    </div>
+
+                    {% if tip.tags.all %}
+                      <div class="tags are-small mb-3">
+                        {% for tag in tip.tags.all|slice:":3" %}
+                          <a
+                            href="{% url 'tips' %}?tags={{ tag.id }}"
+                            class="tag is-light"
+                            style="text-decoration:none;"
+                          >
+                            {{ tag.name }}
+                          </a>
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+
+                    <div
+                      class="content is-small mb-0"
+                      style="overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;"
+                    >
+                      {{ tip.content|safe }}
+                    </div>
+
+                  </div>
+
+                  <footer class="card-footer mt-auto">
+                    <a
+                      href="{% url 'tip_detail' tip.pk %}"
+                      class="card-footer-item has-text-primary has-text-weight-medium"
+                    >
+                      Читать далее
+                    </a>
+                    {% if tip.external_link %}
+                      <a href="{{ tip.external_link }}" class="card-footer-item has-text-grey" target="_blank">
+                        <span class="icon"><i class="fas fa-external-link-alt"></i></span>
+                      </a>
+                    {% endif %}
+                  </footer>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <nav class="pagination is-centered is-rounded my-6" role="navigation" aria-label="pagination">
+            {% if tips.has_previous %}
+              <a href="?{{ query_string }}&page={{ tips.previous_page_number }}" class="pagination-previous">
+                <span class="icon"><i class="fas fa-chevron-left"></i></span> Назад
+              </a>
+            {% else %}
+              <a class="pagination-previous" disabled>Назад</a>
+            {% endif %}
+
+            {% if tips.has_next %}
+              <a href="?{{ query_string }}&page={{ tips.next_page_number }}" class="pagination-next">
+                Вперед <span class="icon"><i class="fas fa-chevron-right"></i></span>
+              </a>
+            {% else %}
+              <a class="pagination-next" disabled>Вперед</a>
+            {% endif %}
+
+            <ul class="pagination-list">
+              {% for num in tips.paginator.page_range %}
+                {% if tips.number == num %}
+                  <li><a class="pagination-link is-current" aria-label="Page {{ num }}">{{ num }}</a></li>
+                {% elif num > tips.number|add:'-3' and num < tips.number|add:'3' %}
+                  <li><a href="?{{ query_string }}&page={{ num }}" class="pagination-link">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </nav>
+
+        {% else %}
+          <div class="notification is-light has-text-centered">
+            <p class="title is-5">Советы не найдены 😔</p>
+            <p>Попробуйте изменить запрос или сбросить фильтры.</p>
+          </div>
+        {% endif %}
+      </div>
+      <div class="column is-12 is-4-widescreen">
+        <div class="box" style="position: sticky; top: 20px;">
+          <h2 class="title is-5 mb-4">
+            <span class="icon-text">
+              <span class="icon has-text-warning"><i class="fas fa-fire"></i></span>
+              <span>Популярное</span>
+            </span>
+          </h2>
+
+          <aside class="menu">
+            <ul class="menu-list">
+              {% for pop_tip in popular_tips %}
+                <li>
+                  <a href="{% url 'tip_detail' pop_tip.pk %}" class="is-size-6 py-2">
+                    {{ pop_tip.title|truncatechars:100 }}<br>
+                    <span class="is-size-7 has-text-grey">
+                      <i class="fas fa-eye mr-1"></i> {{ pop_tip.views_count }}
+                    </span>
+                  </a>
+                </li>
+              {% empty %}
+                <li><p class="is-size-7 has-text-grey">Популярных советов пока нет.</p></li>
+              {% endfor %}
+            </ul>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const dd = document.getElementById('tagsDropdown');
+  if (!dd) return;
+
+  const btn = dd.querySelector('.dropdown-trigger button');
+
+  btn.addEventListener('click', () => {
+    dd.classList.toggle('is-active');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!dd.contains(e.target)) dd.classList.remove('is-active');
+  });
+});
+</script>
 {% endblock %}

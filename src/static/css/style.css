@@ -127,7 +127,6 @@ html[data-theme="dark"] .navbar .navbar-item .nav-tool-icon i {
   color: #ffffff !important;
 }
 
-
 /* =========================================
    3. КАРТОЧКИ (Программы и Советы)
    ========================================= */
@@ -320,7 +319,6 @@ html[data-theme="dark"] .pagination-link.is-current {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
-
 
 html[data-theme="dark"] .news-card,
 html[data-theme="dark"] .news-article-box,
@@ -647,7 +645,6 @@ html[data-theme="dark"], .theme-dark {
   padding-right: 0.75rem;
 }
 
-
 @media (max-width: 480px) {
   .length-input {
     font-size: 1.4rem;
@@ -698,7 +695,6 @@ html[data-theme="dark"] .myip-address {
   margin-right: 0.35rem;
 }
 
-
 @media (max-width: 480px) {
   .rating-box {
     text-align: center;
@@ -715,6 +711,124 @@ html[data-theme="dark"] .myip-address {
   }
 }
 
+.tip-grid > .column {
+  margin-bottom: 1rem;
+}
 
+@media (max-width: 480px) {
+  .resource-card .card-content {
+    padding: 1rem 1rem 0.75rem;
+  }
+  .resource-card .title.is-5 {
+    font-size: 1.05rem;
+  }
+}
 
+#tips-filter-form .tags {
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
 
+@media (max-width: 480px) {
+  #tips-filter-form .tags.are-medium .tag {
+    font-size: 0.8rem;
+    padding-inline: 0.6rem;
+    margin: 0.15rem;
+  }
+}
+
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 1400px) {
+  .main-container {
+    max-width: 1280px;
+  }
+}
+/* =========================================
+   КАСТОМНАЯ ГРУППА ПОИСКА
+   ========================================= */
+
+/* 1. Настройка контейнера */
+.tips-custom-group {
+  display: flex;
+  align-items: center;
+}
+
+/* 
+   2. МОБИЛЬНАЯ ВЕРСИЯ (до 768px) 
+*/
+@media (max-width: 768px) {
+  .tips-custom-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tips-custom-group > .control {
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  .tips-custom-group > .control:last-child {
+    margin-bottom: 0;
+  }
+  .tips-search-input,
+  .tips-tag-btn,
+  .tips-find-btn,
+  .tips-reset-link {
+    border-radius: 9999px !important;
+    width: 100%;
+  }
+  #tagsDropdown, 
+  #tagsDropdown .dropdown-trigger,
+  #tagsDropdown .dropdown-menu {
+    width: 100%;
+  }
+  .tips-tag-btn {
+    justify-content: center;
+  }
+  .tips-reset-link {
+    justify-content: center;
+  }
+}
+
+/* 
+   3. ДЕСКТОПНАЯ ВЕРСИЯ (от 769px) 
+*/
+@media (min-width: 769px) {
+  .tips-custom-group > .control:first-child {
+    flex-grow: 1;
+    flex-shrink: 1;
+    width: auto;
+  }
+  .tips-custom-group > .control:not(:last-child) {
+    margin-right: 0;
+  }
+  .tips-search-input {
+    border-radius: 9999px 0 0 9999px !important;
+    z-index: 2;
+    position: relative;
+    width: 100% !important;
+  }
+  .tips-search-input:focus {
+    z-index: 3;
+  }
+  .tips-tag-btn {
+    border-radius: 0 !important;
+    border-left: none;
+    border-right: none;
+    margin: 0;
+  }
+  .tips-find-btn {
+    border-radius: 0 9999px 9999px 0 !important;
+  }
+
+  .tips-reset-link {
+    margin-left: 10px;
+    border-radius: 9999px;
+    white-space: nowrap;
+  }
+}
