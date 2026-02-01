@@ -164,7 +164,8 @@
                                         {% for i in "12345" %}
                                             <label class="mr-2" style="cursor:pointer;">
                                                 <input type="radio" name="rating" value="{{ forloop.counter }}" style="display:none;">
-                                                <i class="far fa-star fa-2x has-text-warning star-icon" data-value="{{ forloop.counter }}"></i>
+                                                <i class="far fa-star has-text-warning star-icon" data-value="{{ forloop.counter }}"></i>
+
                                             </label>
                                         {% endfor %}
                                     </div>

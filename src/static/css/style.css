@@ -671,4 +671,50 @@ html[data-theme="dark"] .myip-card {
 html[data-theme="dark"] .myip-address {
   color: #ffffff;
 }
+.program-description,
+.program-description p,
+.program-description a {
+  overflow-wrap: break-word;
+  word-break: break-word; 
+}
+.program-title {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.program-description table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.program-description table td,
+.program-description table th {
+  white-space: nowrap;
+}
+.rating-stars .star-icon {
+  font-size: 2rem;
+  margin-right: 0.35rem;
+}
+
+
+@media (max-width: 480px) {
+  .rating-box {
+    text-align: center;
+  }
+
+  .rating-stars {
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  .rating-stars .star-icon {
+    font-size: 1.6rem;
+    margin-right: 0.25rem;
+  }
+}
+
+
+
 
