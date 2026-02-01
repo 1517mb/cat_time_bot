@@ -631,3 +631,16 @@ html[data-theme="dark"], .theme-dark {
   overflow: visible !important;
   overflow-y: visible !important;
 }
+.length-input {
+  font-size: 1.25rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+
+@media (max-width: 480px) {
+  .length-input {
+    font-size: 1.4rem;
+    height: 3rem;
+  }
+}
