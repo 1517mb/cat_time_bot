@@ -3,10 +3,10 @@
 </p>
 
 <div id="random-tip-container" hx-swap-oob="true">
-    <h4 class="subtitle is-6 mb-2">
-        <span class="icon is-small mr-1"><i class="far fa-lightbulb"></i></span>
-        Знаете ли вы?
-    </h4>
+    <div class="icon-text mb-2">
+        <span class="icon has-text-info"><i class="far fa-lightbulb"></i></span>
+        <span class="has-text-weight-bold is-size-6">Знаете ли вы?</span>
+    </div>
     {% if random_tip %}
         <div class="notification is-white p-3 is-size-6" style="border-left: 4px solid #3298dc;">
             <p class="mb-2 has-text-dark"><strong>{{ random_tip.title }}</strong></p>
