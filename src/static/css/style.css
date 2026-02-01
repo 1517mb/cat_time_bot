@@ -619,3 +619,15 @@ html[data-theme="dark"], .theme-dark {
 }
 
 .h-100 { height: 100%; }
+.browser-title,
+.os-title {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.myip-card,
+.myip-card .media,
+.myip-card .media-content {
+  overflow: visible !important;
+  overflow-y: visible !important;
+}
