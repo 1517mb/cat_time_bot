@@ -654,3 +654,21 @@ html[data-theme="dark"], .theme-dark {
     height: 3rem;
   }
 }
+html[data-theme="light"] .myip-card,
+html:not([data-theme]) .myip-card {
+  border-top: 4px solid #00d1b2;
+}
+
+html[data-theme="light"] .myip-address,
+html:not([data-theme]) .myip-address {
+  color: #00d1b2 !important;
+}
+
+html[data-theme="dark"] .myip-card {
+  border-top-color: #00d1b2;
+}
+
+html[data-theme="dark"] .myip-address {
+  color: #ffffff;
+}
+
