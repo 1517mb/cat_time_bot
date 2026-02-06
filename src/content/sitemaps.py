@@ -1,5 +1,6 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
+
 from bot.models import DailytTips
 from content.models import News, Program
 

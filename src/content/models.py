@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -83,7 +84,7 @@ class Program(models.Model):
     )
     description = CKEditor5Field(
         verbose_name=ProgramCfg.DESCRIPTION_V,
-        config_name="default"
+        config_name="extends"
     )
     image = models.ImageField(
         upload_to="programs/covers/",
@@ -111,7 +112,7 @@ class Program(models.Model):
     rating_sum = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0.00,
+        default=Decimal("0.00"),
         verbose_name="Сумма рейтингов"
     )
     ratings_count = models.PositiveIntegerField(
@@ -153,7 +154,8 @@ class Program(models.Model):
         super().clean()
         if not self.file and not self.external_download_link:
             raise ValidationError({
-                "Необходимо указать файл или внешнюю ссылку для скачивания."
+                "file": "Необходимо указать файл или внешнюю ссылку.",
+                "external_download_link": "Необходимо указать файл или внешнюю ссылку." # noqa
             })
 
     def save(self, *args, **kwargs):
