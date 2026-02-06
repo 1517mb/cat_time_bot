@@ -832,3 +832,17 @@ html[data-theme="dark"] .myip-address {
     white-space: nowrap;
   }
 }
+
+.hover-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    color: inherit;
+    display: block;
+}
+.hover-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1);
+    text-decoration: none;
+}
+.has-text-current { 
+    color: inherit !important; 
+}
