@@ -70,6 +70,7 @@ def global_search_view(request):
     query = request.GET.get("q", "").strip()
     tips_results = []
     news_results = []
+    programs_results = []
 
     if query:
         tips_results = DailytTips.objects.filter(
@@ -82,11 +83,18 @@ def global_search_view(request):
         ).filter(
             Q(title__icontains=query) | Q(content__icontains=query)
         ).distinct()
+        programs_results = Program.objects.filter(
+            verified=True
+        ).filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        ).distinct()
 
     context = {
         "query": query,
         "tips_results": tips_results,
         "news_results": news_results,
+        "programs_results": programs_results,
+        "total_count": len(tips_results) + len(news_results) + len(programs_results)
     }
     return render(request, "content/search_results.html", context)
 
