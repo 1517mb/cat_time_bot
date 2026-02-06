@@ -5,83 +5,198 @@
 {% block content %}
 <section class="section">
     <div class="container">
-        <h1 class="title">Результаты поиска</h1>
+        <div class="columns is-centered mb-6">
+            <div class="column is-three-quarters">
+                <h1 class="title has-text-centered">
+                    <span class="icon is-medium mr-2"><i class="fas fa-search has-text-primary"></i></span>
+                    Поиск по сайту
+                </h1>
 
-        <div class="box mb-6">
-            <form method="GET" action="{% url 'content:global_search' %}">
-                <div class="field has-addons">
-                    <div class="control is-expanded">
-                        <input class="input" type="search" name="q" placeholder="Поиск по всему сайту..." value="{{ query }}" required>
-                    </div>
-                    <div class="control">
-                        <button type="submit" class="button is-primary">
-                            <span class="icon"><i class="fas fa-search"></i></span>
-                            <span>Найти</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-        {% if query %}
-            <div class="content">
-                <h2 class="subtitle">По запросу <strong>"{{ query }}"</strong> найдено:</h2>
-            </div>
-            {% if tips_results %}
-            <div class="box">
-                <h3 class="title is-4">Полезные Советы <span class="tag is-primary">{{ tips_results|length }}</span></h3>
-                <div class="columns is-multiline">
-                    {% for tip in tips_results %}
-                    <div class="column is-one-third">
-                        <div class="card">
-                            <div class="card-content">
-                                <p class="title is-5">{{ tip.title }}</p>
-                                <div class="content">
-                                    {{ tip.content|safe|truncatechars_html:100 }}
-                                </div>
-                                <a href="{% url 'tip_detail' tip.pk %}" class="button is-primary is-outlined is-small">Читать</a>
+                <div class="box">
+                    <form method="GET" action="{% url 'content:global_search' %}">
+                        <div class="field has-addons">
+                            <div class="control is-expanded has-icons-left">
+                                <input class="input is-medium is-rounded" type="search" name="q" 
+                                       placeholder="Введите запрос..." value="{{ query }}" required>
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </div>
+                            <div class="control">
+                                <button type="submit" class="button is-primary is-medium is-rounded">
+                                    Найти
+                                </button>
                             </div>
                         </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% if query %}
+            <div class="level mb-5">
+                <div class="level-left">
+                    <div class="level-item">
+                        <h2 class="subtitle is-4">
+                            Результаты для: <strong>{{ query }}</strong>
+                        </h2>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <div class="level-item">
+                        <span class="tag is-medium is-rounded">Всего: {{ total_count }}</span>
+                    </div>
+                </div>
+            </div>
+            {% if programs_results %}
+            <div class="box mb-6" style="border-top: 4px solid #00d1b2;">
+                <div class="level mb-4">
+                    <div class="level-left">
+                        <h3 class="title is-4 has-text-primary">
+                            <span class="icon mr-2"><i class="fas fa-laptop-code"></i></span>
+                            Программы
+                        </h3>
+                    </div>
+                    <div class="level-right">
+                         <span class="tag is-light is-primary is-rounded">{{ programs_results|length }}</span>
+                    </div>
+                </div>
+                
+                <div class="columns is-multiline">
+                    {% for prog in programs_results|slice:":6" %}
+                    <div class="column is-12-mobile is-6-tablet is-4-desktop">
+                        <a href="{{ prog.get_absolute_url }}" class="card is-block h-100 hover-card">
+                            <div class="card-content">
+                                <div class="media">
+                                    <div class="media-content">
+                                        <p class="title is-6">{{ prog.name }}</p>
+                                        <div class="tags are-small mt-2">
+                                            {% if prog.rating > 0 %}
+                                                <span class="tag is-warning is-light">★ {{ prog.rating }}</span>
+                                            {% endif %}
+                                            <span class="tag is-success is-light">↓ {{ prog.downloads }}</span>
+                                        </div>
+                                    </div>
+                                    {% if prog.image %}
+                                    <div class="media-right">
+                                        <figure class="image is-48x48">
+                                            <img class="is-rounded" src="{{ prog.image.url }}" alt="{{ prog.name }}" style="object-fit: cover;">
+                                        </figure>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="content is-small mt-3 has-text-grey">
+                                    {{ prog.description|striptags|truncatechars:80 }}
+                                </div>
+                            </div>
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
+                {% if programs_results|length > 6 %}
+                <div class="has-text-centered mt-4">
+                    <a href="{% url 'content:program_list' %}?search={{ query }}" class="button is-small is-primary is-outlined is-rounded">
+                        Показать все программы ({{ programs_results|length }})
+                    </a>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
             {% if news_results %}
-            <div class="box">
-                <h3 class="title is-4">Новости <span class="tag is-info">{{ news_results|length }}</span></h3>
+            <div class="box mb-6" style="border-top: 4px solid #3273dc;">
+                <div class="level mb-4">
+                    <div class="level-left">
+                        <h3 class="title is-4 has-text-info">
+                            <span class="icon mr-2"><i class="far fa-newspaper"></i></span>
+                            Новости
+                        </h3>
+                    </div>
+                    <div class="level-right">
+                         <span class="tag is-light is-info is-rounded">{{ news_results|length }}</span>
+                    </div>
+                </div>
+
                 <div class="columns is-multiline">
-                     {% for news in news_results %}
-                    <div class="column is-one-third">
-                        <div class="card">
-                            <div class="card-content">
-                                <p class="title is-5">{{ news.title }}</p>
-                                {% if news.image %}
-                                    <figure class="image is-16by9">
-                                        <img src="{{ news.image.url }}" alt="{{ news.title }}">
+                    {% for news in news_results|slice:":6" %}
+                    <div class="column is-12-mobile is-6-tablet is-4-desktop">
+                        <a href="{% url 'content:detail' news.slug %}" class="card is-flex is-flex-direction-column h-100 hover-card is-block has-text-current">
+                            {% if news.image %}
+                                <div class="card-image">
+                                    <figure class="image is-2by1">
+                                        <img src="{{ news.image.url }}" alt="{{ news.title }}" style="object-fit: cover;">
                                     </figure>
-                                {% endif %}
-                                <div class="content">
-                                    {{ news.content|truncatewords_html:20|safe }}
                                 </div>
-                                 <a href="{% url 'content:detail' news.slug %}" class="button is-info is-outlined is-small">Читать</a>
+                            {% endif %}
+                            <div class="card-content is-flex-grow-1">
+                                <p class="title is-5 mb-3">{{ news.title }}</p>
+                                <div class="content is-small has-text-grey">
+                                    {{ news.content|striptags|truncatechars:100 }}
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
+                {% if news_results|length > 6 %}
+                <div class="has-text-centered mt-4">
+                    <a href="{% url 'content:list' %}?q={{ query }}" class="button is-small is-info is-outlined is-rounded">
+                        Показать все новости ({{ news_results|length }})
+                    </a>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
-            {% if not tips_results and not news_results %}
-            <div class="box has-text-centered">
-                <p class="subtitle">📭 Ничего не найдено</p>
-                <p>Попробуйте изменить поисковый запрос.</p>
+            {% if tips_results %}
+            <div class="box mb-6" style="border-top: 4px solid #ffdd57;">
+                 <div class="level mb-4">
+                    <div class="level-left">
+                        <h3 class="title is-4 has-text-warning-dark">
+                            <span class="icon mr-2"><i class="far fa-lightbulb"></i></span>
+                            Советы
+                        </h3>
+                    </div>
+                    <div class="level-right">
+                         <span class="tag is-light is-warning is-rounded">{{ tips_results|length }}</span>
+                    </div>
+                </div>
+
+                <div class="columns is-multiline">
+                    {% for tip in tips_results|slice:":6" %}
+                    <div class="column is-12-mobile is-6-tablet is-4-desktop">
+                        <a href="{% url 'tip_detail' tip.pk %}" class="card is-flex is-flex-direction-column h-100 hover-card is-block has-text-current" style="border-left: 4px solid #ffdd57;">
+                            <div class="card-content is-flex-grow-1">
+                                <p class="title is-6 mb-3">{{ tip.title }}</p>
+                                <div class="content is-small has-text-grey">
+                                    {{ tip.content|striptags|truncatechars:120 }}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if tips_results|length > 6 %}
+                <div class="has-text-centered mt-4">
+                    <a href="{% url 'tips' %}?q={{ query }}" class="button is-small is-warning is-outlined is-rounded">
+                        Показать все советы ({{ tips_results|length }})
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% if not tips_results and not news_results and not programs_results %}
+            <div class="box has-text-centered p-6">
+                <span class="icon is-large mb-3 has-text-grey-light"><i class="fas fa-search-minus fa-3x"></i></span>
+                <p class="title is-4">Ничего не найдено</p>
+                <p class="subtitle is-6">Попробуйте изменить запрос.</p>
+                <a href="/" class="button is-text mt-2">На главную</a>
             </div>
             {% endif %}
 
         {% else %}
-            <div class="box has-text-centered">
-                <p class="subtitle">🔍 Введите поисковый запрос</p>
-                <p>Найдем что-нибудь интересное для вас!</p>
+            <div class="hero is-medium is-rounded mb-6">
+                <div class="hero-body has-text-centered">
+                    <p class="title has-text-grey-light">🔍 Поиск</p>
+                    <p class="subtitle has-text-grey-light">Введите запрос, чтобы найти контент.</p>
+                </div>
             </div>
         {% endif %}
     </div>
