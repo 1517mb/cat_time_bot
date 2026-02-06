@@ -73,21 +73,18 @@ def global_search_view(request):
     programs_results = []
 
     if query:
-        tips_results = DailytTips.objects.filter(
-            is_published=True
-        ).filter(
+        tips_qs = DailytTips.objects.filter(is_published=True).filter(
             Q(title__icontains=query) | Q(content__icontains=query)
         ).distinct()
-        news_results = News.objects.filter(
-            is_published=True
-        ).filter(
+        news_qs = News.objects.filter(is_published=True).filter(
             Q(title__icontains=query) | Q(content__icontains=query)
         ).distinct()
-        programs_results = Program.objects.filter(
-            verified=True
-        ).filter(
+        programs_qs = Program.objects.filter(verified=True).filter(
             Q(name__icontains=query) | Q(description__icontains=query)
         ).distinct()
+        tips_results = tips_qs
+        news_results = news_qs
+        programs_results = programs_qs
 
     context = {
         "query": query,
