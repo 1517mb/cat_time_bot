@@ -846,3 +846,146 @@ html[data-theme="dark"] .myip-address {
 .has-text-current { 
     color: inherit !important; 
 }
+/* =========================================
+   WHOIS - Чей IP?
+   ========================================= */
+.input::placeholder {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.input::-webkit-input-placeholder {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.input::-moz-placeholder {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.input:-ms-input-placeholder {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+@media (max-width: 768px) {
+    .whois-section {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+html:not([data-theme="dark"]) .whois-icon i {
+    color: #7a7a7a !important;
+}
+html[data-theme="dark"] .whois-icon i {
+    color: #dbdbdb !important;
+}
+
+.input:focus,
+.input.is-focused,
+.input:active {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.125em rgba(0, 209, 178, 0.25) !important;
+}
+.whois-list-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .whois-table-desktop {
+        display: none;
+    }
+    .whois-list-mobile {
+        display: block;
+    }
+}
+.whois-mobile-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--card-border);
+}
+.whois-mobile-item:last-child {
+    border-bottom: none;
+}
+
+.whois-mobile-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.whois-mobile-value {
+    font-size: 1rem;
+    color: var(--text-main);
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+}
+@media (max-width: 768px) {
+    .whois-search-group {
+        flex-direction: column !important;
+    }
+    
+    .whois-search-group .control {
+        width: 100% !important;
+    }
+    
+    .whois-search-group .control:not(:last-child) {
+        margin-bottom: 0.75rem;
+        margin-right: 0 !important;
+    }
+    
+    .whois-submit-btn {
+        width: 100%;
+        border-radius: 4px !important;
+    }
+
+    .box {
+        padding: 1rem;
+    }
+    
+    .card-content {
+        padding: 1rem;
+    }
+}
+.whois-label-cell {
+    white-space: nowrap;
+    width: 35%;
+}
+
+.whois-value-cell {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+.whois-result-title {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+.fade-in {
+    animation: fadeInUp 0.5s ease-out;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+html[data-theme="dark"] .table {
+    background-color: transparent;
+    color: var(--text-main);
+}
+html[data-theme="dark"] .table.is-striped tbody tr:not(.is-selected):nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+html[data-theme="dark"] .has-background-primary-light {
+    background-color: rgba(0, 209, 178, 0.15) !important;
+    border-bottom: 1px solid rgba(0, 209, 178, 0.3);
+}
+html[data-theme="dark"] .has-text-primary-dark {
+    color: #e0f2f1 !important;
+}
