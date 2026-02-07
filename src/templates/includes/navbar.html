@@ -31,7 +31,13 @@
                 </a>
 
                 <div class="navbar-dropdown is-boxed">
-                    
+                    <a class="navbar-item" href="{% url 'whois' %}">
+                        <span class="icon nav-tool-icon">
+                            <i class="fas fa-globe"></i>
+                        </span>
+                        <span>Чей IP?</span>
+                    </a>
+                    <hr class="navbar-divider">
                     <a class="navbar-item" href="{% url 'my_ip' %}">
                         <span class="icon nav-tool-icon">
                             <i class="fas fa-fingerprint"></i>
