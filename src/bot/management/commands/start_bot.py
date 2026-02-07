@@ -765,11 +765,14 @@ async def edit_departure_time(update: Update,
                 )
                 if level_up and rank:
                     level_info = await get_level_info(rank)
+                    progress_bar = create_progress_bar(level_info["progress"])
                     msg_text += (
                         "\n\n🎉 *Поздравляем с повышением уровня!* 🎉\n"
                         f"🏆 Новый уровень: *{new_level} lvl - "
                         f"{level_info['title']}*\n"
                         f"📚 Категория: *{level_info['category']}*"
+                        f"📊 Прогресс: {progress_bar} *{int(level_info['progress'])}%*\n"
+                        f"✨ Опыт: *{level_info['current_exp']}/{level_info['next_level_exp']}*"
                     )
 
                 await message.reply_text(
@@ -886,11 +889,14 @@ async def leave(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         if level_up and rank:
             level_info = await get_level_info(rank)
+            progress_bar = create_progress_bar(level_info["progress"])
             msg_text += (
                 "\n\n🎉 *Поздравляем с повышением уровня!* 🎉\n"
                 f"🏆 Новый уровень: *{new_level} lvl - "
                 f"{level_info['title']}*\n"
                 f"📚 Категория: *{level_info['category']}*"
+                f"📊 Прогресс: {progress_bar} *{int(level_info['progress'])}%*\n"
+                f"✨ Опыт: *{level_info['current_exp']}/{level_info['next_level_exp']}*"
             )
         await message.reply_text(msg_text, parse_mode="Markdown")
 
@@ -1134,48 +1140,42 @@ async def get_current_season():
         return None
 
 
-async def update_season_rank(user_id: int,
-                             exp_earned: int,
-                             time_spent: timedelta,
-                             username: str):
+async def update_season_rank(userid: int, expearned: int,
+                             timespent: timedelta, username: str):
     season = await get_current_season()
     if not season:
         return None, False, 0
 
     rank, created = await sync_to_async(SeasonRank.objects.get_or_create)(
-        user_id=user_id,
+        user_id=userid,
         season=season,
         defaults={
             "username": username,
-            "experience": exp_earned,
-            "total_time": time_spent,
-            "visits_count": 1
+            "experience": expearned,
+            "total_time": timespent,
+            "visits_count": 1,
         }
     )
+
     old_level = rank.level
-    level_up = False
     if not created:
-        rank.experience += exp_earned
-        rank.total_time += time_spent
+        rank.experience += expearned
+        rank.total_time += timespent
         rank.visits_count += 1
+    else:
+        rank.username = username  # на всякий случай
 
-        while rank.experience >= rank.level * 100:
-            rank.experience -= rank.level * 100
-            rank.level += 1
-            level_up = True
-        if level_up:
-            try:
-                new_level_title = await sync_to_async(
-                    LevelTitle.objects.get)(level=rank.level)
-                rank.level_title = new_level_title
-            except LevelTitle.DoesNotExist:
-                pass
+    correct = await sync_to_async(
+        lambda: LevelTitle.objects.filter(min_experience__lte=rank.experience).order_by("-level").first()
+    )()
 
-        await sync_to_async(rank.save)()
+    if correct and correct.level != rank.level:
+        rank.level = correct.level
+        rank.level_title = correct
 
-    new_level = rank.level if level_up else old_level
-
-    return rank, level_up, new_level
+    levelup = rank.level > old_level
+    await sync_to_async(rank.save)()
+    return rank, levelup, rank.level
 
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
