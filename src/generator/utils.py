@@ -1,7 +1,9 @@
 import secrets
+import socket
 import string
 from typing import Any, Dict, List
 
+import requests
 from django.http import HttpRequest
 from ua_parser import user_agent_parser
 
@@ -132,3 +134,41 @@ def get_user_agent_info(ua_string: str) -> Dict[str, Any]:
         "device": display_device,
         "is_mobile": is_mobile,
     }
+
+
+def resolve_host(host):
+    """Преобразует домен в IP. Если это уже IP, возвращает его же."""
+    host = host.strip()
+    if host.startswith("http://"):
+        host = host[7:]
+    if host.startswith("https://"):
+        host = host[8:]
+    if "/" in host:
+        host = host.split("/")[0]
+
+    try:
+        return socket.gethostbyname(host)
+    except socket.gaierror:
+        return None
+
+
+def get_ip_info(host_input):
+    """
+    Получает информацию об IP или домене.
+    Сначала резолвит домен в IP, потом делает запрос к API.
+    """
+    ip_address = resolve_host(host_input)
+    if not ip_address:
+        return None, f"Не удалось найти IP для '{host_input}'. Проверьте правильность адреса." # noqa
+    try:
+        url = f"https://ipwhois.app/json/{ip_address}?lang=ru"
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        if not data.get('success', True):
+            return None, data.get('message', 'Ошибка API')
+        if host_input != ip_address:
+            data['original_host'] = host_input
+        return data, None
+    except requests.RequestException:
+        return None, "Не удалось соединиться с сервером проверки."
