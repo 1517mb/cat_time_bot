@@ -82,3 +82,14 @@ class PasswordGeneratorForm(forms.Form):
             )
 
         return cleaned_data
+
+
+class IpLookupForm(forms.Form):
+    host = forms.CharField(
+        label="IP адрес или домен",
+        required=True,
+        widget=forms.TextInput(attrs={
+            "class": "input is-medium",
+            "placeholder": "Например: 8.8.8.8 или google.com"
+        })
+    )
