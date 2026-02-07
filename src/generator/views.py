@@ -12,11 +12,12 @@ from django.views.decorators.http import require_http_methods, require_POST
 from bot.models import DailytTips, DailytTipView, SiteStatistics, Tag
 from bot.services import GamificationService
 
-from .forms import PASSWORD_CHARSETS, PasswordGeneratorForm
+from .forms import PASSWORD_CHARSETS, IpLookupForm, PasswordGeneratorForm
 from .utils import (
     calculate_crack_time,
     generate_password_safe,
     get_client_ip,
+    get_ip_info,
     get_user_agent_info,
 )
 
@@ -122,7 +123,7 @@ def daily_tips_view(request: HttpRequest) -> HttpResponse:
 
     if search_query:
         tips_qs = tips_qs.filter(
-            Q(title__icontains=search_query) |
+            Q(title__icontains=search_query) |  # noqa
             Q(content__icontains=search_query)
         )
     selected_tags = request.GET.getlist("tags")
@@ -136,7 +137,7 @@ def daily_tips_view(request: HttpRequest) -> HttpResponse:
     paginator = Paginator(tips_qs, 6)
     page_number = request.GET.get("page")
     try:
-        tips = paginator.page(page_number)
+        tips = paginator.page(page_number)  # type: ignore
     except PageNotAnInteger:
         tips = paginator.page(1)
     except EmptyPage:
@@ -211,3 +212,31 @@ def my_ip_view(request: HttpRequest) -> HttpResponse:
         "ua_raw": ua_string,
     }
     return render(request, "generator/tools/my_ip.html", context)
+
+
+def whois_view(request: HttpRequest) -> HttpResponse:
+    user_ip = get_client_ip(request)
+    result_data = None
+    error_message = None
+
+    if "host" in request.GET:
+        form = IpLookupForm(request.GET)
+        if form.is_valid():
+            target = form.cleaned_data["host"]
+            result_data, error_message = get_ip_info(target)
+            if result_data:
+                if "latitude" in result_data and result_data["latitude"]:
+                    result_data["latitude"] = str(
+                        result_data["latitude"]).replace(",", ".")
+                if "longitude" in result_data and result_data["longitude"]:
+                    result_data["longitude"] = str(
+                        result_data["longitude"]).replace(",", ".")
+    else:
+        form = IpLookupForm(initial={"host": user_ip})
+    context = {
+        "form": form,
+        "result": result_data,
+        "error": error_message,
+        "user_ip": user_ip
+    }
+    return render(request, "generator/tools/whois.html", context)
