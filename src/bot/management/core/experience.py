@@ -1,46 +1,70 @@
 from asgiref.sync import sync_to_async
 
-from bot.models import SeasonRank
+from bot.models import LevelTitle, SeasonRank
 
 ACHIEVEMENT_BONUSES = {
-    "Первая кровь": 10,
-    "Ночная смена? Или просто забыл уйти?": 15,
-    "Кофеиновый марафонец": 10,
-    "Сова компании": 10,
-    "Лучший сотрудник": 50,
-    "Командный игрок": 15,
-    "А можно мне ещё выезд?": 10,
+    "Первая кровь": 1,
+    "Лучший сотрудник": 5,
+    "Командный игрок": 5,
+    "А можно мне ещё выезд?": 5,
     "Экономлю на пропуске": 5,
     "Читер: Часовщик": -20,
 }
 
 
 async def get_level_info(rank: SeasonRank) -> dict:
+    current_level_obj = await sync_to_async(
+        lambda: LevelTitle.objects.filter(min_experience__lte=rank.experience)
+                                  .order_by("-level")
+                                  .first()
+    )()
 
-    level_title = await sync_to_async(lambda: rank.level_title)()
+    if not current_level_obj:
+        current_level_obj = await sync_to_async(
+            lambda: LevelTitle.objects.order_by("level").first())()
 
-    if not level_title:
+    if not current_level_obj:
         return {
             "title": f"Уровень {rank.level}",
-            "category": "Новичок",
-            "progress": min(100, (rank.experience / (rank.level * 100)) * 100),
+            "category": "legend",
+            "progress": 0,
             "current_exp": rank.experience,
-            "next_level_exp": rank.level * 100
+            "next_level_exp": 0,
+            "exp_in_level": 0,
+            "exp_to_next": 0,
         }
+    next_level_obj = await sync_to_async(
+        lambda: LevelTitle.objects.filter(
+            level=current_level_obj.level + 1).first()
+    )()
 
-    title = await sync_to_async(
-        lambda: rank.level_title.title)()  # type: ignore
-    category = await sync_to_async(
-        lambda: rank.level_title.get_category_display())()  # type: ignore
-    next_level_exp = rank.level * 100
-    progress = (rank.experience / next_level_exp) * 100
+    title = current_level_obj.title
+    category = current_level_obj.get_category_display()  # type: ignore
+
+    base_exp = current_level_obj.min_experience
+
+    if next_level_obj:
+        target_exp = next_level_obj.min_experience
+        exp_range = max(1, target_exp - base_exp)
+        exp_gained = max(0, rank.experience - base_exp)
+
+        progress = min(100, max(0, (exp_gained / exp_range) * 100))
+        next_exp_display = target_exp
+    else:
+        exp_range = 0
+        exp_gained = 0
+        progress = 100
+        next_exp_display = rank.experience
 
     return {
         "title": title,
         "category": category,
         "progress": progress,
         "current_exp": rank.experience,
-        "next_level_exp": next_level_exp
+        "next_level_exp": next_exp_display,
+        "exp_in_level": exp_gained,
+        "exp_to_next": exp_range,
+        "effective_level": current_level_obj.level,
     }
 
 
