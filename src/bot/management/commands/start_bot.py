@@ -35,6 +35,7 @@ from telegram.ext import (
 from bot.management.core.bot_constants import (
     BotAchievementsCfg,
     BotMessages,
+    BotRemidersCfg,
     SiteCfg,
 )
 from bot.management.core.bot_instance import get_bot_application
@@ -979,103 +980,62 @@ async def remind_to_leave(bot):
             f"Критическая ошибка в remind_to_leave: {e}", exc_info=True)
 
 
+def _last_day_of_month(today):
+    if today.month == 12:
+        return (
+            today.replace(year=today.year + 1, month=1, day=1)
+            - timedelta(days=1)
+        )
+    return (
+        today.replace(month=today.month + 1, day=1)
+        - timedelta(days=1)
+    )
+
+
 async def check_and_send_transport_reminder(bot):
     """
-    Проверяет и отправляет напоминание о транспортных
-    расходах за месяц.
+    Проверяет и отправляет напоминание о транспортных расходах за месяц.
     """
     try:
-        today = timezone.now().date()
-        if today.month == 12:
-            last_day = today.replace(
-                year=today.year + 1, month=1, day=1
-            ) - timedelta(days=1)
-        else:
-            last_day = today.replace(
-                month=today.month + 1, day=1
-            ) - timedelta(days=1)
+        today = timezone.localdate()
+        last_day = _last_day_of_month(today)
 
         days_left = (last_day - today).days
-        if days_left in [7, 4, 2, 1]:
-            group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
-            if not group_chat_id:
-                logging.error(
-                    "TELEGRAM_GROUP_CHAT_ID не установлен в .env"
-                )
-                return
-            verb, day_word = get_time_declension(days_left)
-            messages = [
-                (
-                    f"😱 *ПАНИКА!* (ну почти)\n{verb} всего {days_left} "
-                    f"{day_word}! Если не заполнить транспортные расходы "
-                    "сейчас, catbot начнет являться вам в ночных "
-                    "кошмарах."
-                ),
-                (
-                    f"🏃‍♂️ *Финишная прямая!*\n{verb} {days_left} "
-                    f"{day_word}. Быстрее заполняйте расходы по транспорту, "
-                    "а то ваша карета превратится в тыкву (и денег за "
-                    "проезд не дадут)!"
-                ),
-                (
-                    f"🕵️‍♂️ *Внимание, розыск!*\nИщем человека, который "
-                    f"забыл заполнить транспортные расходы. {verb} {days_left} {day_word} " # noqa E501
-                    "до закрытия. Не заставляйте нас применять паяльник... "
-                    "шутка! Просто заполните расходы."
-                ),
-                (
-                    f"📉 *Аттракцион невиданной щедрости закрывается!*\n"
-                    f"{verb} {days_left} {day_word}. Кто не успел заполнить "
-                    "расходы - тот работает в этом месяце за 'спасибо' "
-                    "и печеньки. Шутка."
-                ),
-                (
-                    f"💀 *Memento Mori.*\nПомни месяц скоро закончиться. {verb} " # noqa E501
-                    f"{days_left} {day_word}.А транспортные расходы сами "
-                    "себя не внесут (мы проверяли, магия не работает)."
-                ),
-                (
-                    f"🦖 *Астероид приближается!*\n{verb} {days_left} "
-                    f"{day_word} до конца месяца. Не будьте как динозавры, "
-                    "заполните расходы, чтобы выжить (финансово)."
-                ),
-                (
-                    f"🔮 *Битва экстрасенсов.*\nЯ пытался угадать ваши "
-                    f"расходы силой мысли, но не вышло. {verb} {days_left} "
-                    f"{day_word}. Придется вам заполнять их самим!"
-                ),
-                (
-                    f"🆘 *Хьюстон, у нас проблемы!*\n{verb} {days_left} "
-                    f"{day_word}, а полет нормальный только у тех, кто "
-                    "звполнил расходы на транспорт. Остальные рискуют остаться в " # noqa E501
-                    "открытом космосе без выплат."
-                ),
-                (
-                    f"🕸 *Вжух! И месяца как не бывало.*\n{verb} "
-                    f"{days_left} {day_word}. Ваш кошелек скажет вам "
-                    "громкое 'СПАСИБО', если вы прямо сейчас откроете "
-                    " сайт и заполните расходы."
-                ),
-            ]
-            message_text = random.choice(messages)
+        if days_left not in BotRemidersCfg.TRANSPORT_REMINDER_DAYS:
+            return
 
-            await bot.send_message(
-                chat_id=group_chat_id,
-                text=message_text,
-                parse_mode="Markdown"
-            )
-            logging.info(
-                f"Отправлено напоминание о транспорте. "
-                f"Осталось дней: {days_left}"
-            )
+        group_chat_id = os.getenv("TELEGRAM_GROUP_CHAT_ID")
+        if not group_chat_id:
+            logger.error("TELEGRAM_GROUP_CHAT_ID не установлен в .env")
+            return
+
+        verb, day_word = get_time_declension(days_left)
+
+        template = random.choice(BotRemidersCfg.TRANSPORT_REMINDER_TEMPLATES)
+        body = template.format(verb=verb, days=days_left, day_word=day_word)
+
+        message_text = (
+            "━━━━━━━━━━━━━━━━\n"
+            "🚌 <b>Транспортные расходы</b>\n"
+            "━━━━━━━━━━━━━━━━\n"
+            f"{body}"
+        )
+
+        await bot.send_message(
+            chat_id=group_chat_id,
+            text=message_text,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+        )
+        logger.info(
+            "Отправлено напоминание о транспорте. Осталось дней: %s",
+            days_left,
+        )
 
     except telegram.error.BadRequest as e:
-        logging.error(f"Ошибка отправки сообщения: {str(e)}")
-    except Exception as e:
-        logging.error(
-            f"Неожиданная ошибка в transport_reminder: {str(e)}",
-            exc_info=True
-        )
+        logger.error("Ошибка отправки сообщения: %s", str(e))
+    except Exception:
+        logger.exception("Неожиданная ошибка в transport_reminder")
 
 
 async def mew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1380,7 +1340,7 @@ async def start_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• Проверка активности в организациях — "
         f"ежедневно в {hour:02}:{minute:02}\n"
         "• Транспортные расходы — ежедневно в 09:00 "
-        "(только за 7/4/1 дней до конца месяца)"
+        "(только за 7/4/2 дней до конца месяца)"
     )
 
     await message.reply_text(response_message)
