@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Whois — Проверка IP и домена{% endblock %}
+
+{% block meta %}
+  <meta name="description" content="Проверка IP-адреса и домена: страна, город, провайдер, организация и геолокация.">
+  <meta name="keywords" content="whois, чей ip, проверка ip, проверка домена, ip адрес, узнать провайдера">
+
+  <meta property="og:title" content="Whois — Проверка IP и домена">
+  <meta property="og:description" content="Узнайте информацию по IP или домену: страна, город, провайдер и организация.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/share/logo_share.png' %}">
+{% endblock %}
+
+{% block content %}
+<section class="section whois-section">
+    <div class="container main-container">
+        
+        <div class="columns is-centered">
+            <div class="column is-two-thirds-tablet is-half-desktop">
+                
+                <h1 class="title has-text-centered mb-5">
+                    <span class="icon mr-2 has-text-primary"><i class="fas fa-globe-americas"></i></span>
+                    Whois / Проверка IP и домена
+                </h1>
+                <div class="box shadow-lg mb-6">
+                    <form method="GET">
+                        <div class="field">
+                            <label class="label theme-text">Введите IP адрес или домен</label>
+                            <div class="field has-addons whois-search-group">
+                                <div class="control is-expanded has-icons-left">
+                                    {{ form.host }}
+                                    <span class="icon is-small is-left whois-icon">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                </div>
+                                <div class="control">
+                                    <button type="submit" class="button is-primary is-medium whois-submit-btn">
+                                        Проверить
+                                    </button>
+                                </div>
+                            </div>
+                            {% if form.host.errors %}
+                                <p class="help is-danger">{{ form.host.errors.0 }}</p>
+                            {% endif %}
+                            <p class="help">Например: 8.8.8.8 или google.com</p>
+                        </div>
+                    </form>
+                    <p class="help has-text-grey mt-2">
+                        Ваш IP: <a href="?host={{ user_ip }}" class="has-text-primary">{{ user_ip }}</a>
+                    </p>
+                </div>
+                {% if error %}
+                <div class="notification is-danger is-light">
+                    <button class="delete"></button>
+                    {{ error }}
+                </div>
+                {% endif %}
+                {% if result %}
+                <div class="card result-card fade-in">
+                    <header class="card-header has-background-primary-light">
+                        <div class="card-header-title is-flex is-justify-content-space-between is-align-items-center" style="flex-wrap: wrap;">
+                            <div class="has-text-primary-dark whois-result-title">
+                                Результаты для: 
+                                <span class="has-text-weight-bold">
+                                    {% if result.original_host %}
+                                        {{ result.original_host }} <small class="is-size-6 has-text-grey">({{ result.ip }})</small>
+                                    {% else %}
+                                        {{ result.ip }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% if result.country_flag %}
+                                <figure class="image is-32x32 ml-2 is-flex-shrink-0">
+                                    <img src="{{ result.country_flag }}" alt="{{ result.country }}" title="{{ result.country }}">
+                                </figure>
+                            {% endif %}
+                        </div>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <div class="whois-table-desktop">
+                                <table class="table is-fullwidth is-striped is-hoverable">
+                                    <tbody>
+                                        <tr>
+                                            <td class="has-text-grey whois-label-cell">Страна</td>
+                                            <td class="has-text-weight-bold whois-value-cell">{{ result.country }} ({{ result.country_code }})</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="has-text-grey whois-label-cell">Регион</td>
+                                            <td class="whois-value-cell">{{ result.region }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="has-text-grey whois-label-cell">Город</td>
+                                            <td class="whois-value-cell">{{ result.city }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="has-text-grey whois-label-cell">Провайдер (ISP)</td>
+                                            <td class="whois-value-cell">{{ result.isp }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="has-text-grey whois-label-cell">Организация</td>
+                                            <td class="whois-value-cell">{{ result.org }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="has-text-grey whois-label-cell">Координаты</td>
+                                            <td class="whois-value-cell">
+                                                {{ result.latitude }}, {{ result.longitude }}
+                                                <a href="https://www.google.com/maps/search/?api=1&query={{ result.latitude }},{{ result.longitude }}" target="_blank" class="tag is-info is-light ml-2">
+                                                    <span class="icon is-small mr-1"><i class="fas fa-map-marker-alt"></i></span>
+                                                    Карта
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="has-text-grey whois-label-cell">Часовой пояс</td>
+                                            <td class="whois-value-cell">{{ result.timezone_name }} ({{ result.timezone_gmt }})</td>
+                                        </tr>
+                                        {% if result.type %}
+                                        <tr>
+                                            <td class="has-text-grey whois-label-cell">Тип IP</td>
+                                            <td class="whois-value-cell"><span class="tag is-light">{{ result.type }}</span></td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="whois-list-mobile">
+                                <div class="whois-mobile-item">
+                                    <div class="whois-mobile-label">Страна</div>
+                                    <div class="whois-mobile-value has-text-weight-bold">{{ result.country }} ({{ result.country_code }})</div>
+                                </div>
+                                <div class="whois-mobile-item">
+                                    <div class="whois-mobile-label">Регион</div>
+                                    <div class="whois-mobile-value">{{ result.region }}</div>
+                                </div>
+                                <div class="whois-mobile-item">
+                                    <div class="whois-mobile-label">Город</div>
+                                    <div class="whois-mobile-value">{{ result.city }}</div>
+                                </div>
+                                <div class="whois-mobile-item">
+                                    <div class="whois-mobile-label">Провайдер (ISP)</div>
+                                    <div class="whois-mobile-value">{{ result.isp }}</div>
+                                </div>
+                                <div class="whois-mobile-item">
+                                    <div class="whois-mobile-label">Организация</div>
+                                    <div class="whois-mobile-value">{{ result.org }}</div>
+                                </div>
+                                <div class="whois-mobile-item">
+                                    <div class="whois-mobile-label">Координаты</div>
+                                    <div class="whois-mobile-value">{{ result.latitude }}, {{ result.longitude }}</div>
+                                </div>
+                                <div class="whois-mobile-item">
+                                    <div class="whois-mobile-label">Часовой пояс</div>
+                                    <div class="whois-mobile-value">{{ result.timezone_name }} ({{ result.timezone_gmt }})</div>
+                                </div>
+                                {% if result.type %}
+                                <div class="whois-mobile-item">
+                                    <div class="whois-mobile-label">Тип IP</div>
+                                    <div class="whois-mobile-value"><span class="tag is-light">{{ result.type }}</span></div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="is-hidden-tablet mt-3">
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ result.latitude }},{{ result.longitude }}" target="_blank" class="button is-small is-fullwidth is-info is-outlined">
+                                    <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
+                                    <span>Показать на карте</span>
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+            const $notification = $delete.parentNode;
+            $delete.addEventListener('click', () => {
+                $notification.parentNode.removeChild($notification);
+            });
+        });
+    });
+</script>
+{% endblock %}
