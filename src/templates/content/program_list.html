@@ -26,30 +26,35 @@
                                 <span class="icon is-left is-small"><i class="fas fa-search"></i></span>
                             </div>
                         </div>
+                        <button type="button" class="button is-small is-fullwidth is-info is-light mt-2 is-hidden-tablet" id="mobile-filter-toggle">
+                            <span class="icon"><i class="fas fa-filter"></i></span>
+                            <span>Фильтры</span>
+                            <span class="icon is-small"><i class="fas fa-chevron-down" id="filter-chevron"></i></span>
+                        </button>
                     </div>
-                    <div class="column is-6-mobile is-2-tablet">
+                    <div class="column is-6-mobile is-2-tablet mobile-filter-hidden is-hidden-mobile">
                         <div class="field">
                             <label class="label is-small theme-text">Где искать</label>
                             <div class="control is-expanded"><div class="select is-fullwidth">{{ form.search_in }}</div></div>
                         </div>
                     </div>
-                    <div class="column is-6-mobile is-2-tablet">
+                    <div class="column is-6-mobile is-2-tablet mobile-filter-hidden is-hidden-mobile">
                         <div class="field">
                             <label class="label is-small theme-text">Сортировка</label>
                             <div class="control is-expanded"><div class="select is-fullwidth">{{ form.sort_by }}</div></div>
                         </div>
                     </div>
-                    <div class="column is-6-mobile is-2-tablet">
+                    <div class="column is-6-mobile is-2-tablet mobile-filter-hidden is-hidden-mobile">
                         <div class="field">
                             <label class="label is-small theme-text">Мин. рейтинг</label>
                             <div class="control is-expanded"><div class="select is-fullwidth">{{ form.min_rating }}</div></div>
                         </div>
                     </div>
-                    <div class="column is-6-mobile is-2-tablet">
-                        <label class="label is-small">&nbsp;</label>
+                    <div class="column is-6-mobile is-2-tablet mobile-filter-hidden is-hidden-mobile">
+                        <label class="label is-small is-hidden-mobile">&nbsp;</label>
                         <div class="field is-grouped">
                             <p class="control is-expanded">
-                                <button type="submit" class="button is-primary is-fullwidth"><span class="icon"><i class="fas fa-filter"></i></span></button>
+                                <button type="submit" class="button is-primary is-fullwidth"><span class="icon"><i class="fas fa-check"></i></span></button>
                             </p>
                             <p class="control">
                                 <a href="{% url 'content:program_list' %}" class="button is-white" title="Сбросить"><span class="icon"><i class="fas fa-times"></i></span></a>
@@ -59,13 +64,10 @@
                 </div>
             </form>
         </div>
-
         <div class="columns is-multiline">
             {% for program in programs %}
                 <div class="column is-12-mobile is-6-tablet is-4-desktop is-3-widescreen is-flex">
-                    
                     <div class="card program-card is-flex-grow-1 is-flex is-flex-direction-column">
-                        
                         <div class="card-image">
                             <figure class="image is-4by3">
                                 {% if program.image %}
@@ -77,52 +79,39 @@
                                 {% endif %}
                             </figure>
                         </div>
-                        
                         <div class="card-content is-flex-grow-1 has-text-left">
                             <div class="media mb-2">
                                 <div class="media-content">
                                     <p class="title is-5">
-                                        <a href="{{ program.get_absolute_url }}" class="has-text-dark program-title">
-                                            {{ program.name }}
-                                        </a>
+                                        <a href="{{ program.get_absolute_url }}" class="has-text-dark program-title">{{ program.name }}</a>
                                     </p>
                                     {% if program.verified %}
                                         <p class="subtitle is-7 has-text-success mt-1">
-                                            <span class="icon is-small"><i class="fas fa-check-circle"></i></span>
-                                            Проверено
+                                            <span class="icon is-small"><i class="fas fa-check-circle"></i></span> Проверено
                                         </p>
                                     {% endif %}
                                 </div>
                             </div>
-
                             <div class="tags are-small mb-3">
                                 <span class="tag is-warning is-light"><span class="icon"><i class="fas fa-star"></i></span>&nbsp;{{ program.rating }}</span>
                                 <span class="tag is-light" title="Голосов"><span class="icon"><i class="fas fa-users"></i></span>&nbsp;{{ program.ratings_count }}</span>
                                 <span class="tag is-info is-light" title="Скачиваний"><span class="icon"><i class="fas fa-download"></i></span>&nbsp;{{ program.downloads }}</span>
                             </div>
-
                             <div class="content is-small program-desc">
                                 {{ program.description|striptags|truncatechars:100 }}
                             </div>
-                            
                             <div class="content is-small mt-2">
                                 <p class="is-size-7 has-text-grey-light">
-                                    <span class="icon is-small"><i class="far fa-calendar-alt"></i></span>
-                                    {{ program.created_at|date:"d.m.Y" }}
+                                    <span class="icon is-small"><i class="far fa-calendar-alt"></i></span> {{ program.created_at|date:"d.m.Y" }}
                                 </p>
                             </div>
                         </div>
-                        
                         <footer class="card-footer mt-auto">
-                            <a href="{{ program.get_absolute_url }}" class="card-footer-item footer-details-link">
-                                Подробнее
-                            </a>
+                            <a href="{{ program.get_absolute_url }}" class="card-footer-item footer-details-link">Подробнее</a>
                             {% if program.file or program.external_download_link %}
                                 <a href="{% if program.file %}{{ program.file.url }}{% else %}{{ program.external_download_link }}{% endif %}" 
                                    class="card-footer-item has-text-primary has-text-weight-bold footer-download-link"
-                                   {% if not program.file %}target="_blank"{% endif %}>
-                                    Скачать
-                                </a>
+                                   {% if not program.file %}target="_blank"{% endif %}>Скачать</a>
                             {% endif %}
                         </footer>
                     </div>
@@ -139,7 +128,6 @@
         
         {% if is_paginated %}
             <nav class="pagination is-centered is-rounded mt-6 custom-pagination" role="navigation" aria-label="pagination">
-                
                 {% if page_obj.has_previous %}
                     <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-previous">
                         <span class="icon"><i class="fas fa-chevron-left"></i></span> Назад
@@ -170,9 +158,9 @@
     </div>
 </section>
 {% endblock %}
+
 {% block extra_scripts %}
 <script>
-    // Автоматическое применение фильтров при изменении селектов
     document.addEventListener('DOMContentLoaded', function() {
         const selects = document.querySelectorAll('select');
         selects.forEach(function(select) {
@@ -180,6 +168,24 @@
                 this.form.submit();
             });
         });
+        const toggleButton = document.getElementById('mobile-filter-toggle');
+        const filterElements = document.querySelectorAll('.mobile-filter-hidden');
+        const chevron = document.getElementById('filter-chevron');
+
+        if (toggleButton) {
+            toggleButton.addEventListener('click', function() {
+                filterElements.forEach(function(el) {
+                    el.classList.toggle('is-hidden-mobile');
+                });
+                if (chevron.classList.contains('fa-chevron-down')) {
+                    chevron.classList.remove('fa-chevron-down');
+                    chevron.classList.add('fa-chevron-up');
+                } else {
+                    chevron.classList.remove('fa-chevron-up');
+                    chevron.classList.add('fa-chevron-down');
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
