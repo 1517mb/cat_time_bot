@@ -1,7 +1,7 @@
 # cat_time_bot
 ![Лицензия](https://img.shields.io/github/license/hydrospirt/cat_time_bot)
 <a href="https://www.python.org/" style="text-decoration: none;"><img src="https://img.shields.io/badge/Python-3.12.9-blue?style=flat&logo=python&logoColor=ffdd54" height="20" alt="python"></a>
-<a href="https://www.djangoproject.com/" style="text-decoration: none;"><img src="https://img.shields.io/badge/Django-6.0-blue?style=flat&logo=django" height="20" alt="django"></a>
+<a href="https://www.djangoproject.com/" style="text-decoration: none;"><img src="https://img.shields.io/badge/Django-6.0.2-blue?style=flat&logo=django" height="20" alt="django"></a>
 <br>
 <a href="https://github.com/League-Of-Free-Internet/empty_project/branches" style="text-decoration: none;"><img src="https://img.shields.io/github/commit-activity/w/1517mb/cat_time_bot" height="20" alt="commit-activity"></a>
 <a href="https://github.com/1517mb/cat_time_bot/branches" style="text-decoration: none;"><img src="https://img.shields.io/github/last-commit/1517mb/cat_time_bot" height="20" alt="last-commit"></a>
@@ -12,7 +12,7 @@
 
 ### Текущая версия
 
-**v0.6.4-alpha** -> [Скачать](https://github.com/1517mb/cat_time_bot/releases/tag/v0.6.4-alpha)
+**v0.6.5-alpha** -> [Скачать](https://github.com/1517mb/cat_time_bot/releases/tag/v0.6.5-alpha)
 
 Список всех изменений: [Ссылка.](https://github.com/1517mb/cat_time_bot/blob/master/CHANGE_LIST.md)
 
