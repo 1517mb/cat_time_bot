@@ -15,6 +15,13 @@ VOTE_SALT = os.getenv("VOTE_SALT")
 DEBUG = os.getenv("DEBUG") == "True"
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
+# Для security.txt
+# ---------------------------------------------------------- #
+SECURITY_CONTACT_EMAIL = os.getenv("SECURITY_CONTACT_EMAIL")
+SECURITY_TXT_EXPIRES = os.getenv("SECURITY_TXT_EXPIRES")
+SECURITY_TXT_CANONICAL = os.getenv("SECURITY_TXT_CANONICAL")
+SECURITY_POLICY_URL = os.getenv("SECURITY_POLICY_URL")
+# ---------------------------------------------------------- #
 
 USE_X_FORWARDED_HOST = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
