@@ -6,7 +6,8 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 
 from content.sitemaps import NewsSitemap, ProgramSitemap, TipsSitemap
-from content.views import robots_txt
+from content.views import robots_txt, security_txt
+from django.views.generic import TemplateView
 
 sitemaps = {
     "news": NewsSitemap,
@@ -25,6 +26,15 @@ urlpatterns = [
     path("content/", include("content.urls")),
     path("pages/", include("pages.urls")),
     path("robots.txt", robots_txt),
+    path(
+        "security/",
+        TemplateView.as_view(
+            template_name="pages/security.html",
+            extra_context={"security_email": settings.SECURITY_CONTACT_EMAIL},
+        ),
+        name="security",
+    ),
+    path(".well-known/security.txt", security_txt),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps},
          name="django.contrib.sitemaps.views.sitemap"),
 ]
