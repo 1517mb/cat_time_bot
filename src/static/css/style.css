@@ -25,6 +25,39 @@ body {
     flex-shrink: 0;
 }
 
+.input:focus, 
+.textarea:focus, 
+.select select:focus, 
+.is-focused.input, 
+.is-focused.textarea, 
+.select select.is-focused, 
+.input:active, 
+.textarea:active, 
+.select select:active, 
+.is-active.input, 
+.is-active.textarea, 
+.select select.is-active {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.125em rgba(0, 209, 178, 0.25) !important;
+}
+
+.select:not(.is-multiple):not(.is-loading)::after {
+    border-color: var(--primary-color) !important;
+}
+
+.select:not(.is-multiple):not(.is-loading):hover::after {
+    border-color: var(--primary-color) !important;
+}
+
+.control.has-icons-left:focus-within .icon.is-left {
+    color: var(--primary-color) !important;
+}
+
+.control.has-icons-left:focus-within .icon.is-left i {
+    transition: color 0.2s;
+}
+
+
 /* =========================================
    2. НАВИГАЦИЯ И ЭЛЕМЕНТЫ UI
    ========================================= */
