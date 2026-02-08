@@ -70,11 +70,11 @@ def robots_txt(request):
 @require_GET
 def security_txt(request):
     lines = [
-        "Contact: mailto:{settings.SECURITY_CONTACT_EMAIL}",
-        "Expires: {settings.SECURITY_TXT_EXPIRES}",
+        f"Contact: mailto:{settings.SECURITY_CONTACT_EMAIL}",
+        f"Expires: {settings.SECURITY_TXT_EXPIRES}",
         "Preferred-Languages: ru, en",
-        "Canonical: {settings.SECURITY_TXT_CANONICAL}",
-        "Policy: {settings.SECURITY_POLICY_URL}",
+        f"Canonical: {settings.SECURITY_TXT_CANONICAL}",
+        f"Policy: {settings.SECURITY_POLICY_URL}",
         "",
     ]
     return HttpResponse("\n".join(lines),
