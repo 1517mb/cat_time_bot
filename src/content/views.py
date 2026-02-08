@@ -15,6 +15,7 @@ from django.db.models import (
     Q,
     When,
 )
+from django.views.decorators.http import require_GET
 from django.db.models.functions import ExtractMonth, ExtractYear
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -66,6 +67,20 @@ def robots_txt(request):
     return HttpResponse(content, content_type="text/plain")
 
 
+@require_GET
+def security_txt(request):
+    lines = [
+        "Contact: mailto:{settings.SECURITY_CONTACT_EMAIL}",
+        "Expires: {settings.SECURITY_TXT_EXPIRES}",
+        "Preferred-Languages: ru, en",
+        "Canonical: {settings.SECURITY_TXT_CANONICAL}",
+        "Policy: {settings.SECURITY_POLICY_URL}",
+        "",
+    ]
+    return HttpResponse("\n".join(lines),
+                        content_type="text/plain; charset=utf-8")
+
+
 def global_search_view(request):
     query = request.GET.get("q", "").strip()
     tips_results = []
@@ -91,7 +106,7 @@ def global_search_view(request):
         "tips_results": tips_results,
         "news_results": news_results,
         "programs_results": programs_results,
-        "total_count": len(tips_results) + len(news_results) + len(programs_results)
+        "total_count": len(tips_results) + len(news_results) + len(programs_results) # noqa
     }
     return render(request, "content/search_results.html", context)
 
@@ -146,7 +161,7 @@ class NewsDetailView(DetailView):
         context["latest_news"] = News.objects.filter(
             is_published=True
         ).exclude(
-            pk=self.object.pk
+            pk=self.object.pk  # type: ignore
         ).order_by("-created_at")[:5]
         return context
 
@@ -383,7 +398,7 @@ class ProgramDetailView(DetailView):
             rating_value = int(form.cleaned_data["rating"])
             try:
                 with transaction.atomic():
-                    self.object.add_rating(rating_value)
+                    self.object.add_rating(rating_value)  # type: ignore
                     ProgramVote.create_vote(self.object, client_ip)
                     messages.success(request, "Спасибо за вашу оценку!")
                     response = redirect("content:program_detail",
