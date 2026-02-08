@@ -1,7 +1,12 @@
 from django.utils.translation import gettext_lazy as _
 from request.plugins import (
-    TrafficInformation, LatestRequests, TopPaths,
-    TopErrorPaths, TopReferrers, TopSearchPhrases, TopBrowsers
+    LatestRequests,
+    TopBrowsers,
+    TopErrorPaths,
+    TopPaths,
+    TopReferrers,
+    TopSearchPhrases,
+    TrafficInformation,
 )
 
 
