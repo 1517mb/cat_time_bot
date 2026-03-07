@@ -1,3 +1,5 @@
+"""Константы и конфигурации моделей приложения Cat-Time-Bot."""
+
 from django.db.models import Index
 
 VERSION = "0.6.5 alpha"
