@@ -44,7 +44,13 @@ INSTALLED_APPS = [
     "pages.apps.PagesConfig",
     "import_export",
     "django_ckeditor_5",
-    "config.apps.RequestConfig"
+    "config.apps.RequestConfig",
+    "axes"
+]
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 MIDDLEWARE = [
@@ -56,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "request.middleware.RequestMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -323,3 +330,9 @@ REQUEST_PLUGINS = (
     "config.request_plugins.RuTopSearchPhrases",
     "config.request_plugins.RuTopBrowsers",
 )
+# =========================================
+# НАСТРОЙКИ DJANGO-AXES
+# =========================================
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 2
+AXES_RESET_ON_SUCCESS = True
