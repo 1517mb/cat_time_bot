@@ -16,18 +16,31 @@ _is_initialized = False
 def get_bot_application() -> Application:
     """
     Возвращает глобальный экземпляр Telegram Application.
-    С настройками тайм-аутов для стабильности сети.
+    С настройками тайм-аутов для стабильности сети
+    и маршрутизацией автоматическим проксированием.
     """
     global _bot_application
 
     if _bot_application is None:
         logger.info("Создание нового экземпляра Telegram Application")
         try:
-            request = HTTPXRequest(
-                connection_pool_size=8,
-                connect_timeout=20.0,
-                read_timeout=20.0,
-            )
+            request_kwargs = {
+                "connection_pool_size": 8,
+                "connect_timeout": 20.0,
+                "read_timeout": 20.0,
+            }
+            if not getattr(settings, 'DEBUG', False):
+                logger.info("Prod режим: Включаем маршрутизацию через прокси")
+                proxy_url = getattr(settings, 'TELEGRAM_PROXY_URL', None)
+                if proxy_url:
+                    request_kwargs["proxy_url"] = proxy_url
+                    logger.info(f"Используется прокси: {proxy_url}")
+                else:
+                    logger.warning("TELEGRAM_PROXY_URL не задан, "
+                                   "но DEBUG=False. Проверьте настройки.")
+            else:
+                logger.info("Debug режим: Прямое подключение к Telegram API")
+            request = HTTPXRequest(**request_kwargs)
             _bot_application = Application.builder()\
                 .token(settings.TELEGRAM_BOT_TOKEN)\
                 .request(request)\
