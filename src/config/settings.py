@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_PROXY_URL = os.getenv("TELEGRAM_PROXY_URL", None)
 VOTE_SALT = os.getenv("VOTE_SALT")
 
 DEBUG = os.getenv("DEBUG") == "True"
